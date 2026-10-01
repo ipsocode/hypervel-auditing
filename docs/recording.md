@@ -33,6 +33,10 @@ callback or one request, use `withoutAuditing()`; see
 model also fires `updated`; the observer marks the model while the restore runs
 and skips that `updated`, so a restore is recorded once, as `restored`.
 
+`increment()`, `decrement()` and their `Each` forms fire `updated` as well, and
+are recorded like a save: the changed columns and any extra columns passed with
+them. The model is clean afterwards, so a later `save()` records nothing more.
+
 ### `retrieved`
 
 `retrieved` fires for every model hydrated from a query: a query that returns
@@ -171,6 +175,12 @@ cast already holds a JSON string, so it is recorded whatever
 `allowed_array_values` says; the array rule applies to an attribute with no cast
 that was assigned an array. [Schema](schema.md#how-values-are-stored) shows how
 each value is stored.
+
+Columns a model names in `#[Refreshes]` (or `$refreshes`) are read back from
+the database after each write, before `created` or `updated` fires, so the audit
+records what the row holds. A `created` audit includes such a column's database
+default even when `create()` was not given it, and an `updated` audit includes a
+change a trigger made to it.
 
 ## Per-model properties
 
