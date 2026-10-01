@@ -7,8 +7,7 @@ namespace Workbench\App\Models;
 use Hypervel\Database\Eloquent\Casts\AsArrayObject;
 
 /**
- * `content` is stored as JSON behind an AsArrayObject cast, which the Audit
- * trait special-cases when formatting a historical value.
+ * `content` is stored as JSON behind an AsArrayObject cast.
  */
 class ArrayObjectArticle extends Article
 {

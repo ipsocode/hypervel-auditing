@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Audit;
 
 use Hypervel\Database\Eloquent\Casts\ArrayObject;
+use Hypervel\Support\Collection;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\ArrayObjectArticle;
+use Workbench\App\Models\DecodingCastArticle;
 use Workbench\App\Models\MutatorArticle;
 
 /**
  * Detail rows hold the raw column values, so reading an audit has to put each
- * one back through the auditable's own read side — accessors of both flavours,
- * and the AsArrayObject cast, which stores JSON the cast cannot be handed.
+ * one back through the auditable's own read side — accessors of both flavours
+ * and casts, including those that decode the model's attributes rather than the
+ * value they are handed.
  */
 class AuditValueFormattingTest extends TestCase
 {
@@ -92,7 +95,29 @@ class AuditValueFormattingTest extends TestCase
         $this->assertSame(['body' => 'v1', 'words' => 2], $modified['content']['old']->toArray());
     }
 
-    public function testArrayObjectCastYieldsAnEmptyArrayObjectForUndecodableJson(): void
+    public function testCastsThatDecodeTheModelsAttributesFormatTheStoredValue(): void
+    {
+        $article = DecodingCastArticle::create([
+            'title' => ['v' => 1],
+            'content' => ['v' => 1],
+            'reviewed' => false,
+        ]);
+
+        $article->update(['title' => ['v' => 2], 'content' => ['v' => 2]]);
+        $article->update(['title' => ['v' => 3], 'content' => ['v' => 3]]);
+
+        $modified = $article->audits()->where('event', 'updated')->orderBy('id')->first()->getModified();
+
+        $this->assertInstanceOf(Collection::class, $modified['title']['old']);
+        $this->assertSame(['v' => 1], $modified['title']['old']->all());
+        $this->assertSame(['v' => 2], $modified['title']['new']->all());
+
+        $this->assertInstanceOf(ArrayObject::class, $modified['content']['old']);
+        $this->assertSame(['v' => 1], $modified['content']['old']->toArray());
+        $this->assertSame(['v' => 2], $modified['content']['new']->toArray());
+    }
+
+    public function testAValueTheJsonCastCannotDecodeIsReturnedAsStored(): void
     {
         $article = ArrayObjectArticle::create([
             'title' => 'Title',
@@ -100,17 +125,13 @@ class AuditValueFormattingTest extends TestCase
             'reviewed' => false,
         ]);
 
-        // A row written before the cast existed holds a bare string, which
-        // json_decode() cannot turn into an array.
+        // A row written before the cast existed holds a bare string.
         $article->audits()->where('event', 'created')->sole()
             ->details()->where('field', 'content')->sole()
             ->update(['new_value' => 'plain text']);
 
         $audit = $article->audits()->where('event', 'created')->sole()->fresh();
 
-        $content = $audit->getModified()['content']['new'];
-
-        $this->assertInstanceOf(ArrayObject::class, $content);
-        $this->assertSame([], $content->toArray());
+        $this->assertSame('plain text', $audit->getModified()['content']['new']);
     }
 }

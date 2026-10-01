@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing;
 
 use DateTimeInterface;
-use Hypervel\Database\Eloquent\Casts\ArrayObject;
-use Hypervel\Database\Eloquent\Casts\AsArrayObject;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Support\Carbon;
 use Hypervel\Support\Facades\Config;
@@ -14,6 +12,7 @@ use Hypervel\Support\Facades\Date;
 use Hypervel\Support\Str;
 use InvalidArgumentException;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
+use JsonException;
 
 trait Audit
 {
@@ -106,6 +105,12 @@ trait Audit
      */
     protected function getFormattedValue(Model $model, string $key, $value)
     {
+        // Casts and accessors read the model's attributes rather than only the
+        // value they are handed, and cache what they return, which save() merges
+        // back. So format on a copy that holds the stored value, never on the live model.
+        $model = clone $model;
+        $model->setRawAttributes([$key => $value] + $model->getAttributes());
+
         if ($model->hasGetMutator($key)) {
             return $model->mutateAttribute($key, $value);
         }
@@ -114,35 +119,16 @@ trait Audit
             return $model->mutateAttributeMarkedAttribute($key, $value);
         }
 
-        if (array_key_exists(
-            $key,
-            $model->getCasts()
-        ) && $model->getCasts()[$key] == AsArrayObject::class) {
-            return new ArrayObject(json_decode($value, true) ?: []);
-        }
-
         if ($model->hasCast($key)) {
             if ($model->getCastType($key) == 'datetime') {
                 $value = $this->castDatetimeUTC($model, $value);
             }
 
-            // castAttribute() reads and fills the model's classCastCache, and
-            // Model::save() merges that cache into the attributes. Clear the entry
-            // so the historical value is cast rather than the cached live one, then
-            // restore it so the audited value never reaches the next save.
-            $wasCached = array_key_exists($key, $model->classCastCache);
-            $cached = $wasCached ? $model->classCastCache[$key] : null;
-
-            unset($model->classCastCache[$key]);
-
             try {
                 return $model->castAttribute($key, $value);
-            } finally {
-                if ($wasCached) {
-                    $model->classCastCache[$key] = $cached;
-                } else {
-                    unset($model->classCastCache[$key]);
-                }
+            } catch (JsonException) {
+                // A value stored before the column held JSON is returned as stored.
+                return $value;
             }
         }
 
