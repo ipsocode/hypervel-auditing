@@ -1,0 +1,71 @@
+# Testbench / Workbench configuration for ipsocode/hypervel-auditing.
+#
+# `workbench/` is the throwaway host application the package is tested against:
+# it owns the Eloquent models, factories and migrations the suite exercises, so
+# the package sees the same shape a consuming application would.
+
+providers:
+  # The package under test, then the Workbench app that registers its own
+  # migrations. Order matters: the package's `auditing.run_migrations` guard is
+  # exercised through its provider, so it has to register first.
+  - Ipsocode\Auditing\AuditingServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+# Applied to the Testbench CLI (`composer test`, testbench artisan, tinker).
+# Testbench does NOT apply these to PHPUnit test methods, so phpunit.xml mirrors
+# them under <php><env> — keep the two in step.
+env:
+  APP_NAME: "Hypervel Auditing Workbench"
+  APP_ENV: testing
+  # The suite never touches a real database file; every connection is in-memory
+  # so tests stay isolated and parallel-safe.
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ":memory:"
+  # SQLite enforces foreign keys only when asked, and Testbench's `testing`
+  # connection leaves them off by default. Without this the audit_details
+  # cascade is inert under test while working on MySQL and PostgreSQL — exactly
+  # the asymmetry that hides a broken constraint until production.
+  DB_FOREIGN_KEYS: true
+  # The package's own knobs, spelled out so config/auditing.php's env() calls are
+  # visible here rather than only in the published config.
+  AUDITING_ENABLED: true
+  AUDITING_TABLE: audits
+  AUDITING_DETAILS_TABLE: audit_details
+  AUDITING_RUN_MIGRATIONS: true
+
+migrations:
+  - workbench/database/migrations
+
+seeders:
+  - Workbench\Database\Seeders\DatabaseSeeder
+
+workbench:
+  # UserResolver resolves the acting user through Auth::guard(), so the auth
+  # provider is genuinely part of what this package exercises.
+  auth: true
+  # No HTTP surface: this package is model observers and a console command.
+  health: false
+  discovers:
+    # `workbench/config` is intentionally empty: the package merges its own
+    # config from its provider. The hook stays on so an app-level override can
+    # be dropped in to reproduce a consumer's configuration without editing
+    # this file again.
+    config: true
+    factories: true
+    web: false
+    api: false
+    commands: true
+    components: false
+    views: false
+
+purge:
+  # Paths here are resolved against the runtime *skeleton*, not against
+  # workbench/. package:purge-skeleton already removes the env file, the cached
+  # testbench.yaml, database/database.sqlite, routes/testbench-*.php and the
+  # storage app/session files on its own; these are the extras.
+  files:
+    - .env
+  directories:
+    # Hyperf's AOP proxy cache. Regenerated on the next boot, and stale proxies
+    # survive a config:clear.
+    - storage/framework/aop

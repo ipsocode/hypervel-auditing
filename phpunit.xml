@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.0/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    cacheDirectory="tests/.cache/phpunit"
+    colors="true"
+    backupGlobals="false"
+    backupStaticProperties="false"
+    processIsolation="false"
+    failOnWarning="true"
+    failOnRisky="true"
+>
+    <testsuites>
+        <!-- The package's pure logic, run without booting an application. Every
+             method carries #[UnitTest], so anything that reaches for a facade or
+             the container fails here rather than quietly leaning on a framework
+             the unit under test does not need. -->
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <!-- Everything that needs the Testbench application: models, observers,
+             the database, the console command. -->
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <!-- The package only. `workbench/` is the throwaway host application
+                 the suite runs against, not shipped code. -->
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+
+    <extensions>
+        <!-- Discovers this package's `extra.hypervel.test-state` registrar and runs
+             its cleanup after every test, plus the framework's own state flush —
+             the same path consuming applications get. Nothing else in the
+             framework invokes AfterEachTestCleanup, so without this the static
+             $auditingDisabled flags leak between tests in a worker. -->
+        <bootstrap class="Hypervel\Testing\PHPUnit\AfterEachTestExtension"/>
+    </extensions>
+
+    <php>
+        <!-- Mirrors testbench.yaml's `env` block. Testbench applies that block to
+             its own CLI (`composer test`) but explicitly not to PHPUnit test
+             methods, so without these a `vendor/bin/phpunit` run would boot a
+             differently-configured application than `composer test` does.
+             Keep the two lists in step. -->
+        <env name="APP_NAME" value="Hypervel Auditing Workbench"/>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- SQLite enforces foreign keys only when asked, and Testbench's
+             `testing` connection leaves them off. Without this the audit_details
+             cascade is inert under test while working on MySQL and PostgreSQL. -->
+        <env name="DB_FOREIGN_KEYS" value="true"/>
+        <env name="AUDITING_ENABLED" value="true"/>
+        <env name="AUDITING_TABLE" value="audits"/>
+        <env name="AUDITING_DETAILS_TABLE" value="audit_details"/>
+        <env name="AUDITING_RUN_MIGRATIONS" value="true"/>
+
+        <ini name="error_reporting" value="-1"/>
+        <ini name="display_errors" value="on"/>
+        <ini name="display_startup_errors" value="on"/>
+        <ini name="memory_limit" value="1024M"/>
+    </php>
+</phpunit>

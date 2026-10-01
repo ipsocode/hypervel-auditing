@@ -1,0 +1,16 @@
+/vendor
+# Local environment only — carries the COMPOSER_AUTH token in a normal checkout.
+/.env
+.DS_Store
+
+composer.lock
+
+# What the tools write: the caches of PHPUnit, php-cs-fixer and PHPStan
+# (phpunit.xml, .php-cs-fixer.dist.php, phpstan.neon), and the clover report
+# of `composer test:coverage`.
+/tests/.cache/
+/tests/coverage/
+
+# Claude Code's local state. The automated review's skill and brief are
+# imported into .github/claude/.
+/.claude

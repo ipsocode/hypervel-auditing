@@ -1,0 +1,94 @@
+{
+    "name": "ipsocode/hypervel-auditing",
+    "description": "Audit changes of your Eloquent models for Hypervel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gregory Daus",
+            "email": "codeipso@gmail.com"
+        }
+    ],
+    "keywords": [
+        "hypervel",
+        "audit",
+        "auditing",
+        "eloquent",
+        "coroutine"
+    ],
+    "require": {
+        "php": "^8.4",
+        "ext-json": "*",
+        "hypervel/contracts": "^0.4",
+        "hypervel/support": "^0.4",
+        "hypervel/database": "^0.4",
+        "hypervel/reflection": "^0.4"
+    },
+    "require-dev": {
+        "brianium/paratest": "^7.24",
+        "fakerphp/faker": "^1.24",
+        "friendsofphp/php-cs-fixer": "^3.57.2",
+        "hypervel/components": "0.4.x-dev",
+        "hypervel/testbench": "^0.4",
+        "mockery/mockery": "^1.6",
+        "phpstan/phpstan": "^2.2.15",
+        "phpunit/phpunit": "^13.0.3",
+        "symfony/yaml": "^8.0.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ipsocode\\Auditing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ipsocode\\Auditing\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "extra": {
+        "hypervel": {
+            "providers": [
+                "Ipsocode\\Auditing\\AuditingServiceProvider"
+            ],
+            "aliases": {
+                "Auditor": "Ipsocode\\Auditing\\Facades\\Auditor"
+            },
+            "test-state": [
+                "Ipsocode\\Auditing\\Testing\\TestState"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "platform": {
+            "ext-swoole": "6.2.3"
+        }
+    },
+    "scripts": {
+        "lint": "@php vendor/bin/php-cs-fixer fix --diff --dry-run",
+        "lint:fix": "@php vendor/bin/php-cs-fixer fix",
+        "analyse": "@php vendor/bin/phpstan analyse --memory-limit 1G -c phpstan.neon",
+        "conventions": "@php .github/scripts/conventions.php",
+        "test": "@php vendor/bin/testbench package:test",
+        "test:phpunit": "@php vendor/bin/phpunit",
+        "test:parallel": "@php vendor/bin/testbench package:test --parallel",
+        "test:coverage": "@php vendor/bin/testbench package:test --parallel --coverage --coverage-clover tests/coverage/clover.xml --min=100",
+        "test:purge": "@php vendor/bin/testbench package:purge-skeleton"
+    },
+    "scripts-descriptions": {
+        "analyse": "Run PHPStan over src/ with the level, settings and extensions hypervel/components uses.",
+        "conventions": "Check the review rules a script can decide, as CI does before anything else: .github/scripts/conventions.php, with this package's settings in .github/conventions.php.",
+        "test": "Run the package suite through the Testbench CLI.",
+        "test:phpunit": "Run the package suite through PHPUnit directly, bypassing the Testbench CLI.",
+        "test:parallel": "Run the package suite through ParaTest.",
+        "test:coverage": "Run the package suite with PCOV coverage, failing under 100%. Needs the PCOV extension, which the CI image has.",
+        "test:purge": "Clear cached config, routes, views and runtime SQLite files from the Testbench skeleton."
+    }
+}
