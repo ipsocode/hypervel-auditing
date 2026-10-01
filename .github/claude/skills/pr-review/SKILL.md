@@ -69,6 +69,11 @@ a coverage gate below 100%, and context keys, cache keys, commands, publish tags
 config names outside the package's own. Say nothing about what these checks enforce. Locally,
 `composer conventions`, `composer lint`, `composer analyse` and `composer test:coverage` run them.
 
+Files imported from ipsocode/hypervel-packages, whose first lines say so, are written and checked
+there. A pull request that changes only those is not reviewed at all (`review.sh scope`). In one
+that also changes the package's own files, review only the package's own; each imported file still
+gets its line in the notes.
+
 ## 4. What to look for
 
 Look first for what package.md focuses on, then for these:
