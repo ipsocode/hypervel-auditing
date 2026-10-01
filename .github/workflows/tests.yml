@@ -164,11 +164,7 @@ jobs:
   claude:
     name: claude
     needs: php84
-    if: >-
-      github.event_name == 'pull_request'
-      && !github.event.pull_request.draft
-      && github.event.pull_request.head.repo.full_name == github.repository
-      && github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     uses: ./.github/workflows/review.yml
     with:
       components_ref: ${{ needs.php84.outputs.components_ref }}

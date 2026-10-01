@@ -9,6 +9,11 @@ inputs:
     required: false
     default: ''
 
+outputs:
+  review:
+    description: Whether Claude reviews the pull request, 'true' or 'false'
+    value: ${{ steps.scope.outputs.review }}
+
 runs:
   using: composite
   steps:
@@ -28,6 +33,11 @@ runs:
         REVIEW_SCAN_SKIP: ${{ steps.focus.outputs.skip }}
       shell: bash
       run: bash .github/scripts/review.sh scan
+
+    - name: Decide whether Claude reviews it
+      id: scope
+      shell: bash
+      run: bash .github/scripts/review.sh scope
 
     - name: Make the framework's restore ask for gzip
       if: inputs.components_ref != ''
