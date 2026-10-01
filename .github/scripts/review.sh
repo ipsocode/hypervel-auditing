@@ -38,7 +38,8 @@ Run it from the repository root. The commands, in the order the job runs them:
   install             the review's skill and brief, into ~/.claude/
   brief               the prompt; outputs prompt
   check-memory        whether the review left notes on this head; outputs save
-  summarize [FILE]    the review session's turns, cost, tools and refusals
+  summarize [FILE]    the review session's turns, cost, tools and refusals, and whether it
+                      finished (REVIEW_OUTCOME)
   collapse            minimizes the older summaries once the newest covers this head
   components-ref      the hypervel/components commit Composer installed; outputs ref. It is
                       for the PHP 8.4 job in tests.yml, and needs php, not jq
@@ -504,12 +505,17 @@ cmd_check_memory() {
 }
 
 cmd_summarize() {
-    local execution=${file:-${work}/claude-execution-output.json}
-    [ -f "${execution}" ] || return 0
+    local execution=${file:-${work}/claude-execution-output.json} unfinished=''
+    if [ "${REVIEW_OUTCOME:-}" = failure ]; then
+        unfinished="- Did not finish: the session failed, or ran past its time limit. claude / review passes without it."
+        echo "::warning::The review did not finish: it failed, or ran past its time limit. Re-run the job for a review."
+    fi
+    [ -f "${execution}" ] || [ -n "${unfinished}" ] || return 0
     {
         echo "## Review session"
         echo
-        jq -r '
+        [ -z "${unfinished}" ] || echo "${unfinished}"
+        [ ! -f "${execution}" ] || jq -r '
             ([.[] | select(.type == "result")] | last) as $result
             | [.[] | select(.type == "assistant") | .message.content[]? | select(.type == "tool_use")
                 | if .name == "Bash" then "Bash(" + (.input.command // "" | split(" ")[0:3] | join(" ")) + ")"

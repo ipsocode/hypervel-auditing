@@ -23,7 +23,7 @@ jobs:
   review:
     name: review
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     concurrency:
       group: claude-review-${{ github.event.pull_request.number }}
@@ -60,6 +60,8 @@ jobs:
       - name: Review
         id: review
         if: steps.credential.outputs.present == 'true' && steps.setup.outputs.review == 'true'
+        timeout-minutes: 10
+        continue-on-error: true
         uses: ./.github/actions/review-claude
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -107,3 +109,5 @@ jobs:
           always() && steps.credential.outputs.present == 'true'
           && steps.pristine.outcome == 'success'
         uses: ./.github/actions/review-finalise
+        with:
+          outcome: ${{ steps.review.outcome }}
