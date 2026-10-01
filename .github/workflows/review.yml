@@ -23,7 +23,7 @@ jobs:
   review:
     name: review
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     concurrency:
       group: claude-review-${{ github.event.pull_request.number }}
@@ -46,19 +46,22 @@ jobs:
         run: bash .github/scripts/review.sh credential
 
       - name: Collect and scan the pull request
+        id: setup
         uses: ./.github/actions/review-setup
         with:
           components_ref: ${{ inputs.components_ref }}
 
       - name: Restore the review's memory
-        if: steps.credential.outputs.present == 'true'
+        if: steps.credential.outputs.present == 'true' && steps.setup.outputs.review == 'true'
         uses: ./.github/actions/review-memory
         with:
           mode: restore
 
       - name: Review
         id: review
-        if: steps.credential.outputs.present == 'true'
+        if: steps.credential.outputs.present == 'true' && steps.setup.outputs.review == 'true'
+        timeout-minutes: 10
+        continue-on-error: true
         uses: ./.github/actions/review-claude
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -67,7 +70,9 @@ jobs:
 
       - name: Put .github/ back from the commit
         id: pristine
-        if: always() && steps.credential.outputs.present == 'true'
+        if: >-
+          always() && steps.credential.outputs.present == 'true'
+          && steps.setup.outputs.review == 'true'
         run: |
           set -euo pipefail
           git() { command git -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"; }
@@ -104,3 +109,5 @@ jobs:
           always() && steps.credential.outputs.present == 'true'
           && steps.pristine.outcome == 'success'
         uses: ./.github/actions/review-finalise
+        with:
+          outcome: ${{ steps.review.outcome }}

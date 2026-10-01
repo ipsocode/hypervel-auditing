@@ -24,7 +24,9 @@ Run it from the repository root. The commands, in the order the job runs them:
   collect             fills DIR: pr.md, diff.patch, files.txt and comments.md; and the file
                       index for the prompt
   scan                review-scan.sh over DIR/diff.patch, into DIR/scan.md and the summary
-  gzip-only           a zstd that fails, for the framework's restore (see there)
+  scope               whether Claude reviews the pull request: not when every file in
+                      DIR/files.txt is imported from ipsocode/hypervel-packages; outputs review
+  gzip-only          a zstd that fails, for the framework's restore (see there)
   framework --restored true|false
                       strips other projects' agent files from the restored framework
   since-memory        DIR/since-memory.md (and .patch): what changed since the notes
@@ -36,7 +38,8 @@ Run it from the repository root. The commands, in the order the job runs them:
   install             the review's skill and brief, into ~/.claude/
   brief               the prompt; outputs prompt
   check-memory        whether the review left notes on this head; outputs save
-  summarize [FILE]    the review session's turns, cost, tools and refusals
+  summarize [FILE]    the review session's turns, cost, tools and refusals, and whether it
+                      finished (REVIEW_OUTCOME)
   collapse            minimizes the older summaries once the newest covers this head
   components-ref      the hypervel/components commit Composer installed; outputs ref. It is
                       for the PHP 8.4 job in tests.yml, and needs php, not jq
@@ -249,6 +252,44 @@ cmd_scan() {
         echo
         cat "${dir}/scan.md"
     } | summary
+}
+
+imported() {
+    case "$1" in
+        .github/PULL_REQUEST_TEMPLATE.md) return 0 ;;
+        .github/conventions.php | .github/review/*) return 1 ;;
+    esac
+    if [ -L "$1" ]; then
+        return 1
+    elif [ -f "$1" ]; then
+        head -n 10 "$1" | grep -q -F "Imported from ipsocode/hypervel-packages ${1#.}. Edit it there."
+    else
+        case "$1" in
+            .github/*) return 0 ;;
+            *) return 1 ;;
+        esac
+    fi
+}
+
+cmd_scope() {
+    local path shared=0 own=''
+    [ -f "${dir}/files.txt" ] || die "no ${dir}/files.txt; run collect first."
+    while IFS= read -r path; do
+        [ -n "${path}" ] || continue
+        if imported "${path}"; then
+            shared=$((shared + 1))
+        else
+            own="${own}${own:+, }${path}"
+        fi
+    done < "${dir}/files.txt"
+    if [ -z "${own}" ] && [ "${shared}" -gt 0 ]; then
+        set_output review false
+        echo "::notice::Every file this pull request changes is imported from ipsocode/hypervel-packages, and checked there; Claude does not review it."
+        printf '## Scope\n\nAll %s changed files are imported from ipsocode/hypervel-packages, so Claude does not review this pull request.\n' "${shared}" | summary
+    else
+        set_output review true
+        echo "Claude reviews this pull request for the package's own files: ${own:-none}."
+    fi
 }
 
 cmd_gzip_only() {
@@ -464,12 +505,17 @@ cmd_check_memory() {
 }
 
 cmd_summarize() {
-    local execution=${file:-${work}/claude-execution-output.json}
-    [ -f "${execution}" ] || return 0
+    local execution=${file:-${work}/claude-execution-output.json} unfinished=''
+    if [ "${REVIEW_OUTCOME:-}" = failure ]; then
+        unfinished="- Did not finish: the session failed, or ran past its time limit. claude / review passes without it."
+        echo "::warning::The review did not finish: it failed, or ran past its time limit. Re-run the job for a review."
+    fi
+    [ -f "${execution}" ] || [ -n "${unfinished}" ] || return 0
     {
         echo "## Review session"
         echo
-        jq -r '
+        [ -z "${unfinished}" ] || echo "${unfinished}"
+        [ ! -f "${execution}" ] || jq -r '
             ([.[] | select(.type == "result")] | last) as $result
             | [.[] | select(.type == "assistant") | .message.content[]? | select(.type == "tool_use")
                 | if .name == "Bash" then "Bash(" + (.input.command // "" | split(" ")[0:3] | join(" ")) + ")"
@@ -621,6 +667,7 @@ case "${command}" in
     focus) cmd_focus ;;
     collect) cmd_collect ;;
     scan) cmd_scan ;;
+    scope) cmd_scope ;;
     gzip-only) cmd_gzip_only ;;
     framework) cmd_framework ;;
     since-memory) cmd_since_memory ;;
