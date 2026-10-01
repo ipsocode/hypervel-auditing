@@ -51,13 +51,20 @@ For each value, in order:
 1. An [encoder](attribute-modifiers.md) registered for the attribute decodes
    it. Redacted values stay masked.
 2. A get accessor, of either style, formats it, and nothing further is applied.
-3. Otherwise an `AsArrayObject` cast rebuilds its `ArrayObject` from the stored
-   JSON, or an empty one if the JSON does not decode.
-4. Otherwise any other cast runs as it does on the model; class casts return
-   their objects. Before a `datetime` cast, and for the model's created-at and
-   updated-at columns, the stored text is read as UTC: `Y-m-d` is taken as
-   midnight, and `Y-m-d H:i:s` and the model's date format are recognised.
-   Text in no recognised shape is handed on as it is.
+3. Otherwise the attribute's cast runs as it does on the model; class casts
+   return their objects. Text that a JSON cast cannot decode, such as a value
+   stored before the column held JSON, comes back as stored. Before a
+   `datetime` cast, and for the model's created-at and updated-at columns, the
+   stored text is read as UTC: `Y-m-d` is taken as midnight, and `Y-m-d H:i:s`
+   and the model's date format are recognised. Text in no recognised shape is
+   handed on as it is.
+
+Steps 2 and 3 run on a copy of the auditable that holds the stored value. Casts
+such as `AsCollection` and `AsEncryptedArrayObject`, and accessors, read the
+model's attributes rather than only the value they are handed, so each sees the
+value being formatted. The auditable itself is left as it was, including what
+its casts and cached accessors hold, so saving it afterwards writes its own
+values.
 
 A date that comes out as a `DateTimeInterface` is then serialized with the
 model's `serializeDate()`, ISO 8601 by default:
