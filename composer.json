@@ -1,13 +1,8 @@
 {
     "name": "ipsocode/hypervel-auditing",
     "description": "Audit changes of your Eloquent models for Hypervel",
+    "type": "library",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Gregory Daus",
-            "email": "codeipso@gmail.com"
-        }
-    ],
     "keywords": [
         "hypervel",
         "audit",
@@ -15,23 +10,29 @@
         "eloquent",
         "coroutine"
     ],
+    "homepage": "https://github.com/ipsocode/hypervel-auditing",
+    "authors": [
+        {
+            "name": "Ipsocode",
+            "homepage": "https://github.com/ipsocode"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ipsocode/hypervel-auditing/issues",
+        "source": "https://github.com/ipsocode/hypervel-auditing",
+        "security": "https://github.com/ipsocode/hypervel-auditing/security/policy"
+    },
     "require": {
-        "php": "^8.4",
-        "ext-json": "*",
-        "hypervel/contracts": "^0.4",
-        "hypervel/support": "^0.4",
-        "hypervel/database": "^0.4",
-        "hypervel/reflection": "^0.4"
+        "hypervel/components": "0.4.x-dev"
     },
     "require-dev": {
         "brianium/paratest": "^7.24",
         "fakerphp/faker": "^1.24",
         "friendsofphp/php-cs-fixer": "^3.57.2",
-        "hypervel/components": "0.4.x-dev",
         "hypervel/testbench": "^0.4",
         "mockery/mockery": "^1.6",
         "phpstan/phpstan": "^2.2.15",
-        "phpunit/phpunit": "^13.0.3",
+        "phpunit/phpunit": ">=13.0.3 <13.4",
         "symfony/yaml": "^8.0.12"
     },
     "autoload": {
@@ -85,11 +86,13 @@
     },
     "scripts-descriptions": {
         "analyse": "Run PHPStan over src/ with the level, settings and extensions hypervel/components uses.",
-        "conventions": "Check the review rules a script can decide, as CI does before anything else: .github/scripts/conventions.php, with this package's settings in .github/conventions.php.",
+        "conventions": "Run the conventions check with this package's settings, .github/conventions.php. Plain PHP: it needs no install.",
+        "lint": "Report the coding-standard changes php-cs-fixer would make, without writing them.",
+        "lint:fix": "Apply the coding standard. Risky rules are enabled (see .php-cs-fixer.dist.php) \u2014 run `composer test` afterwards, not just before committing.",
         "test": "Run the package suite through the Testbench CLI.",
         "test:phpunit": "Run the package suite through PHPUnit directly, bypassing the Testbench CLI.",
         "test:parallel": "Run the package suite through ParaTest.",
-        "test:coverage": "Run the package suite with PCOV coverage, failing under 100%. Needs the PCOV extension, which the CI image has.",
+        "test:coverage": "Run the package suite through ParaTest with PCOV coverage, failing under 100%. Needs the PCOV extension, which the CI image has.",
         "test:purge": "Clear cached config, routes, views and runtime SQLite files from the Testbench skeleton."
     }
 }
