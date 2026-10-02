@@ -16,7 +16,6 @@
         "coroutine"
     ],
     "require": {
-        "php": "^8.4",
         "ext-json": "*",
         "hypervel/components": "0.4.x-dev"
     },
