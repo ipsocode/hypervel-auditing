@@ -86,11 +86,13 @@
     },
     "scripts-descriptions": {
         "analyse": "Run PHPStan over src/ with the level, settings and extensions hypervel/components uses.",
-        "conventions": "Check the review rules a script can decide, as CI does before anything else: .github/scripts/conventions.php, with this package's settings in .github/conventions.php.",
+        "conventions": "Run the conventions check with this package's settings, .github/conventions.php. Plain PHP: it needs no install.",
+        "lint": "Report the coding-standard changes php-cs-fixer would make, without writing them.",
+        "lint:fix": "Apply the coding standard. Risky rules are enabled (see .php-cs-fixer.dist.php) \u2014 run `composer test` afterwards, not just before committing.",
         "test": "Run the package suite through the Testbench CLI.",
         "test:phpunit": "Run the package suite through PHPUnit directly, bypassing the Testbench CLI.",
         "test:parallel": "Run the package suite through ParaTest.",
-        "test:coverage": "Run the package suite with PCOV coverage, failing under 100%. Needs the PCOV extension, which the CI image has.",
+        "test:coverage": "Run the package suite through ParaTest with PCOV coverage, failing under 100%. Needs the PCOV extension, which the CI image has.",
         "test:purge": "Clear cached config, routes, views and runtime SQLite files from the Testbench skeleton."
     }
 }
