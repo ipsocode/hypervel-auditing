@@ -1,13 +1,8 @@
 {
     "name": "ipsocode/hypervel-auditing",
     "description": "Audit changes of your Eloquent models for Hypervel",
+    "type": "library",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Gregory Daus",
-            "email": "codeipso@gmail.com"
-        }
-    ],
     "keywords": [
         "hypervel",
         "audit",
@@ -15,6 +10,18 @@
         "eloquent",
         "coroutine"
     ],
+    "homepage": "https://github.com/ipsocode/hypervel-auditing",
+    "authors": [
+        {
+            "name": "Ipsocode",
+            "homepage": "https://github.com/ipsocode"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ipsocode/hypervel-auditing/issues",
+        "source": "https://github.com/ipsocode/hypervel-auditing",
+        "security": "https://github.com/ipsocode/hypervel-auditing/security/policy"
+    },
     "require": {
         "hypervel/components": "0.4.x-dev"
     },
