@@ -24,6 +24,7 @@ use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Support\AuditBatch;
+use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
 use Throwable;
 use UnitEnum;
@@ -350,8 +351,14 @@ trait Auditable
      */
     protected function resolveUser()
     {
-        if (! empty($this->preloadedResolverData['user'] ?? null)) {
+        // array_key_exists, not empty(): a null preloaded from an actingAs(null)
+        // scope is a decision, not a missing value.
+        if (array_key_exists('user', $this->preloadedResolverData)) {
             return $this->preloadedResolverData['user'];
+        }
+
+        if (AuditCauser::isScoped()) {
+            return AuditCauser::current();
         }
 
         $userResolver = Config::get('auditing.user.resolver');
@@ -396,7 +403,7 @@ trait Auditable
         $this->preloadedResolverData = $this->runResolvers();
 
         $user = $this->resolveUser();
-        if (! empty($user)) {
+        if (! empty($user) || AuditCauser::isScoped()) {
             $this->preloadedResolverData['user'] = $user;
         }
 

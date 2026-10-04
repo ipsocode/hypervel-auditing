@@ -81,7 +81,7 @@ belongs to whichever batch is open when it is written.
 
 ## Child coroutines
 
-A batch is stored in the coroutine context, and a child coroutine starts with
+An `Auditor::actingAs()` causer scope follows the same rules as a batch. A batch is stored in the coroutine context, and a child coroutine starts with
 an empty context unless told to copy its parent's. Audits written in a child
 that does not copy it belong to no batch:
 

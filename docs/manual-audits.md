@@ -75,6 +75,10 @@ all in a queue job or a console command. Pass the user explicitly in those cases
 Auditor::on($account)->as('impersonated')->by($subject)->log();
 ```
 
+To name the causer of every audit written by a piece of work, not one manual
+audit, wrap it in `Auditor::actingAs($user, $callback)`. `by()` with a user
+wins over the scope; see [Resolvers](resolvers.md#the-causer).
+
 ## When nothing is written
 
 `log()` returns `null` when:

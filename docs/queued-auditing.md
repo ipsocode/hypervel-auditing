@@ -120,7 +120,8 @@ and is skipped.
 The job that writes the audit has no request behind it, which is why step 2
 runs the resolvers on the request and stores their results with the model.
 The causer travels the same way, so a queued audit records the user who was
-authenticated on the request. Every bundled resolver returns its stored
+authenticated on the request, or the one named by an open `Auditor::actingAs()`
+scope, `null` included. Every bundled resolver returns its stored
 value in the job; a resolver of your own has to do the same, as
 [Resolvers](resolvers.md) shows, or it records whatever the job sees.
 

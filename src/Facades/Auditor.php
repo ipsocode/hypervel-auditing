@@ -12,6 +12,8 @@ use Hypervel\Support\Facades\Facade;
  * @method static \Ipsocode\Auditing\PendingAudit on(\Ipsocode\Auditing\Contracts\Auditable $model)
  * @method static mixed withinBatch(callable $callback, ?string $batchUuid = null)
  * @method static null|string currentBatch()
+ * @method static mixed actingAs(null|\Hypervel\Contracts\Auth\Authenticatable $user, callable $callback)
+ * @method static null|\Hypervel\Contracts\Auth\Authenticatable currentCauser()
  */
 class Auditor extends Facade
 {
