@@ -146,7 +146,7 @@ The examples above are covered in full in
 | [Resolvers](docs/resolvers.md) | How the causer, `url`, `ip_address` and `user_agent` are filled; custom resolvers |
 | [Audit model](docs/audit-model.md) | Extending or replacing the `Audit` model |
 | [Transitions](docs/transitions.md) | Filling a model with an audit's old or new values |
-| [Testing](docs/testing.md) | Recording audits in tests, the state reset after each test, and asserting on audits |
+| [Testing](docs/testing.md) | Recording audits in tests, the state reset after each test, and asserting on audits with `Auditor::fake()` |
 | [Coroutines](docs/coroutines.md) | The coroutine-safety rules the package follows, and that extensions must follow |
 | [Configuration](docs/configuration.md) | Every `config/auditing.php` key and its default |
 
