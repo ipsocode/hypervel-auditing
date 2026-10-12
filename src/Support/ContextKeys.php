@@ -28,6 +28,11 @@ final class ContextKeys
     public const string BATCH = '__auditing.batch';
 
     /**
+     * The `Auditor::actingAs()` scope open on this coroutine.
+     */
+    public const string CAUSER = '__auditing.causer';
+
+    /**
      * The models currently inside a `restore()` on this coroutine.
      */
     public const string RESTORING = '__auditing.restoring';

@@ -102,6 +102,9 @@ Article::withoutAuditing(fn () => $article->update(['title' => 'Quietly']));
 // Record an event that has no column behind it.
 Auditor::on($article)->as('exported')->with(['format' => 'pdf'])->log();
 
+// Name the causer of every audit written inside the callback.
+Auditor::actingAs($admin, fn () => $article->update(['title' => 'Edited']));
+
 // Stamp every audit written inside the callback with the same batch_uuid.
 Auditor::withinBatch(function () use ($article, $author) {
     $article->save();
@@ -158,6 +161,7 @@ The examples above are covered in full in
 | Driver generator | `make:audit-driver` | None |
 | Retention | Threshold only | Threshold plus `auditing:prune` |
 | Batches | None | `Auditor::withinBatch()`, `batch_uuid` column |
+| Causer scoping | None | `Auditor::actingAs()` (the `Contracts\Auditor` gained methods: a breaking change for custom implementations) |
 | Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()` |
 | `withoutAuditing()` | Static flag | Coroutine-scoped |
 | Table names | Fixed | `auditing.tables.*` |

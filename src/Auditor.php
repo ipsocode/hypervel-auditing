@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing;
 
+use Hypervel\Contracts\Auth\Authenticatable;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Manager;
 use InvalidArgumentException;
@@ -15,6 +16,7 @@ use Ipsocode\Auditing\Events\Audited;
 use Ipsocode\Auditing\Events\Auditing;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Support\AuditBatch;
+use Ipsocode\Auditing\Support\AuditCauser;
 
 class Auditor extends Manager implements Contracts\Auditor
 {
@@ -71,6 +73,23 @@ class Auditor extends Manager implements Contracts\Auditor
     public function currentBatch(): ?string
     {
         return AuditBatch::current();
+    }
+
+    /**
+     * Run a callback with a causer named for every audit it writes, and return
+     * its result.
+     */
+    public function actingAs(?Authenticatable $user, callable $callback): mixed
+    {
+        return AuditCauser::acting($user, $callback);
+    }
+
+    /**
+     * The causer named by the open `actingAs()` scope, if any.
+     */
+    public function currentCauser(): ?Authenticatable
+    {
+        return AuditCauser::current();
     }
 
     /**

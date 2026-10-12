@@ -21,6 +21,7 @@ Everything the package tracks per request is stored in
 |---|---|
 | `withoutAuditing()` scopes, one per model class plus one for `globally: true` | `src/Auditable.php` |
 | The open audit batch | `src/Support/AuditBatch.php` |
+| The open `actingAs()` causer scope | `src/Support/AuditCauser.php` |
 | The models whose restore is in flight | `src/AuditableObserver.php` |
 
 Kept in a static instead, a `withoutAuditing()` scope would switch auditing off
