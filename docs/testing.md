@@ -149,7 +149,59 @@ protected function setUp(): void
 
 ## Asserting on audits
 
-Read the audits back through the model:
+`Auditor::fake()` replaces the auditor with one that records the audits the
+real auditor would write, and asserts on them. Nothing reaches the audit
+tables, and no driver runs:
+
+```php
+use Ipsocode\Auditing\Contracts\Audit;
+use Ipsocode\Auditing\Facades\Auditor;
+
+$fake = Auditor::fake();
+
+$article->update(['title' => 'Revised']);
+
+$fake->assertAudited($article, 'updated');
+$fake->assertAudited(Article::class, 'updated', fn (Audit $audit) => $audit->getModified()['title']['new'] === 'Revised');
+$fake->assertNotAudited($article, 'deleted');
+$fake->assertAuditedCount(1);
+
+$fake->recorded(fn (Audit $audit) => $audit->event === 'updated');   // a Collection
+```
+
+- `assertAudited($model, ?string $event = null, ?callable $callback = null)`
+  takes a model instance, matched with `is()`, or a class name, matching any
+  instance of it. A null event matches any event, and the callback receives
+  each audit that matches so far.
+- `assertNotAudited()` takes the same arguments. `assertNothingAudited()` takes
+  none, and `assertAuditedCount()` takes the number of audits recorded.
+- A failed assertion lists what was recorded, by model, key and event.
+
+Model events, the relationship helpers and manual audits made with
+`Auditor::on()` are all recorded; `log()` returns the recorded audit. The fake
+applies the gates the real auditor applies before it reaches a driver: an
+event that is not audited, `withoutAuditing()` and the empty-value guard record
+nothing. A recorded audit is an unsaved instance of `auditing.implementation`,
+and `getModified()`, `getMetadata()`, the causer and the batch id read back as
+they would from a stored one. `actingAs()`, `withinBatch()`, `currentBatch()`
+and `auditDriver()` still go to the real auditor.
+
+The fake is also bound to `Ipsocode\Auditing\Contracts\Auditor`, so a class
+that injects the contract gets it. Calling `Auditor::fake()` again starts a
+fresh recording. It lasts for the test: the framework rebuilds the application,
+and with it the facade, before the next one.
+
+The fake fires neither `Auditing` nor `Audited`. A listener that vetoes an
+audit is not consulted, so `assertNotAudited()` does not reflect it, and no
+listener is handed an audit that was never saved. With queued auditing on the
+`sync` connection the job records through the fake like any other audit.
+
+Model events still need `auditing.console` on, as in
+[Recording audits in tests](#recording-audits-in-tests): the observer is
+registered when a class boots, and the fake does not change that.
+
+To check what is stored, read the audits back through the model, which runs the
+real driver and so needs the audit tables:
 
 ```php
 $article = Article::factory()->create(['title' => 'Draft title']);
@@ -162,9 +214,9 @@ $this->assertSame(
 );
 ```
 
-To assert on the package's events, fake only those events. `Event::fake()`
-with no arguments fakes the model events as well, so the audit observer never
-runs and nothing is audited:
+To assert on the package's events instead, fake only those events.
+`Event::fake()` with no arguments fakes the model events as well, so the audit
+observer never runs and nothing is audited:
 
 ```php
 use Hypervel\Support\Facades\Event;
