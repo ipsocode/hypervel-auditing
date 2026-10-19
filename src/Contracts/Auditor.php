@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Contracts;
 
+use Hypervel\Contracts\Auth\Authenticatable;
+
 interface Auditor
 {
     public function auditDriver(Auditable $model): AuditDriver;
@@ -28,4 +30,15 @@ interface Auditor
      * The batch open on this coroutine, if any.
      */
     public function currentBatch(): ?string;
+
+    /**
+     * Run a callback with a causer named for every audit it writes, and return
+     * its result. A null user records no causer.
+     */
+    public function actingAs(?Authenticatable $user, callable $callback): mixed;
+
+    /**
+     * The causer named by the open `actingAs()` scope, if any.
+     */
+    public function currentCauser(): ?Authenticatable;
 }

@@ -48,7 +48,7 @@ reaches the queue.
 ### Child coroutines
 
 A child coroutine starts with an empty context unless it is told to copy its
-parent's. Work fanned out from inside the callback is audited as usual unless
+parent's; an `Auditor::actingAs()` causer scope behaves the same way. Work fanned out from inside the callback is audited as usual unless
 the child copies the context:
 
 | Started with | Inherits the scope |

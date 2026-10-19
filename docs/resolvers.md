@@ -52,9 +52,24 @@ and `user_type`, so a custom user resolver should return an Eloquent model.
 The column names follow `auditing.user.morph_prefix`. `$audit->user` loads the
 causer back.
 
-A manual audit can name its causer instead: `Auditor::on($model)->by($user)`
-records `$user` and skips the user resolver for that audit (see
-[Manual audits](manual-audits.md)).
+The causer can be named instead of resolved. Precedence, first match wins:
+
+1. `Auditor::on($model)->by($user)` with a user (see [Manual audits](manual-audits.md)).
+2. The innermost open `Auditor::actingAs($user, $callback)` scope. Every audit
+   written on the current coroutine inside the callback names `$user`, whatever
+   the audit's source: model events, relationship helpers and manual audits.
+   `actingAs(null, ...)` records no causer, even on an authenticated request.
+3. The user resolver.
+
+```php
+Auditor::actingAs($user, fn () => $order->update(['status' => 'refunded']));
+
+Auditor::currentCauser(); // the open scope's user, or null
+```
+
+Scopes nest: an inner scope replaces the causer for its callback, and the
+outer one is back when the inner callback returns or throws. `actingAs()`
+returns what the callback returns.
 
 ## Adding a resolver
 

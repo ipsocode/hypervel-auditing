@@ -34,7 +34,7 @@ class TestState
     {
         Audit::$auditingGloballyDisabled = false;
 
-        $keys = [ContextKeys::DISABLED_GLOBALLY, ContextKeys::RESTORING, ContextKeys::BATCH];
+        $keys = [ContextKeys::DISABLED_GLOBALLY, ContextKeys::RESTORING, ContextKeys::BATCH, ContextKeys::CAUSER];
 
         foreach (static::auditableClasses() as $class) {
             $class::$auditingDisabled = false;

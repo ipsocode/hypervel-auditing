@@ -107,14 +107,22 @@ class AuditableObserver
         $model->preloadResolverData();
 
         if (! $this->fireDispatchingAuditEvent($model)) {
+            $model->preloadedResolverData = [];
+
             return;
         }
 
         // unsetRelations(): withoutRelations() returns a cleared clone and leaves this model untouched.
         $model->unsetRelations();
 
-        // DispatchAudit captures the payload, batch included, in its constructor.
-        app()->make('events')->dispatch(new DispatchAudit($model));
+        try {
+            // DispatchAudit captures the payload, batch included, in its constructor.
+            app()->make('events')->dispatch(new DispatchAudit($model));
+        } finally {
+            // The payload carries the resolved data now. Left on the live model,
+            // it would outrank an actingAs() scope for a later inline audit.
+            $model->preloadedResolverData = [];
+        }
     }
 
     protected function fireDispatchingAuditEvent(Auditable $model): bool
