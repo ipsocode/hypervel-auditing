@@ -47,11 +47,7 @@ lists the rest.
 
 ## Installation
 
-The package is not on Packagist, so add this repository to your application's
-Composer repositories first:
-
 ```sh
-composer config repositories.hypervel-auditing vcs https://github.com/ipsocode/hypervel-auditing
 composer require ipsocode/hypervel-auditing
 php artisan auditing:install
 php artisan migrate
@@ -60,9 +56,9 @@ php artisan migrate
 Hypervel 0.4 is only available as a dev branch, so your application's
 `composer.json` must already allow it: `"minimum-stability": "dev"` together
 with `"prefer-stable": true`. Tags are not re-tested as `0.4.x-dev` moves on,
-and neither is `main` between changes: each change is tested against the
-`0.4.x-dev` of its day before it merges. To pick up changes as they land,
-require `ipsocode/hypervel-auditing:dev-main` instead. Each release's notes,
+but `main` is, every night: when a change upstream breaks it, an issue titled
+"Nightly components check failed" stays open until it passes again. To pick up
+changes as they land, require `ipsocode/hypervel-auditing:dev-main` instead. Each release's notes,
 breaking changes first, are on the
 [Releases](https://github.com/ipsocode/hypervel-auditing/releases) page.
 
