@@ -34,4 +34,29 @@ class UserResolverTest extends TestCase
         $this->assertNull($audit->user_id);
         $this->assertNull($audit->user_type);
     }
+
+    public function testAGuardThatThrowsIsSkippedForTheNextOne(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $this->app->get('config')->set('auditing.user.guards', [
+            'not-a-configured-guard',
+            $this->app->get('config')->get('auth.defaults.guard'),
+        ]);
+
+        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+
+        $this->assertSame($user->getKey(), $audit->user_id);
+    }
+
+    public function testNoUserIsRecordedWhenEveryConfiguredGuardThrows(): void
+    {
+        $this->app->get('config')->set('auditing.user.guards', ['not-a-configured-guard']);
+
+        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+
+        $this->assertNull($audit->user_id);
+    }
 }
