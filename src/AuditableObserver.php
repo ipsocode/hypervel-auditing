@@ -29,16 +29,25 @@ class AuditableObserver
         'restored',
     ];
 
+    /**
+     * @return void
+     */
     public function retrieved(Auditable $model)
     {
         $this->dispatchAudit($model->setAuditEvent('retrieved'));
     }
 
+    /**
+     * @return void
+     */
     public function created(Auditable $model)
     {
         $this->dispatchAudit($model->setAuditEvent('created'));
     }
 
+    /**
+     * @return void
+     */
     public function updated(Auditable $model)
     {
         // Read without creating the map: restores are rare, and this runs on every update.
@@ -51,11 +60,17 @@ class AuditableObserver
         $this->dispatchAudit($model->setAuditEvent('updated'));
     }
 
+    /**
+     * @return void
+     */
     public function deleted(Auditable $model)
     {
         $this->dispatchAudit($model->setAuditEvent('deleted'));
     }
 
+    /**
+     * @return void
+     */
     public function restoring(Auditable $model)
     {
         // A restore also fires `updated`: mark the model so updated() skips it
@@ -63,6 +78,9 @@ class AuditableObserver
         $this->restoringModels()[$model] = true;
     }
 
+    /**
+     * @return void
+     */
     public function restored(Auditable $model)
     {
         try {

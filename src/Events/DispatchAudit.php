@@ -120,6 +120,7 @@ class DispatchAudit
 
     /**
      * @param ReflectionClass<object> $reflection
+     * @return mixed
      */
     protected function getModelPropertyValue(ReflectionClass $reflection, string $name)
     {

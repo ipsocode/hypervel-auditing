@@ -8,6 +8,9 @@ use Ipsocode\Auditing\Contracts\AttributeRedactor;
 
 class RightRedactor implements AttributeRedactor
 {
+    /**
+     * @param  mixed  $value
+     */
     public static function redact($value): string
     {
         // Raw values may be ints, floats or bools; strlen() takes a string.

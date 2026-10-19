@@ -1,0 +1,85 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method Ipsocode\\Auditing\\Console\\PruneCommand\:\:prune\(\) has parameter \$query with generic class Hypervel\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Console/PruneCommand.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Console\\PruneCommand\:\:query\(\) return type with generic class Hypervel\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Console/PruneCommand.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Contracts\\Audit\:\:auditable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Contracts/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Contracts\\Audit\:\:getDataValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Contracts/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Contracts\\Audit\:\:user\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Contracts/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:auditable\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:castDatetimeUTC\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:decodeAttributeValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:decodeAttributeValue\(\) has parameter \$value with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:details\(\) return type with generic class Hypervel\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:getDataValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:getFormattedValue\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\Audit\:\:user\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/Models/Audit.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\Models\\AuditDetail\:\:audit\(\) return type with generic class Hypervel\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Models/AuditDetail.php
