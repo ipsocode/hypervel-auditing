@@ -9,7 +9,7 @@ use Ipsocode\Auditing\Contracts\AttributeRedactor;
 class LeftRedactor implements AttributeRedactor
 {
     /**
-     * @param  mixed  $value
+     * @param mixed $value
      */
     public static function redact($value): string
     {

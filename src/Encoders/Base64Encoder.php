@@ -9,8 +9,8 @@ use Ipsocode\Auditing\Contracts\AttributeEncoder;
 class Base64Encoder implements AttributeEncoder
 {
     /**
-     * @param  mixed  $value
-     * @return string|null
+     * @param mixed $value
+     * @return null|string
      */
     public static function encode($value)
     {
@@ -23,8 +23,8 @@ class Base64Encoder implements AttributeEncoder
     }
 
     /**
-     * @param  mixed  $value
-     * @return string|false|null
+     * @param mixed $value
+     * @return null|false|string
      */
     public static function decode($value)
     {

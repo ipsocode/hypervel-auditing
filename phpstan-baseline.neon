@@ -1,6 +1,42 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:created\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:deleted\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:restored\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:restoring\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:retrieved\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
+			message: '#^Method Ipsocode\\Auditing\\AuditableObserver\:\:updated\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: src/AuditableObserver.php
+
+		-
 			message: '#^Method Ipsocode\\Auditing\\Console\\PruneCommand\:\:prune\(\) has parameter \$query with generic class Hypervel\\Database\\Eloquent\\Builder but does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			count: 1
