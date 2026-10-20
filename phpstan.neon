@@ -53,7 +53,7 @@ parameters:
         # $auditBatchUuid, $preloadedResolverData — is set dynamically on the model by the
         # Auditable trait. The contract declares behaviour, not storage, so PHPStan sees an
         # interface with no properties. Keep these covered by tests: it cannot tell a real
-        # field from a typo here.
+        # field from a typo here. The audit-state names live in Support\AuditState::PROPERTIES.
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Contracts\\Auditable::\$\w+\.$#'
 

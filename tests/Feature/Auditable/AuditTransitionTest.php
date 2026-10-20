@@ -7,6 +7,7 @@ namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
+use Workbench\App\Models\HashedArticle;
 use Workbench\App\Models\IncludeArticle;
 use Workbench\App\Models\RedactedArticle;
 
@@ -66,6 +67,21 @@ class AuditTransitionTest extends TestCase
     public function testTransitionRejectsModelsWithARedactor(): void
     {
         $article = RedactedArticle::create([
+            'title' => 'Title',
+            'content' => 'Body',
+            'reviewed' => false,
+        ]);
+
+        $audit = $article->audits()->where('event', 'created')->sole();
+
+        $this->expectException(AuditableTransitionException::class);
+
+        $article->transitionTo($audit);
+    }
+
+    public function testTransitionRejectsModelsWithAHashRedactor(): void
+    {
+        $article = HashedArticle::create([
             'title' => 'Title',
             'content' => 'Body',
             'reviewed' => false,

@@ -78,6 +78,14 @@ A model with any redactor registered cannot be
 [transitioned](transitions.md): `transitionTo()` throws, whichever attributes
 the audit holds.
 
+`HashRedactor` stores `hash_hmac('sha256', $value, <app.key>)`: 64 hex
+characters, the same for equal values, so a change back to an earlier value is
+visible as the earlier hash. A key stored as `base64:...` is used as its decoded
+bytes, the way the encrypter reads it. An empty `app.key` throws an
+`AuditingException` rather than hashing with an empty key. Rotating the key
+changes every hash, so hashes written before and after do not compare. The
+value is cast to a string first, so it suits string attributes only.
+
 ### A custom redactor
 
 ```php
@@ -131,36 +139,18 @@ manual-audit property that shares its name with an encoded attribute is
 therefore passed through `decode()` on the way out, so give such properties a
 different name.
 
+`EncryptedEncoder` encrypts the value's string representation with the
+application key (`Crypt::encryptString()`), so the `audit_details` row holds
+ciphertext and `getModified()` returns the plain value. Ciphertext differs on
+every write, so an encrypted value cannot be matched in a query. Its `decode()`
+returns the value as stored when it cannot decrypt it: after the key is rotated,
+earlier values read back as stored, as do values that were never encrypted.
+
 ### A custom encoder
 
-An encoder that encrypts the value with the application key:
-
-```php
-use Hypervel\Contracts\Encryption\DecryptException;
-use Hypervel\Support\Facades\Crypt;
-use Ipsocode\Auditing\Contracts\AttributeEncoder;
-
-class EncryptedEncoder implements AttributeEncoder
-{
-    public static function encode($value)
-    {
-        return Crypt::encryptString((string) $value);
-    }
-
-    public static function decode($value)
-    {
-        try {
-            return Crypt::decryptString((string) $value);
-        } catch (DecryptException) {
-            // Written under another key, or not encrypted: show it as stored.
-            return $value;
-        }
-    }
-}
-```
-
-`decode()` runs every time an audit is read, so make it tolerate a value it
-cannot decode rather than throw.
+An encoder implements the two static methods above and nothing else. It should
+tolerate a value it cannot decode, because `decode()` runs every time an audit
+is read, and it should not keep state of its own.
 
 ## Writing a modifier safely
 

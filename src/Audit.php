@@ -107,10 +107,8 @@ trait Audit
 
     /**
      * Present a stored value the way the model would: mutators, casts and dates.
-     *
-     * @param mixed $value
      */
-    protected function getFormattedValue(Model $model, string $key, $value): mixed
+    protected function getFormattedValue(Model $model, string $key, mixed $value): mixed
     {
         // Casts and accessors read the model's attributes rather than only the
         // value they are handed, and cache what they return, which save() merges
@@ -146,11 +144,7 @@ trait Audit
         return $value;
     }
 
-    /**
-     * @param Model $model
-     * @param mixed $value
-     */
-    private function castDatetimeUTC($model, $value): mixed
+    private function castDatetimeUTC(Model $model, mixed $value): mixed
     {
         if (! is_string($value)) {
             return $value;
@@ -222,7 +216,7 @@ trait Audit
         return $value;
     }
 
-    public function getMetadata(bool $json = false, int $options = 0, int $depth = 512)
+    public function getMetadata(bool $json = false, int $options = 0, int $depth = 512): array|string
     {
         if (empty($this->data)) {
             $this->resolveData();
@@ -246,7 +240,7 @@ trait Audit
         return json_encode($metadata, $options, $depth) ?: '{}';
     }
 
-    public function getModified(bool $json = false, int $options = 0, int $depth = 512)
+    public function getModified(bool $json = false, int $options = 0, int $depth = 512): array|string
     {
         if (empty($this->data)) {
             $this->resolveData();
