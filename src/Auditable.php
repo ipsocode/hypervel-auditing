@@ -18,6 +18,7 @@ use Ipsocode\Auditing\Contracts\AttributeRedactor;
 use Ipsocode\Auditing\Contracts\Resolver;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
@@ -124,7 +125,7 @@ trait Auditable
      * This record's audits that recorded the field, oldest first, with their
      * details loaded. Returns the builder, so it can be narrowed further.
      *
-     * @return MorphMany<\Ipsocode\Auditing\Models\Audit, $this>
+     * @return MorphMany<AuditModel, $this>
      */
     public function auditHistory(string $field): MorphMany
     {
