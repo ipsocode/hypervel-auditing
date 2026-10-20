@@ -102,6 +102,9 @@ Auditor::on($article)->as('exported')->with(['format' => 'pdf'])->log();
 // Name the causer of every audit written inside the callback.
 Auditor::actingAs($admin, fn () => $article->update(['title' => 'Edited']));
 
+// Audits a user caused (add the CausesAudits trait to the user model).
+$admin->causedAudits()->latest()->get();
+
 // Stamp every audit written inside the callback with the same batch_uuid.
 Auditor::withinBatch(function () use ($article, $author) {
     $article->save();
