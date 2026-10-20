@@ -6,14 +6,13 @@ you already have, and publishing the config file and migrations.
 ## Install the package
 
 ```sh
-composer config repositories.hypervel-auditing vcs https://github.com/ipsocode/hypervel-auditing
 composer require ipsocode/hypervel-auditing
 php artisan auditing:install
 php artisan migrate
 ```
 
-The package is installed from its Git repository and builds on development
-releases of Hypervel 0.4, so your application's `composer.json` needs the
+The package is installed from Packagist and builds on development releases of
+Hypervel 0.4, so your application's `composer.json` needs the
 stability settings described in the [README](../README.md#installation).
 
 There is nothing to register by hand. Hypervel reads `extra.hypervel` from the
