@@ -19,10 +19,10 @@ trait CausesAudits
      */
     public function causedAudits(): MorphMany
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         return $this->morphMany(
-            Config::get('auditing.implementation', AuditModel::class),
+            Config::get('auditing.implementation'),
             $morphPrefix,
             $morphPrefix . '_type',
             $morphPrefix . '_id'

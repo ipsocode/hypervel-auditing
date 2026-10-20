@@ -42,7 +42,7 @@ trait Audit
      */
     public function user(): MorphTo
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         return $this->morphTo(__FUNCTION__, $morphPrefix . '_type', $morphPrefix . '_id');
     }
@@ -80,7 +80,7 @@ trait Audit
     #[Scope]
     protected function byUser(Builder $query, (Authenticatable&Model)|null $user): void
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         if ($user === null) {
             $query->whereNull($morphPrefix . '_type')->whereNull($morphPrefix . '_id');
@@ -115,7 +115,7 @@ trait Audit
 
     public function resolveData(): array
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         $this->data = [
             'audit_id' => $this->getKey(),

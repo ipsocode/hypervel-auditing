@@ -16,7 +16,7 @@ class UserResolver implements Resolver
      */
     public static function resolve()
     {
-        $guards = Config::get('auditing.user.guards', ['web', 'sanctum']);
+        $guards = Config::get('auditing.user.guards');
 
         foreach ($guards as $guard) {
             try {

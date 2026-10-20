@@ -94,7 +94,7 @@ class AuditableObserver
             return;
         }
 
-        if (! Config::get('auditing.queue.enable', false)) {
+        if (! Config::get('auditing.queue.enable')) {
             Auditor::execute($model);
 
             return;

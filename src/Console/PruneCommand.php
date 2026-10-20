@@ -10,7 +10,6 @@ use Hypervel\Database\Eloquent\Relations\Relation;
 use Hypervel\Support\Carbon;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\Audit;
-use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditTables;
 
 /**
@@ -113,7 +112,7 @@ class PruneCommand extends Command
 
     private function audit(): Audit
     {
-        $class = Config::get('auditing.implementation', AuditModel::class);
+        $class = Config::get('auditing.implementation');
 
         return new $class;
     }

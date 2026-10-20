@@ -116,7 +116,7 @@ trait Auditable
     public function audits(): MorphMany
     {
         return $this->morphMany(
-            Config::get('auditing.implementation', Models\Audit::class),
+            Config::get('auditing.implementation'),
             'auditable'
         );
     }
@@ -336,7 +336,7 @@ trait Auditable
             }
         }
 
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         $tags = implode(',', $this->generateTags());
 
