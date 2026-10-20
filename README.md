@@ -162,6 +162,7 @@ The examples above are covered in full in
 | Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()` |
 | `withoutAuditing()` | Static flag | Coroutine-scoped |
 | Table names | Fixed | `auditing.tables.*` |
+| Sensitive attributes | `Base64Encoder`, `LeftRedactor`, `RightRedactor` | Also `EncryptedEncoder` and `HashRedactor` |
 
 ## Contributing
 
