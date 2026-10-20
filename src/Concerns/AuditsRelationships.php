@@ -21,10 +21,10 @@ use Throwable;
  * record the change as one custom audit. Applications use only Auditable,
  * which uses this trait.
  */
-// @phpstan-ignore trait.unused (used by Auditable, which applications use on their own models)
 trait AuditsRelationships
 {
     /**
+     * @param array<array-key, mixed> $attributes
      * @param array<int, string> $columns
      *
      * @throws AuditingException
@@ -66,6 +66,7 @@ trait AuditsRelationships
         $pivotClass = $relationCall->getPivotClass();
 
         if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
+            // @phpstan-ignore staticMethod.notFound (is_a() above confirms an Auditable pivot, which has withoutAuditing() through its trait)
             $results = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $touch) {
                 return $relationCall->detach($ids, $touch);
             });
@@ -81,8 +82,9 @@ trait AuditsRelationships
     }
 
     /**
+     * @param null|array<array-key, mixed>|Collection<array-key, mixed>|int|Model|string $ids
      * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
+     * @return array{attached: array<array-key, mixed>, detached: array<array-key, mixed>, updated: array<array-key, mixed>}
      *
      * @throws AuditingException
      */
@@ -101,6 +103,7 @@ trait AuditsRelationships
         $pivotClass = $relationCall->getPivotClass();
 
         if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
+            // @phpstan-ignore staticMethod.notFound (is_a() above confirms an Auditable pivot, which has withoutAuditing() through its trait)
             $changes = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $detaching) {
                 return $relationCall->sync($ids, $detaching);
             });
@@ -108,6 +111,7 @@ trait AuditsRelationships
             $changes = $relationCall->sync($ids, $detaching);
         }
 
+        /** @var array{attached: array<array-key, mixed>, detached: array<array-key, mixed>, updated: array<array-key, mixed>} $changes */
         if (collect($changes)->flatten()->isEmpty()) {
             $old = $new = collect([]);
         } else {
@@ -120,8 +124,9 @@ trait AuditsRelationships
     }
 
     /**
+     * @param null|array<array-key, mixed>|Collection<array-key, mixed>|int|Model|string $ids
      * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
+     * @return array{attached: array<array-key, mixed>, detached: array<array-key, mixed>, updated: array<array-key, mixed>}
      *
      * @throws AuditingException
      */
@@ -133,8 +138,10 @@ trait AuditsRelationships
     }
 
     /**
+     * @param null|array<array-key, mixed>|Collection<array-key, mixed>|int|Model|string $ids
+     * @param array<array-key, mixed> $values
      * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
+     * @return array{attached: array<array-key, mixed>, detached: array<array-key, mixed>, updated: array<array-key, mixed>}
      */
     public function auditSyncWithPivotValues(string $relationName, Collection|Model|array|int|string|null $ids, array $values, bool $detaching = true, array $columns = ['*'], ?Closure $callback = null): array
     {
@@ -153,6 +160,10 @@ trait AuditsRelationships
         }), $detaching, $columns, $callback);
     }
 
+    /**
+     * @param Collection<array-key, mixed> $old
+     * @param Collection<array-key, mixed> $new
+     */
     private function dispatchRelationAuditEvent(string $relationName, string $event, Collection $old, Collection $new): void
     {
         $this->auditCustomOld[$relationName] = $old->diff($new)->toArray();
@@ -186,6 +197,9 @@ trait AuditsRelationships
         }
     }
 
+    /**
+     * @param BelongsToMany<*, *, *, *> $relation
+     */
     private function applyClosureToRelationship(BelongsToMany $relation, Closure $closure): void
     {
         try {
