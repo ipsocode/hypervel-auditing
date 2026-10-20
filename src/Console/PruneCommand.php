@@ -65,6 +65,8 @@ class PruneCommand extends Command
      * The audits eligible for deletion, queried through `auditing.implementation`
      * so the connection, table and any custom overrides match where audits are
      * written.
+     *
+     * @return Builder<*>
      */
     private function query(Carbon $cutoff): Builder
     {
@@ -85,6 +87,8 @@ class PruneCommand extends Command
     /**
      * Delete the matched audits a chunk at a time: a first sweep can match
      * millions of rows, and one delete over all of them holds locks throughout.
+     *
+     * @param Builder<*> $query
      */
     private function prune(Builder $query, int $chunk): int
     {

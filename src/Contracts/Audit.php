@@ -17,12 +17,12 @@ interface Audit
     public function getTable(): string;
 
     /**
-     * @return MorphTo<Model, Model>
+     * @return MorphTo<Model, *>
      */
     public function auditable(): MorphTo;
 
     /**
-     * @return MorphTo<Model, Model>
+     * @return MorphTo<Model, *>
      */
     public function user(): MorphTo;
 
