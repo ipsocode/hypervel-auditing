@@ -137,6 +137,26 @@ class RelationshipAuditHelpersTest extends TestCase
         );
     }
 
+    public function testAThrowingClosureKeepsTheOriginalException(): void
+    {
+        $original = new RuntimeException('boom');
+
+        try {
+            $this->article->auditAttach(
+                'categories',
+                $this->categories['php']->getKey(),
+                [],
+                true,
+                ['*'],
+                fn () => throw $original
+            );
+            $this->fail('Expected an AuditingException.');
+        } catch (AuditingException $exception) {
+            $this->assertSame($original, $exception->getPrevious());
+            $this->assertStringContainsString('boom', $exception->getMessage());
+        }
+    }
+
     public function testAuditDetachReportsHowManyRowsItRemoved(): void
     {
         $this->article->categories()->attach([

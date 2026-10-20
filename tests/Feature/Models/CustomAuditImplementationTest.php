@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Models;
 
 use Hypervel\Support\Facades\Config;
+use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\AuditLog;
@@ -52,6 +53,24 @@ class CustomAuditImplementationTest extends TestCase
             $this->assertSame($audit->getKey(), $detail->audit_id);
             $this->assertSame($audit->getKey(), $detail->audit->getKey());
         }
+    }
+
+    public function testTheDetailsInverseRelationReturnsTheCustomImplementation(): void
+    {
+        $audit = $this->article()->audits()->sole();
+        $detail = $audit->details()->firstOrFail();
+
+        $this->assertInstanceOf(AuditLog::class, $detail->audit);
+        $this->assertSame($audit->getKey(), $detail->audit->getKey());
+    }
+
+    public function testTheDetailsInverseRelationDefaultsToTheBundledAudit(): void
+    {
+        Config::set('auditing.implementation', Audit::class);
+
+        $detail = $this->article()->audits()->sole()->details()->firstOrFail();
+
+        $this->assertInstanceOf(Audit::class, $detail->audit);
     }
 
     public function testPruningWorksThroughTheCustomImplementation(): void

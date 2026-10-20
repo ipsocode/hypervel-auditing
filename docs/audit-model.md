@@ -102,13 +102,9 @@ requirements: the `details()` relation is the bundled driver's.
 
 ## What stays on `Models\Audit`
 
-Two things refer to `Models\Audit` whatever the implementation is:
-
-- `Models\Audit::$auditingGloballyDisabled`, the worker-wide switch that turns
-  off auditing for every model, is read from `Models\Audit` itself; see
-  [Disabling auditing](disabling-auditing.md).
-- `AuditDetail::audit()`, the inverse of `details()`, returns a
-  `Models\Audit` for the same row, not an instance of your class.
+`Models\Audit::$auditingGloballyDisabled`, the worker-wide switch that turns
+off auditing for every model, is read from `Models\Audit` itself whatever the
+implementation is; see [Disabling auditing](disabling-auditing.md).
 
 ## Related
 
