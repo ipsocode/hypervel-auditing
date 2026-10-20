@@ -72,12 +72,13 @@ trait Audit
     }
 
     /**
-     * Audits caused by the given user, or by nobody when null.
+     * Audits caused by the given user, or by nobody when null. The user is an
+     * Eloquent model, as on the write side, which stores its morph class.
      *
      * @param Builder<static> $query
      */
     #[Scope]
-    protected function byUser(Builder $query, ?Authenticatable $user): void
+    protected function byUser(Builder $query, (Authenticatable&Model)|null $user): void
     {
         $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
 
@@ -87,7 +88,7 @@ trait Audit
             return;
         }
 
-        $query->where($morphPrefix . '_type', $user instanceof Model ? $user->getMorphClass() : $user::class)
+        $query->where($morphPrefix . '_type', $user->getMorphClass())
             ->where($morphPrefix . '_id', $user->getAuthIdentifier());
     }
 

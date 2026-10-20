@@ -36,7 +36,7 @@ every class in `auditing.implementation`:
 |---|---|
 | `forField($field)` | Audits that recorded the field; takes a string or an array of fields |
 | `forEvent($event)` | Audits of the event; takes a string or an array of events |
-| `byUser($user)` | Audits caused by the user, matched on `user_type` and `user_id` (named after `auditing.user.morph_prefix`); `byUser(null)` matches audits with no causer |
+| `byUser($user)` | Audits caused by the user model, matched on `user_type` and `user_id` (named after `auditing.user.morph_prefix`); `byUser(null)` matches audits with no causer |
 | `inBatch($uuid)` | Audits whose `batch_uuid` is the id |
 
 ```php
