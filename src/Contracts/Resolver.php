@@ -6,5 +6,5 @@ namespace Ipsocode\Auditing\Contracts;
 
 interface Resolver
 {
-    public static function resolve(Auditable $auditable);
+    public static function resolve(Auditable $auditable): mixed;
 }

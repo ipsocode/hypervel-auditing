@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing;
 
 use DateTimeInterface;
 use Hypervel\Database\Eloquent\Model;
+use Hypervel\Database\Eloquent\Relations\MorphTo;
 use Hypervel\Support\Carbon;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Date;
@@ -25,12 +26,18 @@ trait Audit
     /** @var array<int,string> the keys of the resolved data that hold modified values */
     protected $modified = [];
 
-    public function auditable()
+    /**
+     * @return MorphTo<Model, $this>
+     */
+    public function auditable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function user()
+    /**
+     * @return MorphTo<Model, $this>
+     */
+    public function user(): MorphTo
     {
         $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
 
@@ -103,7 +110,7 @@ trait Audit
      *
      * @param mixed $value
      */
-    protected function getFormattedValue(Model $model, string $key, $value)
+    protected function getFormattedValue(Model $model, string $key, $value): mixed
     {
         // Casts and accessors read the model's attributes rather than only the
         // value they are handed, and cache what they return, which save() merges
@@ -143,7 +150,7 @@ trait Audit
      * @param Model $model
      * @param mixed $value
      */
-    private function castDatetimeUTC($model, $value)
+    private function castDatetimeUTC($model, $value): mixed
     {
         if (! is_string($value)) {
             return $value;
@@ -168,10 +175,10 @@ trait Audit
         }
     }
 
-    public function getDataValue(string $key)
+    public function getDataValue(string $key): mixed
     {
         if (! array_key_exists($key, $this->data)) {
-            return;
+            return null;
         }
 
         $value = $this->data[$key];
@@ -193,7 +200,7 @@ trait Audit
         return $value;
     }
 
-    protected function decodeAttributeValue(Contracts\Auditable $auditable, string $attribute, $value)
+    protected function decodeAttributeValue(Contracts\Auditable $auditable, string $attribute, mixed $value): mixed
     {
         // Null passes through: modifyAttributeValue() never encodes it, so there is nothing to decode.
         if ($value === null) {

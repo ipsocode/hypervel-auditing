@@ -6,7 +6,7 @@ namespace Ipsocode\Auditing\Contracts;
 
 interface AttributeEncoder extends AttributeModifier
 {
-    public static function encode($value);
+    public static function encode(mixed $value): ?string;
 
-    public static function decode($value);
+    public static function decode(mixed $value): mixed;
 }

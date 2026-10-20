@@ -8,7 +8,7 @@ use Ipsocode\Auditing\Contracts\AttributeRedactor;
 
 class LeftRedactor implements AttributeRedactor
 {
-    public static function redact($value): string
+    public static function redact(mixed $value): string
     {
         // Raw values may be ints, floats or bools; strlen() takes a string.
         $value = (string) $value;

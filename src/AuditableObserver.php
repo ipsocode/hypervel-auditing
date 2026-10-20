@@ -29,17 +29,17 @@ class AuditableObserver
         'restored',
     ];
 
-    public function retrieved(Auditable $model)
+    public function retrieved(Auditable $model): void
     {
         $this->dispatchAudit($model->setAuditEvent('retrieved'));
     }
 
-    public function created(Auditable $model)
+    public function created(Auditable $model): void
     {
         $this->dispatchAudit($model->setAuditEvent('created'));
     }
 
-    public function updated(Auditable $model)
+    public function updated(Auditable $model): void
     {
         // Read without creating the map: restores are rare, and this runs on every update.
         $restoring = CoroutineContext::get(ContextKeys::RESTORING);
@@ -51,19 +51,19 @@ class AuditableObserver
         $this->dispatchAudit($model->setAuditEvent('updated'));
     }
 
-    public function deleted(Auditable $model)
+    public function deleted(Auditable $model): void
     {
         $this->dispatchAudit($model->setAuditEvent('deleted'));
     }
 
-    public function restoring(Auditable $model)
+    public function restoring(Auditable $model): void
     {
         // A restore also fires `updated`: mark the model so updated() skips it
         // and the restore is recorded once, with the right values.
         $this->restoringModels()[$model] = true;
     }
 
-    public function restored(Auditable $model)
+    public function restored(Auditable $model): void
     {
         try {
             $this->dispatchAudit($model->setAuditEvent('restored'));
