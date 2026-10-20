@@ -8,6 +8,7 @@ use Hypervel\Support\ClassMetadataCache;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Support\AuditBatch;
+use Ipsocode\Auditing\Support\AuditState;
 use ReflectionClass;
 use ReflectionException;
 
@@ -79,14 +80,8 @@ class DispatchAudit
             'attributes',
             'original',
             'excludedAttributes',
-            'auditEvent',
             'auditExclude',
-            'auditCustomOld',
-            'auditCustomNew',
-            'isCustomEvent',
-            'preloadedResolverData',
-            'auditBatchUuid',
-        ], $this->model->auditEventSerializedProperties ?? []);
+        ], AuditState::PROPERTIES, $this->model->auditEventSerializedProperties ?? []);
 
         $reflection = ClassMetadataCache::reflectClass($this->model);
 

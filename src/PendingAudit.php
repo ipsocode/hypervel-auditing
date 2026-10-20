@@ -9,6 +9,7 @@ use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\Auditor;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditState;
 
 /**
  * A manual audit, built up and then written.
@@ -107,17 +108,14 @@ class PendingAudit
 
         $model = $this->model;
 
-        // The custom-audit state is six properties on the caller's model, which
-        // may be mid-save: snapshot and restore them so logging never disturbs
-        // an audit in flight.
-        $restore = [
-            'auditEvent' => $model->auditEvent,
-            'auditCustomOld' => $model->auditCustomOld,
-            'auditCustomNew' => $model->auditCustomNew,
-            'isCustomEvent' => $model->isCustomEvent,
-            'preloadedResolverData' => $model->preloadedResolverData,
-            'auditBatchUuid' => $model->auditBatchUuid,
-        ];
+        // The custom-audit state lives on the caller's model, which may be
+        // mid-save: snapshot and restore it so logging never disturbs an audit
+        // in flight.
+        $restore = [];
+
+        foreach (AuditState::PROPERTIES as $property) {
+            $restore[$property] = $model->{$property};
+        }
 
         $model->auditEvent = $event;
         $model->auditCustomOld = $this->old;
