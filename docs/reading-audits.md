@@ -55,6 +55,21 @@ returns the builder, so you can narrow it further (`->byUser($user)`), with
 `details` eager-loaded. Audits written in the same second are in insertion
 order.
 
+### Audits a user caused
+
+Add `Ipsocode\Auditing\CausesAudits` to the user model for the other direction
+of an audit's `user` relation:
+
+```php
+$user->causedAudits()->latest()->get();
+```
+
+`causedAudits()` is a morph-many relation on the class in `auditing.implementation`,
+matched on the `user_type`/`user_id` columns (named after
+`auditing.user.morph_prefix`). It is not called `audits()`, so a user model that
+is itself `Auditable` keeps both: `audits()` are the changes made to the user,
+`causedAudits()` the changes the user made.
+
 To find audits by anything else, query the audit model directly. See
 [Schema](schema.md#querying) for queries on fields and values, and
 [Batches](batches.md) for `batch_uuid`.
