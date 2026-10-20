@@ -57,6 +57,9 @@ class Audit extends Model implements AuditContract
     /**
      * One row per audited field.
      */
+    /**
+     * @return HasMany<AuditDetail, $this>
+     */
     public function details(): HasMany
     {
         // Explicit key: the default derives from the class name, so a subclass

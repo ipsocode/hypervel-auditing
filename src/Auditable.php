@@ -847,7 +847,10 @@ trait Auditable
         try {
             $closure($relation);
         } catch (Throwable $exception) {
-            throw new AuditingException("Invalid Closure for {$relation->getRelationName()} Relationship");
+            throw new AuditingException(
+                "Invalid Closure for {$relation->getRelationName()} Relationship: {$exception->getMessage()}",
+                previous: $exception
+            );
         }
     }
 }

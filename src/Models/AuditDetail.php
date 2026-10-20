@@ -7,6 +7,7 @@ namespace Ipsocode\Auditing\Models;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\BelongsTo;
 use Hypervel\Support\Facades\Config;
+use Ipsocode\Auditing\Contracts\Audit as AuditContract;
 
 /**
  * @property int $id
@@ -39,8 +40,14 @@ class AuditDetail extends Model
         return \Ipsocode\Auditing\Support\AuditTables::auditDetails();
     }
 
+    /**
+     * @return BelongsTo<AuditContract&Model, $this>
+     */
     public function audit(): BelongsTo
     {
-        return $this->belongsTo(Audit::class, 'audit_id');
+        /** @var class-string<AuditContract&Model> $class */
+        $class = Config::get('auditing.implementation', Audit::class);
+
+        return $this->belongsTo($class, 'audit_id');
     }
 }
