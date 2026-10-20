@@ -79,7 +79,8 @@ $article->auditDetach(
 
 Only a `Closure` is applied; any other value is ignored. A closure that throws
 is reported as an `AuditingException` ("Invalid Closure for categories
-Relationship").
+Relationship: " followed by the original message), with the original exception
+as its `getPrevious()`.
 
 ## Auditable pivot models
 
