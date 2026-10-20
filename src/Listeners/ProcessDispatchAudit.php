@@ -36,7 +36,7 @@ class ProcessDispatchAudit implements ShouldQueue
 
     public function handle(DispatchAudit $event): void
     {
-        if (! Config::get('auditing.enabled', true)) {
+        if (! Config::get('auditing.enabled')) {
             return;
         }
 

@@ -128,7 +128,7 @@ trait Audit
         ];
 
         $resolverData = [];
-        foreach (array_keys(Config::get('auditing.resolvers', [])) as $name) {
+        foreach (array_keys(Config::get('auditing.resolvers')) as $name) {
             $resolverData['audit_' . $name] = $this->{$name};
         }
         $this->data = array_merge($this->data, $resolverData);

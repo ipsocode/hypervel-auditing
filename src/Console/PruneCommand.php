@@ -29,7 +29,7 @@ class PruneCommand extends Command
 
     public function handle(): int
     {
-        $days = $this->option('days') ?? Config::get('auditing.delete_records_older_than_days', 365);
+        $days = $this->option('days') ?? Config::get('auditing.delete_records_older_than_days');
 
         // Without this, `--days=nonsense` casts to 0 and quietly deletes the
         // whole trail.
