@@ -62,9 +62,3 @@ parameters:
         # properties, so PHPStan cannot see either.
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Models\\Audit::\$(batch_uuid|details)\.$#'
-
-        # CausesAudits is public API for an application's user model, so nothing under src/
-        # uses it; the workbench User does, and workbench/ is not analysed.
-        - identifier: trait.unused
-          message: '#^Trait Ipsocode\\Auditing\\CausesAudits is used zero times#'
-          path: src/CausesAudits.php
