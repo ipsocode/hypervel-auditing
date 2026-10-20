@@ -8,11 +8,7 @@ use Ipsocode\Auditing\Contracts\AttributeEncoder;
 
 class Base64Encoder implements AttributeEncoder
 {
-    /**
-     * @param mixed $value
-     * @return null|string
-     */
-    public static function encode($value)
+    public static function encode(mixed $value): ?string
     {
         // Null passes through; any other raw value is cast for base64_encode().
         if ($value === null) {
@@ -22,11 +18,7 @@ class Base64Encoder implements AttributeEncoder
         return base64_encode((string) $value);
     }
 
-    /**
-     * @param mixed $value
-     * @return null|false|string
-     */
-    public static function decode($value)
+    public static function decode(mixed $value): string|false|null
     {
         if ($value === null) {
             return null;

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Contracts;
 
+use Hypervel\Database\Eloquent\Model;
+use Hypervel\Database\Eloquent\Relations\MorphTo;
+
 /**
  * @mixin \Ipsocode\Auditing\Models\Audit
  */
@@ -19,9 +22,15 @@ interface Audit
      */
     public function getTable();
 
-    public function auditable();
+    /**
+     * @return MorphTo<Model, Model>
+     */
+    public function auditable(): MorphTo;
 
-    public function user();
+    /**
+     * @return MorphTo<Model, Model>
+     */
+    public function user(): MorphTo;
 
     /**
      * Flatten the audit into one array: `audit_*` and `user_*` metadata, then
@@ -36,7 +45,7 @@ interface Audit
      * `user_*` through the user, `new_*`/`old_*` through the auditable after
      * decoding. Null for an unknown key.
      */
-    public function getDataValue(string $key);
+    public function getDataValue(string $key): mixed;
 
     /**
      * @param int<1, max> $depth
