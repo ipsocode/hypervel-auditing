@@ -18,10 +18,7 @@ interface Auditable
 
     public function setAuditEvent(string $event): Auditable;
 
-    /**
-     * @return null|string
-     */
-    public function getAuditEvent();
+    public function getAuditEvent(): ?string;
 
     /**
      * @return array<string>
@@ -51,10 +48,7 @@ interface Auditable
 
     public function getAuditTimestamps(): bool;
 
-    /**
-     * @return null|string
-     */
-    public function getAuditDriver();
+    public function getAuditDriver(): string;
 
     public function getAuditThreshold(): int;
 
