@@ -124,6 +124,24 @@ trait Auditable
         );
     }
 
+    /**
+     * This record's audits that recorded the field, oldest first, with their
+     * details loaded. Returns the builder, so it can be narrowed further.
+     *
+     * @return MorphMany<\Ipsocode\Auditing\Models\Audit, $this>
+     */
+    public function auditHistory(string $field): MorphMany
+    {
+        // `created_at` has whole-second precision, so same-second audits tie
+        // on it; the auto-incrementing key breaks the tie in insertion order.
+        $audits = $this->audits();
+
+        return $audits->forField($field)
+            ->with('details')
+            ->oldest()
+            ->orderBy($audits->getModel()->getKeyName());
+    }
+
     protected function resolveAuditExclusions(): void
     {
         $this->excludedAttributes = $this->getAuditExclude();

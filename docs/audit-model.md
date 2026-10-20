@@ -42,7 +42,7 @@ class ActivityAudit extends Audit
     #[Scope]
     protected function touching(Builder $query, string $field): void
     {
-        $query->whereHas('details', fn (Builder $details) => $details->where('field', $field));
+        $query->forField($field);
     }
 }
 ```
@@ -50,6 +50,9 @@ class ActivityAudit extends Audit
 ```php
 $article->audits()->touching('title')->get();   // ActivityAudit instances
 ```
+
+A subclass inherits the `forField()`, `forEvent()`, `byUser()` and `inBatch()`
+scopes from the `Audit` trait; see [Reading audits](reading-audits.md#fetching-audits).
 
 A subclass is also where events that record only one side are declared; see
 [Schema](schema.md) for `$eventsWithoutOldValues` and
