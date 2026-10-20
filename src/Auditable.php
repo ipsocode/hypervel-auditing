@@ -174,7 +174,7 @@ trait Auditable
             // Arrays pass only with `allowed_array_values`; objects only when
             // they stringify or are enums.
             if (
-                (is_array($value) && ! Config::get('auditing.allowed_array_values', false))
+                (is_array($value) && ! Config::get('auditing.allowed_array_values'))
                 || (is_object($value)
                     && ! method_exists($value, '__toString')
                     && ! ($value instanceof UnitEnum))
@@ -186,7 +186,7 @@ trait Auditable
 
     public function getAuditExclude(): array
     {
-        return $this->auditExclude ?? Config::get('auditing.exclude', []);
+        return $this->auditExclude ?? Config::get('auditing.exclude');
     }
 
     public function getAuditInclude(): array
@@ -390,7 +390,7 @@ trait Auditable
     protected function runResolvers(): array
     {
         $resolved = [];
-        $resolvers = Config::get('auditing.resolvers', []);
+        $resolvers = Config::get('auditing.resolvers');
 
         foreach ($resolvers as $name => $implementation) {
             if (empty($implementation)) {
@@ -493,12 +493,7 @@ trait Auditable
 
     public function getAuditEvents(): array
     {
-        return $this->auditEvents ?? Config::get('auditing.events', [
-            'created',
-            'updated',
-            'deleted',
-            'restored',
-        ]);
+        return $this->auditEvents ?? Config::get('auditing.events');
     }
 
     /**
@@ -587,30 +582,30 @@ trait Auditable
     public static function isAuditingEnabled(): bool
     {
         if (App::runningInConsole()) {
-            return Config::get('auditing.enabled', true) && Config::get('auditing.console', false);
+            return Config::get('auditing.enabled') && Config::get('auditing.console');
         }
 
-        return Config::get('auditing.enabled', true);
+        return Config::get('auditing.enabled');
     }
 
     public function getAuditStrict(): bool
     {
-        return $this->auditStrict ?? Config::get('auditing.strict', false);
+        return $this->auditStrict ?? Config::get('auditing.strict');
     }
 
     public function getAuditTimestamps(): bool
     {
-        return $this->auditTimestamps ?? Config::get('auditing.timestamps', false);
+        return $this->auditTimestamps ?? Config::get('auditing.timestamps');
     }
 
     public function getAuditDriver(): string
     {
-        return $this->auditDriver ?? Config::get('auditing.driver', 'audit_details');
+        return $this->auditDriver ?? Config::get('auditing.driver');
     }
 
     public function getAuditThreshold(): int
     {
-        return $this->auditThreshold ?? Config::get('auditing.threshold', 0);
+        return $this->auditThreshold ?? Config::get('auditing.threshold');
     }
 
     public function getAttributeModifiers(): array

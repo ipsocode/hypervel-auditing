@@ -12,7 +12,7 @@ class RecordCustomAudit
 {
     public function handle(AuditCustom $event): void
     {
-        if (! Config::get('auditing.enabled', true)) {
+        if (! Config::get('auditing.enabled')) {
             return;
         }
 

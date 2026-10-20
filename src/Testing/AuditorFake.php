@@ -84,7 +84,7 @@ class AuditorFake implements Auditor, Fake
         $data = $model->toAudit();
 
         $allowEmpty = Config::get('auditing.empty_values');
-        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values', []));
+        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values'));
 
         if (! $allowEmpty && ! $explicitAllowEmpty && empty($data['new_values']) && empty($data['old_values'])) {
             return null;
