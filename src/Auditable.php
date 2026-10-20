@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing;
 
 use Closure;
 use Hypervel\Context\CoroutineContext;
+use Hypervel\Contracts\Auth\Authenticatable;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\BelongsToMany;
 use Hypervel\Database\Eloquent\Relations\MorphMany;
@@ -74,7 +75,7 @@ trait Auditable
      * with whenBooted() so it registers once the class has booted, after the
      * listeners the model adds in boot() and booted().
      */
-    public static function bootAuditable()
+    public static function bootAuditable(): void
     {
         static::whenBooted(function () {
             if (static::shouldRegisterAuditObserver()) {
@@ -123,7 +124,7 @@ trait Auditable
         );
     }
 
-    protected function resolveAuditExclusions()
+    protected function resolveAuditExclusions(): void
     {
         $this->excludedAttributes = $this->getAuditExclude();
 
@@ -261,11 +262,9 @@ trait Auditable
     }
 
     /**
-     * @param mixed $value
-     *
      * @throws AuditingException
      */
-    protected function modifyAttributeValue(string $attribute, $value)
+    protected function modifyAttributeValue(string $attribute, mixed $value): mixed
     {
         $attributeModifiers = $this->getAttributeModifiers();
 
@@ -349,7 +348,7 @@ trait Auditable
     /**
      * @throws AuditingException
      */
-    protected function resolveUser()
+    protected function resolveUser(): ?Authenticatable
     {
         // array_key_exists, not empty(): a null preloaded from an actingAs(null)
         // scope is a decision, not a missing value.
@@ -398,7 +397,7 @@ trait Auditable
         return $this->auditBatchUuid ?? AuditBatch::current();
     }
 
-    public function preloadResolverData()
+    public function preloadResolverData(): static
     {
         $this->preloadedResolverData = $this->runResolvers();
 
@@ -421,22 +420,15 @@ trait Auditable
         return empty($include) || in_array($attribute, $include, true);
     }
 
-    /**
-     * @param string $event
-     */
-    protected function isEventAuditable($event): bool
+    protected function isEventAuditable(?string $event): bool
     {
         return is_string($this->resolveAttributeGetter($event));
     }
 
-    /**
-     * @param string $event
-     * @return null|string
-     */
-    protected function resolveAttributeGetter($event)
+    protected function resolveAttributeGetter(?string $event): ?string
     {
         if (empty($event)) {
-            return;
+            return null;
         }
 
         if ($this->isCustomEvent) {
@@ -450,6 +442,8 @@ trait Auditable
                 return is_int($key) ? sprintf('get%sEventAttributes', ucfirst($event)) : $value;
             }
         }
+
+        return null;
     }
 
     /**
@@ -474,7 +468,7 @@ trait Auditable
         return $this;
     }
 
-    public function getAuditEvent()
+    public function getAuditEvent(): ?string
     {
         return $this->auditEvent;
     }
@@ -533,12 +527,12 @@ trait Auditable
         return false;
     }
 
-    public static function disableAuditing()
+    public static function disableAuditing(): void
     {
         static::$auditingDisabled = true;
     }
 
-    public static function enableAuditing()
+    public static function enableAuditing(): void
     {
         static::$auditingDisabled = false;
     }
@@ -548,7 +542,7 @@ trait Auditable
      * with $globally. The scope is coroutine-local: concurrent requests keep
      * auditing, and a child coroutine is covered only if it copies the context.
      */
-    public static function withoutAuditing(callable $callback, bool $globally = false)
+    public static function withoutAuditing(callable $callback, bool $globally = false): mixed
     {
         $key = static::auditingDisabledContextKey();
         $globalKey = static::globallyDisabledContextKey();
@@ -591,7 +585,7 @@ trait Auditable
         return $this->auditTimestamps ?? Config::get('auditing.timestamps', false);
     }
 
-    public function getAuditDriver()
+    public function getAuditDriver(): string
     {
         return $this->auditDriver ?? Config::get('auditing.driver', 'audit_details');
     }
@@ -661,14 +655,11 @@ trait Auditable
     }
 
     /**
-     * @param mixed $id
-     * @param bool $touch
-     * @param array $columns
-     * @param null|Closure $callback
+     * @param array<int, string> $columns
      *
      * @throws AuditingException
      */
-    public function auditAttach(string $relationName, $id, array $attributes = [], $touch = true, $columns = ['*'], $callback = null)
+    public function auditAttach(string $relationName, mixed $id, array $attributes = [], bool $touch = true, array $columns = ['*'], ?Closure $callback = null): void
     {
         $this->validateRelationshipMethodExistence($relationName, 'attach');
 
@@ -686,15 +677,11 @@ trait Auditable
     }
 
     /**
-     * @param mixed $ids
-     * @param bool $touch
-     * @param array $columns
-     * @param null|Closure $callback
-     * @return int
+     * @param array<int, string> $columns
      *
      * @throws AuditingException
      */
-    public function auditDetach(string $relationName, $ids = null, $touch = true, $columns = ['*'], $callback = null)
+    public function auditDetach(string $relationName, mixed $ids = null, bool $touch = true, array $columns = ['*'], ?Closure $callback = null): int
     {
         $this->validateRelationshipMethodExistence($relationName, 'detach');
 
@@ -724,15 +711,12 @@ trait Auditable
     }
 
     /**
-     * @param array|Collection|Model $ids
-     * @param bool $detaching
-     * @param array $columns
-     * @param null|Closure $callback
-     * @return array
+     * @param array<int, string> $columns
+     * @return array{attached: array, detached: array, updated: array}
      *
      * @throws AuditingException
      */
-    public function auditSync(string $relationName, $ids, $detaching = true, $columns = ['*'], $callback = null)
+    public function auditSync(string $relationName, Collection|Model|array|int|string|null $ids, bool $detaching = true, array $columns = ['*'], ?Closure $callback = null): array
     {
         $this->validateRelationshipMethodExistence($relationName, 'sync');
 
@@ -766,14 +750,12 @@ trait Auditable
     }
 
     /**
-     * @param array|Collection|Model $ids
-     * @param array $columns
-     * @param null|Closure $callback
-     * @return array
+     * @param array<int, string> $columns
+     * @return array{attached: array, detached: array, updated: array}
      *
      * @throws AuditingException
      */
-    public function auditSyncWithoutDetaching(string $relationName, $ids, $columns = ['*'], $callback = null)
+    public function auditSyncWithoutDetaching(string $relationName, Collection|Model|array|int|string|null $ids, array $columns = ['*'], ?Closure $callback = null): array
     {
         $this->validateRelationshipMethodExistence($relationName, 'syncWithoutDetaching');
 
@@ -781,12 +763,10 @@ trait Auditable
     }
 
     /**
-     * @param array|Collection|Model $ids
-     * @param array $columns
-     * @param null|Closure $callback
-     * @return array
+     * @param array<int, string> $columns
+     * @return array{attached: array, detached: array, updated: array}
      */
-    public function auditSyncWithPivotValues(string $relationName, $ids, array $values, bool $detaching = true, $columns = ['*'], $callback = null)
+    public function auditSyncWithPivotValues(string $relationName, Collection|Model|array|int|string|null $ids, array $values, bool $detaching = true, array $columns = ['*'], ?Closure $callback = null): array
     {
         $this->validateRelationshipMethodExistence($relationName, 'syncWithPivotValues');
 
@@ -803,13 +783,7 @@ trait Auditable
         }), $detaching, $columns, $callback);
     }
 
-    /**
-     * @param string $relationName
-     * @param string $event
-     * @param Collection $old
-     * @param Collection $new
-     */
-    private function dispatchRelationAuditEvent($relationName, $event, $old, $new)
+    private function dispatchRelationAuditEvent(string $relationName, string $event, Collection $old, Collection $new): void
     {
         $this->auditCustomOld[$relationName] = $old->diff($new)->toArray();
         $this->auditCustomNew[$relationName] = $new->diff($old)->toArray();

@@ -12,15 +12,9 @@ use Hypervel\Database\Eloquent\Relations\MorphTo;
  */
 interface Audit
 {
-    /**
-     * @return null|string
-     */
-    public function getConnectionName();
+    public function getConnectionName(): ?string;
 
-    /**
-     * @return string
-     */
-    public function getTable();
+    public function getTable(): string;
 
     /**
      * @return MorphTo<Model, *>
@@ -51,7 +45,7 @@ interface Audit
      * @param int<1, max> $depth
      * @return array<string,mixed>|string a JSON string when $json is true
      */
-    public function getMetadata(bool $json = false, int $options = 0, int $depth = 512);
+    public function getMetadata(bool $json = false, int $options = 0, int $depth = 512): array|string;
 
     /**
      * Modified attributes by name, each with its `old` and/or `new` value.
@@ -59,5 +53,5 @@ interface Audit
      * @param int<1, max> $depth
      * @return array<string,mixed>|string a JSON string when $json is true
      */
-    public function getModified(bool $json = false, int $options = 0, int $depth = 512);
+    public function getModified(bool $json = false, int $options = 0, int $depth = 512): array|string;
 }
