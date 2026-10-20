@@ -43,7 +43,7 @@ class AuditingServiceProvider extends ServiceProvider
             $this->commands([InstallCommand::class, PruneCommand::class]);
         }
 
-        if (Config::get('auditing.run_migrations', true)) {
+        if (Config::get('auditing.run_migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         }
 

@@ -140,7 +140,7 @@ decoding anything:
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Models\AuditDetail;
 
-$emailChanges = Audit::whereHas('details', fn ($query) => $query->where('field', 'email'))->get();
+$emailChanges = Audit::forField('email')->get();
 
 $details = AuditDetail::where('field', 'status')->where('new_value', 'archived')->get();
 ```

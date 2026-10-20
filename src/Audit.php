@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing;
 
 use DateTimeInterface;
+use Hypervel\Contracts\Auth\Authenticatable;
+use Hypervel\Database\Eloquent\Attributes\Scope;
+use Hypervel\Database\Eloquent\Builder;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\MorphTo;
 use Hypervel\Support\Carbon;
@@ -39,9 +42,65 @@ trait Audit
      */
     public function user(): MorphTo
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         return $this->morphTo(__FUNCTION__, $morphPrefix . '_type', $morphPrefix . '_id');
+    }
+
+    /**
+     * Audits that recorded any of the given fields.
+     *
+     * @param Builder<static> $query
+     * @param array<int,string>|string $fields
+     */
+    #[Scope]
+    protected function forField(Builder $query, string|array $fields): void
+    {
+        $query->whereHas('details', fn (Builder $details) => $details->whereIn('field', (array) $fields));
+    }
+
+    /**
+     * Audits of any of the given events.
+     *
+     * @param Builder<static> $query
+     * @param array<int,string>|string $events
+     */
+    #[Scope]
+    protected function forEvent(Builder $query, string|array $events): void
+    {
+        $query->whereIn('event', (array) $events);
+    }
+
+    /**
+     * Audits caused by the given user, or by nobody when null. The user is an
+     * Eloquent model, as on the write side, which stores its morph class.
+     *
+     * @param Builder<static> $query
+     */
+    #[Scope]
+    protected function byUser(Builder $query, (Authenticatable&Model)|null $user): void
+    {
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
+
+        if ($user === null) {
+            $query->whereNull($morphPrefix . '_type')->whereNull($morphPrefix . '_id');
+
+            return;
+        }
+
+        $query->where($morphPrefix . '_type', $user->getMorphClass())
+            ->where($morphPrefix . '_id', $user->getAuthIdentifier());
+    }
+
+    /**
+     * Audits written inside the given batch.
+     *
+     * @param Builder<static> $query
+     */
+    #[Scope]
+    protected function inBatch(Builder $query, string $batchUuid): void
+    {
+        $query->where('batch_uuid', $batchUuid);
     }
 
     public function getConnectionName(): ?string
@@ -56,7 +115,7 @@ trait Audit
 
     public function resolveData(): array
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         $this->data = [
             'audit_id' => $this->getKey(),
@@ -70,7 +129,7 @@ trait Audit
         ];
 
         $resolverData = [];
-        foreach (array_keys(Config::get('auditing.resolvers', [])) as $name) {
+        foreach (array_keys(Config::get('auditing.resolvers')) as $name) {
             $resolverData['audit_' . $name] = $this->{$name};
         }
         $this->data = array_merge($this->data, $resolverData);

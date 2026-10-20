@@ -22,7 +22,7 @@ class Auditor extends Manager implements Contracts\Auditor
 {
     public function getDefaultDriver(): string
     {
-        return Config::get('auditing.driver', 'audit_details');
+        return Config::get('auditing.driver');
     }
 
     /**
@@ -120,7 +120,7 @@ class Auditor extends Manager implements Contracts\Auditor
         $data = $model->toAudit();
 
         $allowEmpty = Config::get('auditing.empty_values');
-        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values', []));
+        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values'));
 
         if (! $allowEmpty && ! $explicitAllowEmpty && empty($data['new_values']) && empty($data['old_values'])) {
             return null;

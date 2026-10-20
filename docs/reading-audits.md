@@ -29,9 +29,50 @@ An audit has three relations of its own:
 `old_values`, `new_values`, `getModified()` and `getMetadata()` read `details`,
 `user` and `auditable`, so eager-load them when you read many audits at once.
 
-To find audits by anything other than their subject, query the audit model
-directly. See [Schema](schema.md#querying) for queries on fields and values,
-and [Batches](batches.md) for `batch_uuid`.
+The `Audit` trait adds local scopes, so they chain from `audits()` and work on
+every class in `auditing.implementation`:
+
+| Scope | Matches |
+|---|---|
+| `forField($field)` | Audits that recorded the field; takes a string or an array of fields |
+| `forEvent($event)` | Audits of the event; takes a string or an array of events |
+| `byUser($user)` | Audits caused by the user model, matched on `user_type` and `user_id` (named after `auditing.user.morph_prefix`); `byUser(null)` matches audits with no causer |
+| `inBatch($uuid)` | Audits whose `batch_uuid` is the id |
+
+```php
+$article->audits()->forEvent('updated')->forField('title')->get();
+```
+
+`auditHistory()` is the same query for one field, oldest first:
+
+```php
+$article->auditHistory('status')->get();
+```
+
+It is on the `Auditable` trait only, not on the `Auditable` contract, so a class
+that implements the contract without the trait is not forced to add it. It
+returns the builder, so you can narrow it further (`->byUser($user)`), with
+`details` eager-loaded. Audits written in the same second are in insertion
+order.
+
+### Audits a user caused
+
+Add `Ipsocode\Auditing\CausesAudits` to the user model for the other direction
+of an audit's `user` relation:
+
+```php
+$user->causedAudits()->latest()->get();
+```
+
+`causedAudits()` is a morph-many relation on the class in `auditing.implementation`,
+matched on the `user_type`/`user_id` columns (named after
+`auditing.user.morph_prefix`). It is not called `audits()`, so a user model that
+is itself `Auditable` keeps both: `audits()` are the changes made to the user,
+`causedAudits()` the changes the user made.
+
+To find audits by anything else, query the audit model directly. See
+[Schema](schema.md#querying) for queries on fields and values, and
+[Batches](batches.md) for `batch_uuid`.
 
 ## `getModified()`
 

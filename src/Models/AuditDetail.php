@@ -46,7 +46,7 @@ class AuditDetail extends Model
     public function audit(): BelongsTo
     {
         /** @var class-string<AuditContract&Model> $class */
-        $class = Config::get('auditing.implementation', Audit::class);
+        $class = Config::get('auditing.implementation');
 
         return $this->belongsTo($class, 'audit_id');
     }

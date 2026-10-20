@@ -4,26 +4,21 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing;
 
-use Closure;
 use Hypervel\Context\CoroutineContext;
 use Hypervel\Contracts\Auth\Authenticatable;
 use Hypervel\Database\Eloquent\Model;
-use Hypervel\Database\Eloquent\Relations\BelongsToMany;
 use Hypervel\Database\Eloquent\Relations\MorphMany;
-use Hypervel\Database\Eloquent\Relations\Pivot;
 use Hypervel\Support\Arr;
-use Hypervel\Support\Collection;
 use Hypervel\Support\Facades\App;
 use Hypervel\Support\Facades\Config;
-use Hypervel\Support\Facades\Event;
 use Hypervel\Support\Facades\Log;
+use Ipsocode\Auditing\Concerns\AuditsRelationships;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
 use Ipsocode\Auditing\Contracts\AttributeRedactor;
-use Ipsocode\Auditing\Contracts\Auditable as ContractsAuditable;
 use Ipsocode\Auditing\Contracts\Resolver;
-use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
@@ -33,6 +28,8 @@ use UnitEnum;
 // @phpstan-ignore trait.unused (applications use it on their own models, outside src/)
 trait Auditable
 {
+    use AuditsRelationships;
+
     /** @var array */
     protected $excludedAttributes = [];
 
@@ -119,9 +116,27 @@ trait Auditable
     public function audits(): MorphMany
     {
         return $this->morphMany(
-            Config::get('auditing.implementation', Models\Audit::class),
+            Config::get('auditing.implementation'),
             'auditable'
         );
+    }
+
+    /**
+     * This record's audits that recorded the field, oldest first, with their
+     * details loaded. Returns the builder, so it can be narrowed further.
+     *
+     * @return MorphMany<AuditModel, $this>
+     */
+    public function auditHistory(string $field): MorphMany
+    {
+        // `created_at` has whole-second precision, so same-second audits tie
+        // on it; the auto-incrementing key breaks the tie in insertion order.
+        $audits = $this->audits();
+
+        return $audits->forField($field)
+            ->with('details')
+            ->oldest()
+            ->orderBy($audits->getModel()->getKeyName());
     }
 
     protected function resolveAuditExclusions(): void
@@ -156,7 +171,7 @@ trait Auditable
             // Arrays pass only with `allowed_array_values`; objects only when
             // they stringify or are enums.
             if (
-                (is_array($value) && ! Config::get('auditing.allowed_array_values', false))
+                (is_array($value) && ! Config::get('auditing.allowed_array_values'))
                 || (is_object($value)
                     && ! method_exists($value, '__toString')
                     && ! ($value instanceof UnitEnum))
@@ -168,7 +183,7 @@ trait Auditable
 
     public function getAuditExclude(): array
     {
-        return $this->auditExclude ?? Config::get('auditing.exclude', []);
+        return $this->auditExclude ?? Config::get('auditing.exclude');
     }
 
     public function getAuditInclude(): array
@@ -321,7 +336,7 @@ trait Auditable
             }
         }
 
-        $morphPrefix = Config::get('auditing.user.morph_prefix', 'user');
+        $morphPrefix = Config::get('auditing.user.morph_prefix');
 
         $tags = implode(',', $this->generateTags());
 
@@ -372,7 +387,7 @@ trait Auditable
     protected function runResolvers(): array
     {
         $resolved = [];
-        $resolvers = Config::get('auditing.resolvers', []);
+        $resolvers = Config::get('auditing.resolvers');
 
         foreach ($resolvers as $name => $implementation) {
             if (empty($implementation)) {
@@ -475,12 +490,7 @@ trait Auditable
 
     public function getAuditEvents(): array
     {
-        return $this->auditEvents ?? Config::get('auditing.events', [
-            'created',
-            'updated',
-            'deleted',
-            'restored',
-        ]);
+        return $this->auditEvents ?? Config::get('auditing.events');
     }
 
     /**
@@ -569,30 +579,30 @@ trait Auditable
     public static function isAuditingEnabled(): bool
     {
         if (App::runningInConsole()) {
-            return Config::get('auditing.enabled', true) && Config::get('auditing.console', false);
+            return Config::get('auditing.enabled') && Config::get('auditing.console');
         }
 
-        return Config::get('auditing.enabled', true);
+        return Config::get('auditing.enabled');
     }
 
     public function getAuditStrict(): bool
     {
-        return $this->auditStrict ?? Config::get('auditing.strict', false);
+        return $this->auditStrict ?? Config::get('auditing.strict');
     }
 
     public function getAuditTimestamps(): bool
     {
-        return $this->auditTimestamps ?? Config::get('auditing.timestamps', false);
+        return $this->auditTimestamps ?? Config::get('auditing.timestamps');
     }
 
     public function getAuditDriver(): string
     {
-        return $this->auditDriver ?? Config::get('auditing.driver', 'audit_details');
+        return $this->auditDriver ?? Config::get('auditing.driver');
     }
 
     public function getAuditThreshold(): int
     {
-        return $this->auditThreshold ?? Config::get('auditing.threshold', 0);
+        return $this->auditThreshold ?? Config::get('auditing.threshold');
     }
 
     public function getAttributeModifiers(): array
@@ -652,179 +662,5 @@ trait Auditable
         }
 
         return $this;
-    }
-
-    /**
-     * @param array<int, string> $columns
-     *
-     * @throws AuditingException
-     */
-    public function auditAttach(string $relationName, mixed $id, array $attributes = [], bool $touch = true, array $columns = ['*'], ?Closure $callback = null): void
-    {
-        $this->validateRelationshipMethodExistence($relationName, 'attach');
-
-        $relationCall = $this->{$relationName}();
-
-        if ($callback instanceof Closure) {
-            $this->applyClosureToRelationship($relationCall, $callback);
-        }
-
-        $old = $relationCall->get($columns);
-        $relationCall->attach($id, $attributes, $touch);
-        $new = $relationCall->get($columns);
-
-        $this->dispatchRelationAuditEvent($relationName, 'attach', $old, $new);
-    }
-
-    /**
-     * @param array<int, string> $columns
-     *
-     * @throws AuditingException
-     */
-    public function auditDetach(string $relationName, mixed $ids = null, bool $touch = true, array $columns = ['*'], ?Closure $callback = null): int
-    {
-        $this->validateRelationshipMethodExistence($relationName, 'detach');
-
-        $relationCall = $this->{$relationName}();
-
-        if ($callback instanceof Closure) {
-            $this->applyClosureToRelationship($relationCall, $callback);
-        }
-
-        $old = $relationCall->get($columns);
-
-        $pivotClass = $relationCall->getPivotClass();
-
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            $results = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $touch) {
-                return $relationCall->detach($ids, $touch);
-            });
-        } else {
-            $results = $relationCall->detach($ids, $touch);
-        }
-
-        $new = $relationCall->get($columns);
-
-        $this->dispatchRelationAuditEvent($relationName, 'detach', $old, $new);
-
-        return empty($results) ? 0 : $results;
-    }
-
-    /**
-     * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
-     *
-     * @throws AuditingException
-     */
-    public function auditSync(string $relationName, Collection|Model|array|int|string|null $ids, bool $detaching = true, array $columns = ['*'], ?Closure $callback = null): array
-    {
-        $this->validateRelationshipMethodExistence($relationName, 'sync');
-
-        $relationCall = $this->{$relationName}();
-
-        if ($callback instanceof Closure) {
-            $this->applyClosureToRelationship($relationCall, $callback);
-        }
-
-        $old = $relationCall->get($columns);
-
-        $pivotClass = $relationCall->getPivotClass();
-
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            $changes = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $detaching) {
-                return $relationCall->sync($ids, $detaching);
-            });
-        } else {
-            $changes = $relationCall->sync($ids, $detaching);
-        }
-
-        if (collect($changes)->flatten()->isEmpty()) {
-            $old = $new = collect([]);
-        } else {
-            $new = $relationCall->get($columns);
-        }
-
-        $this->dispatchRelationAuditEvent($relationName, 'sync', $old, $new);
-
-        return $changes;
-    }
-
-    /**
-     * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
-     *
-     * @throws AuditingException
-     */
-    public function auditSyncWithoutDetaching(string $relationName, Collection|Model|array|int|string|null $ids, array $columns = ['*'], ?Closure $callback = null): array
-    {
-        $this->validateRelationshipMethodExistence($relationName, 'syncWithoutDetaching');
-
-        return $this->auditSync($relationName, $ids, false, $columns, $callback);
-    }
-
-    /**
-     * @param array<int, string> $columns
-     * @return array{attached: array, detached: array, updated: array}
-     */
-    public function auditSyncWithPivotValues(string $relationName, Collection|Model|array|int|string|null $ids, array $values, bool $detaching = true, array $columns = ['*'], ?Closure $callback = null): array
-    {
-        $this->validateRelationshipMethodExistence($relationName, 'syncWithPivotValues');
-
-        if ($ids instanceof Model) {
-            $ids = $ids->getKey();
-        } elseif ($ids instanceof \Hypervel\Database\Eloquent\Collection) {
-            $ids = $ids->isEmpty() ? [] : $ids->pluck($ids->first()->getKeyName())->toArray();
-        } elseif ($ids instanceof Collection) {
-            $ids = $ids->toArray();
-        }
-
-        return $this->auditSync($relationName, collect(Arr::wrap($ids))->mapWithKeys(function ($id) use ($values) {
-            return [$id => $values];
-        }), $detaching, $columns, $callback);
-    }
-
-    private function dispatchRelationAuditEvent(string $relationName, string $event, Collection $old, Collection $new): void
-    {
-        $this->auditCustomOld[$relationName] = $old->diff($new)->toArray();
-        $this->auditCustomNew[$relationName] = $new->diff($old)->toArray();
-
-        if (
-            empty($this->auditCustomOld[$relationName])
-            && empty($this->auditCustomNew[$relationName])
-        ) {
-            $this->auditCustomOld = $this->auditCustomNew = [];
-        }
-
-        $this->auditEvent = $event;
-        $this->isCustomEvent = true;
-
-        // In a finally: a throwing listener must not leave custom-audit state
-        // for the model's next save (PendingAudit::log() restores the same way).
-        try {
-            Event::dispatch(new AuditCustom($this));
-        } finally {
-            $this->auditCustomOld = $this->auditCustomNew = [];
-            $this->isCustomEvent = false;
-            $this->auditEvent = null;
-        }
-    }
-
-    private function validateRelationshipMethodExistence(string $relationName, string $methodName): void
-    {
-        if (! method_exists($this, $relationName) || ! method_exists($this->{$relationName}(), $methodName)) {
-            throw new AuditingException("Relationship {$relationName} was not found or does not support method {$methodName}");
-        }
-    }
-
-    private function applyClosureToRelationship(BelongsToMany $relation, Closure $closure): void
-    {
-        try {
-            $closure($relation);
-        } catch (Throwable $exception) {
-            throw new AuditingException(
-                "Invalid Closure for {$relation->getRelationName()} Relationship: {$exception->getMessage()}",
-                previous: $exception
-            );
-        }
     }
 }

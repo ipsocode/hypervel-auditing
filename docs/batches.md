@@ -20,7 +20,7 @@ $batch = Auditor::withinBatch(function () use ($order, $invoice) {
     return Auditor::currentBatch();
 });
 
-Audit::where('batch_uuid', $batch)->get();
+Audit::inBatch($batch)->get();
 ```
 
 - `withinBatch()` returns whatever the callback returns.

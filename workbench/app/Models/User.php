@@ -7,9 +7,11 @@ namespace Workbench\App\Models;
 use Hypervel\Database\Eloquent\Factories\HasFactory;
 use Hypervel\Foundation\Auth\User as Authenticatable;
 use Hypervel\Notifications\Notifiable;
+use Ipsocode\Auditing\CausesAudits;
 
 class User extends Authenticatable
 {
+    use CausesAudits;
     use HasFactory;
     use Notifiable;
 

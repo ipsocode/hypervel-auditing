@@ -13,12 +13,12 @@ class ProcessDispatchAudit implements ShouldQueue
 {
     public function viaConnection(): string
     {
-        return Config::get('auditing.queue.connection', 'sync');
+        return Config::get('auditing.queue.connection');
     }
 
     public function viaQueue(): string
     {
-        return Config::get('auditing.queue.queue', 'default');
+        return Config::get('auditing.queue.queue');
     }
 
     /**
@@ -29,14 +29,14 @@ class ProcessDispatchAudit implements ShouldQueue
      */
     public function withDelay(DispatchAudit $event): ?int
     {
-        $delay = (int) Config::get('auditing.queue.delay', 0);
+        $delay = (int) Config::get('auditing.queue.delay');
 
         return $delay > 0 ? $delay : null;
     }
 
     public function handle(DispatchAudit $event): void
     {
-        if (! Config::get('auditing.enabled', true)) {
+        if (! Config::get('auditing.enabled')) {
             return;
         }
 

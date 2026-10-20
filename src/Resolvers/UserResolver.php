@@ -16,9 +16,7 @@ class UserResolver implements Resolver
      */
     public static function resolve()
     {
-        $guards = Config::get('auditing.user.guards', [
-            Config::get('auth.defaults.guard'),
-        ]);
+        $guards = Config::get('auditing.user.guards');
 
         foreach ($guards as $guard) {
             try {
