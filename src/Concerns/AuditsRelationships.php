@@ -39,8 +39,11 @@ trait AuditsRelationships
             $this->applyClosureToRelationship($relationCall, $callback);
         }
 
+        // Only the given ids can change, so only they are read on either side.
+        $this->limitToRelatedKeys($relationCall, $this->relatedKeysOf($relationCall, $id));
+
         $old = $relationCall->get($columns);
-        $relationCall->attach($id, $attributes, $touch);
+        $this->withoutPivotAuditing($relationCall, fn () => $relationCall->attach($id, $attributes, $touch));
         $new = $relationCall->get($columns);
 
         $this->dispatchRelationAuditEvent($relationName, 'attach', $old, $new);
@@ -61,18 +64,15 @@ trait AuditsRelationships
             $this->applyClosureToRelationship($relationCall, $callback);
         }
 
+        // Detaching everything (null) affects the whole relation; otherwise only
+        // the given ids can change.
+        if ($ids !== null) {
+            $this->limitToRelatedKeys($relationCall, $this->relatedKeysOf($relationCall, $ids));
+        }
+
         $old = $relationCall->get($columns);
 
-        $pivotClass = $relationCall->getPivotClass();
-
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            // @phpstan-ignore staticMethod.notFound (is_a() above confirms an Auditable pivot, which has withoutAuditing() through its trait)
-            $results = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $touch) {
-                return $relationCall->detach($ids, $touch);
-            });
-        } else {
-            $results = $relationCall->detach($ids, $touch);
-        }
+        $results = $this->withoutPivotAuditing($relationCall, fn () => $relationCall->detach($ids, $touch));
 
         $new = $relationCall->get($columns);
 
@@ -98,24 +98,28 @@ trait AuditsRelationships
             $this->applyClosureToRelationship($relationCall, $callback);
         }
 
-        $old = $relationCall->get($columns);
+        // The keys attached now are a pluck on the query (an Eloquent pluck would hydrate
+        // a model per row to cast the key), not hydrated models. A sync that
+        // detaches can remove any of them; one that does not only touches the
+        // given ids that are already attached.
+        $current = $relationCall->toBase()->pluck($relationCall->getQualifiedRelatedKeyName())->all();
+        $given = $this->relatedKeysOf($relationCall, $ids);
 
-        $pivotClass = $relationCall->getPivotClass();
+        $before = $detaching
+            ? $current
+            : array_values(array_intersect(array_map('strval', $current), array_map('strval', $given)));
 
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            // @phpstan-ignore staticMethod.notFound (is_a() above confirms an Auditable pivot, which has withoutAuditing() through its trait)
-            $changes = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $detaching) {
-                return $relationCall->sync($ids, $detaching);
-            });
-        } else {
-            $changes = $relationCall->sync($ids, $detaching);
-        }
+        $old = $this->relatedRows($relationCall, $before, $columns);
+
+        $changes = $this->withoutPivotAuditing($relationCall, fn () => $relationCall->sync($ids, $detaching));
 
         /** @var array{attached: array<array-key, mixed>, detached: array<array-key, mixed>, updated: array<array-key, mixed>} $changes */
         if (collect($changes)->flatten()->isEmpty()) {
             $old = $new = collect([]);
         } else {
-            $new = $relationCall->get($columns);
+            // The same rows are read again, plus those attached: a row the sync
+            // kept must be on both sides, or the diff records it as removed.
+            $new = $this->relatedRows($relationCall, [...$before, ...$changes['attached']], $columns);
         }
 
         $this->dispatchRelationAuditEvent($relationName, 'sync', $old, $new);
@@ -161,6 +165,58 @@ trait AuditsRelationships
     }
 
     /**
+     * The related keys a attach, detach or sync argument names, in the shapes
+     * those methods accept: a model, a collection, or an array of keys, models or
+     * key => pivot attributes.
+     *
+     * @param BelongsToMany<*, *, *, *> $relation
+     * @return array<int, mixed>
+     */
+    private function relatedKeysOf(BelongsToMany $relation, mixed $ids): array
+    {
+        $relatedKey = $relation->getRelatedKeyName();
+
+        if ($ids instanceof Model) {
+            return [$ids->{$relatedKey}];
+        }
+
+        if ($ids instanceof Collection || is_array($ids)) {
+            return collect($ids)
+                ->map(fn ($item, $key) => $item instanceof Model ? $item->{$relatedKey} : (is_array($item) ? $key : $item))
+                ->values()
+                ->all();
+        }
+
+        return (array) $ids;
+    }
+
+    /**
+     * @param BelongsToMany<*, *, *, *> $relation
+     * @param array<int, mixed> $keys
+     */
+    private function limitToRelatedKeys(BelongsToMany $relation, array $keys): void
+    {
+        $relation->whereIn($relation->getQualifiedRelatedKeyName(), $keys);
+    }
+
+    /**
+     * Reads only the given related rows, under the constraints already on the relation.
+     *
+     * @param BelongsToMany<*, *, *, *> $relation
+     * @param array<int, mixed> $keys
+     * @param array<int, string> $columns
+     * @return Collection<array-key, mixed>
+     */
+    private function relatedRows(BelongsToMany $relation, array $keys, array $columns): Collection
+    {
+        if ($keys === []) {
+            return collect([]);
+        }
+
+        return (clone $relation)->whereIn($relation->getQualifiedRelatedKeyName(), $keys)->get($columns);
+    }
+
+    /**
      * @param Collection<array-key, mixed> $old
      * @param Collection<array-key, mixed> $new
      */
@@ -188,6 +244,24 @@ trait AuditsRelationships
             $this->isCustomEvent = false;
             $this->auditEvent = null;
         }
+    }
+
+    /**
+     * Runs a pivot write with an Auditable pivot's own auditing suppressed, so
+     * only the one relation audit is recorded.
+     *
+     * @param BelongsToMany<*, *, *, *> $relation
+     */
+    private function withoutPivotAuditing(BelongsToMany $relation, Closure $callback): mixed
+    {
+        $pivotClass = $relation->getPivotClass();
+
+        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
+            // @phpstan-ignore staticMethod.notFound (is_a() above confirms an Auditable pivot, which has withoutAuditing() through its trait)
+            return $pivotClass::withoutAuditing($callback);
+        }
+
+        return $callback();
     }
 
     private function validateRelationshipMethodExistence(string $relationName, string $methodName): void

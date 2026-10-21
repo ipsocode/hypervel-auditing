@@ -82,6 +82,50 @@ class AuditableBranchesTest extends TestCase
         }
     }
 
+    public function testNumericStringMasterSwitchIsReadAsABoolOffConsole(): void
+    {
+        try {
+            $this->app->setRunningInConsole(false);
+
+            Config::set('auditing.enabled', '1');
+            $this->assertTrue(Article::isAuditingEnabled());
+
+            Config::set('auditing.enabled', '0');
+            $this->assertFalse(Article::isAuditingEnabled());
+        } finally {
+            $this->app->setRunningInConsole(true);
+        }
+    }
+
+    public function testObserverIsRegisteredOffConsoleWhenTheMasterSwitchIsANumericString(): void
+    {
+        Config::set('auditing.enabled', '1');
+
+        try {
+            $this->app->setRunningInConsole(false);
+
+            $registers = (fn (): bool => static::shouldRegisterAuditObserver())
+                ->bindTo(null, Article::class);
+
+            $this->assertTrue($registers());
+        } finally {
+            $this->app->setRunningInConsole(true);
+        }
+    }
+
+    public function testAuditSettingsAcceptNumericStringConfigValues(): void
+    {
+        Config::set('auditing.strict', '1');
+        Config::set('auditing.timestamps', '1');
+        Config::set('auditing.threshold', '5');
+
+        $article = new Article;
+
+        $this->assertTrue($article->getAuditStrict());
+        $this->assertTrue($article->getAuditTimestamps());
+        $this->assertSame(5, $article->getAuditThreshold());
+    }
+
     public function testUrlResolverFallsBackToTheRequestUrlOffConsole(): void
     {
         $article = Article::factory()->make();

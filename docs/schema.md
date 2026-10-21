@@ -83,7 +83,7 @@ after any [attribute modifier](attribute-modifiers.md) has run:
 |---|---|
 | `null` | `NULL` |
 | A string | As it is |
-| An int or a float | Its string form: `'42'`, `'4.5'` |
+| An int or a float | Its string form: `'42'`, `'4.5'`. A float whose string form would not read back as the same float (`0.1 + 0.2`) is stored in its shortest exact form, `'0.30000000000000004'` |
 | `true`, `false` | `'1'`, `''` |
 | A backed enum | Its value |
 | A pure enum | Its name |

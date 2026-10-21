@@ -59,6 +59,30 @@ class RelationshipAuditHelpersTest extends TestCase
         $this->assertNotEmpty($this->soleAudit('sync')['new']);
     }
 
+    public function testAuditSyncRecordsOnlyTheRowsItChanges(): void
+    {
+        $this->article->categories()->attach([$this->categories['php']->getKey(), $this->categories['testing']->getKey()]);
+
+        $this->article->auditSync('categories', [$this->categories['php']->getKey(), $this->categories['audit']->getKey()]);
+
+        $audit = $this->soleAudit('sync');
+
+        $this->assertSame([$this->categories['testing']->getKey()], array_column(json_decode($audit['old']['categories'], true), 'id'));
+        $this->assertSame([$this->categories['audit']->getKey()], array_column(json_decode($audit['new']['categories'], true), 'id'));
+    }
+
+    public function testAuditSyncWithoutDetachingDoesNotRecordAnAlreadyAttachedIdAsRemoved(): void
+    {
+        $this->article->categories()->attach($this->categories['php']->getKey());
+
+        $this->article->auditSyncWithoutDetaching('categories', [$this->categories['php']->getKey(), $this->categories['audit']->getKey()]);
+
+        $audit = $this->soleAudit('sync');
+
+        $this->assertSame([], json_decode($audit['old']['categories'], true));
+        $this->assertSame([$this->categories['audit']->getKey()], array_column(json_decode($audit['new']['categories'], true), 'id'));
+    }
+
     public function testAuditSyncWithPivotValuesAcceptsAScalarId(): void
     {
         $this->article->auditSyncWithPivotValues('categories', $this->categories['php']->getKey(), []);
@@ -228,5 +252,29 @@ class RelationshipAuditHelpersTest extends TestCase
         $audit = $this->article->audits()->where('event', 'updated')->sole();
 
         $this->assertSame(['title' => 'a clean update'], $audit->new_values);
+    }
+
+    public function testRelationHelpersHydrateOnlyTheRowsTheChangeCanTouch(): void
+    {
+        $extra = Category::factory()->count(20)->create();
+        $this->article->categories()->attach($extra->modelKeys());
+
+        $retrieved = 0;
+        Event::listen('eloquent.retrieved: ' . Category::class, function () use (&$retrieved): void {
+            ++$retrieved;
+        });
+
+        $this->article->auditAttach('categories', $this->categories['php']->getKey());
+        $this->assertLessThanOrEqual(2, $retrieved, 'attach reads the given id before and after');
+
+        $retrieved = 0;
+        $this->article->auditDetach('categories', [$this->categories['php']->getKey()]);
+        $this->assertLessThanOrEqual(2, $retrieved);
+
+        $retrieved = 0;
+        $this->article->auditSyncWithoutDetaching('categories', [$this->categories['testing']->getKey()]);
+        $this->assertLessThanOrEqual(2, $retrieved);
+
+        $this->assertNotEmpty($this->soleAudit('sync')['new']);
     }
 }

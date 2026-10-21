@@ -45,4 +45,18 @@ class LeftRedactorTest extends TestCase
         $this->assertSame('####5', LeftRedactor::redact(12345));
         $this->assertSame('#', LeftRedactor::redact(true));
     }
+
+    #[UnitTest]
+    public function testItCutsMultiByteTextByCharactersNotBytes(): void
+    {
+        foreach (['José', '田中', 'Hello 🙂'] as $value) {
+            $redacted = LeftRedactor::redact($value);
+
+            $this->assertTrue(mb_check_encoding($redacted, 'UTF-8'));
+            $this->assertSame(mb_strlen($value, 'UTF-8'), mb_strlen($redacted, 'UTF-8'));
+        }
+
+        $this->assertSame('###é', LeftRedactor::redact('José'));
+        $this->assertSame('#中', LeftRedactor::redact('田中'));
+    }
 }

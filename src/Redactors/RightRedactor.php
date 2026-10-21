@@ -10,15 +10,15 @@ class RightRedactor implements AttributeRedactor
 {
     public static function redact(mixed $value): string
     {
-        // Raw values may be ints, floats or bools; strlen() takes a string.
+        // Raw values may be ints, floats or bools; mb_strlen() takes a string.
         $value = (string) $value;
 
-        $total = strlen($value);
+        $total = mb_strlen($value, 'UTF-8');
         $tenth = (int) ceil($total / 10);
 
         // Make sure single character strings get redacted
         $length = ($total > $tenth) ? ($total - $tenth) : 1;
 
-        return str_pad(substr($value, 0, -$length), $total, '#', STR_PAD_RIGHT);
+        return mb_str_pad(mb_substr($value, 0, -$length, 'UTF-8'), $total, '#', STR_PAD_RIGHT, 'UTF-8');
     }
 }

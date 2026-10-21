@@ -16,7 +16,8 @@ use UnitEnum;
 trait NormalizesAuditValues
 {
     /**
-     * Reduce an attribute value to a string for one column: scalars are cast,
+     * Reduce an attribute value to a string for one column: scalars are cast (a
+     * float that the cast would change keeps its full precision),
      * enums give their value or name, stringable objects their string form, and
      * anything else is JSON-encoded.
      */
@@ -24,6 +25,15 @@ trait NormalizesAuditValues
     {
         if ($value === null || is_string($value)) {
             return $value;
+        }
+
+        // A float is cast at `precision` digits, which can erase a real change
+        // (1.0 → 1.0000000000000002 reads back as '1' both times); keep the cast
+        // whenever it round-trips and use the shortest exact form when it doesn't.
+        if (is_float($value)) {
+            $string = (string) $value;
+
+            return (float) $string === $value ? $string : var_export($value, true);
         }
 
         if (is_scalar($value)) {

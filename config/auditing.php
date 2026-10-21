@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'enabled' => env('AUDITING_ENABLED', true),
+    'enabled' => (bool) env('AUDITING_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------

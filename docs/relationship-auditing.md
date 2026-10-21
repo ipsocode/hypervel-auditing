@@ -85,20 +85,10 @@ as its `getPrevious()`.
 ## Auditable pivot models
 
 When the relation goes through a custom pivot class (`->using(...)`) that is
-itself auditable, `auditDetach()`, `auditSync()` and the two sync variants
-write inside the pivot class's `withoutAuditing()`. The change is then
-recorded once, on the parent, rather than once more per pivot row.
-
-`auditAttach()` does not wrap its write, so the pivot also audits each row it
-inserts. A pivot with a composite key has no single id for
-`audits.auditable_id`, so that audit fails on insert and `auditAttach()`
-throws. Wrap the call in the pivot class's `withoutAuditing()`, as the other
-helpers do, to record only the parent's `attach` audit:
-
-```php
-// ArticleCategory is the pivot class the relation passes to ->using().
-ArticleCategory::withoutAuditing(fn () => $article->auditAttach('categories', $category));
-```
+itself auditable, every helper (`auditAttach()`, `auditDetach()`,
+`auditSync()` and the two sync variants) writes inside the pivot class's
+`withoutAuditing()`. The change is then recorded once, on the parent, rather
+than once more per pivot row.
 
 ## When the audit is written
 

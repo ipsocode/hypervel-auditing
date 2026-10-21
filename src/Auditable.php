@@ -608,20 +608,20 @@ trait Auditable
     public static function isAuditingEnabled(): bool
     {
         if (App::runningInConsole()) {
-            return Config::get('auditing.enabled') && Config::get('auditing.console');
+            return (bool) Config::get('auditing.enabled') && (bool) Config::get('auditing.console');
         }
 
-        return Config::get('auditing.enabled');
+        return (bool) Config::get('auditing.enabled');
     }
 
     public function getAuditStrict(): bool
     {
-        return $this->auditStrict ?? Config::get('auditing.strict');
+        return $this->auditStrict ?? (bool) Config::get('auditing.strict');
     }
 
     public function getAuditTimestamps(): bool
     {
-        return $this->auditTimestamps ?? Config::get('auditing.timestamps');
+        return $this->auditTimestamps ?? (bool) Config::get('auditing.timestamps');
     }
 
     public function getAuditDriver(): string
@@ -631,7 +631,7 @@ trait Auditable
 
     public function getAuditThreshold(): int
     {
-        return $this->auditThreshold ?? Config::get('auditing.threshold');
+        return $this->auditThreshold ?? (int) Config::get('auditing.threshold');
     }
 
     public function getAttributeModifiers(): array

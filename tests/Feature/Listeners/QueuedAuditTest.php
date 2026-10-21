@@ -68,12 +68,12 @@ class QueuedAuditTest extends TestCase
         $this->assertSame(0, $article->audits()->count());
     }
 
-    public function testTheDispatchedModelCarriesNoLoadedRelations(): void
+    public function testARestoredDispatchAuditCarriesAModelWithNoLoadedRelations(): void
     {
         $captured = null;
 
         Event::listen(DispatchAudit::class, function (DispatchAudit $event) use (&$captured) {
-            $captured = $event->model;
+            $captured = $event;
         });
 
         $article = $this->article();
@@ -81,7 +81,16 @@ class QueuedAuditTest extends TestCase
         $article->update(['title' => 'V2']);
 
         $this->assertNotNull($captured);
-        $this->assertSame([], $captured->getRelations());
+        $this->assertSame([], unserialize(serialize($captured))->model->getRelations());
+    }
+
+    public function testTheCallersLoadedRelationsSurviveAQueuedUpdate(): void
+    {
+        $article = $this->article();
+        $article->load('categories');
+        $article->update(['title' => 'V2']);
+
+        $this->assertTrue($article->relationLoaded('categories'));
     }
 
     public function testSerializingAndRestoringTheEventPreservesTheAuditPayload(): void
