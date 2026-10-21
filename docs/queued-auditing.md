@@ -35,10 +35,7 @@ steps on the request coroutine:
    the audit has no request to read.
 3. `Events\DispatchingAudit` fires. A listener that returns `false` stops the
    audit; nothing is written.
-4. The model's loaded relations are unloaded, so they are not serialized.
-   This is the instance you saved, not a copy: load again any relation you
-   still need.
-5. `Events\DispatchAudit` is dispatched. It captures everything the job needs
+4. `Events\DispatchAudit` is dispatched. It captures everything the job needs
    as it is constructed.
 
 `Listeners\ProcessDispatchAudit`, a queued listener, handles `DispatchAudit` on
