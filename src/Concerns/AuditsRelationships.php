@@ -40,7 +40,7 @@ trait AuditsRelationships
         }
 
         $old = $relationCall->get($columns);
-        $relationCall->attach($id, $attributes, $touch);
+        $this->withoutPivotAuditing($relationCall, fn () => $relationCall->attach($id, $attributes, $touch));
         $new = $relationCall->get($columns);
 
         $this->dispatchRelationAuditEvent($relationName, 'attach', $old, $new);
@@ -63,15 +63,7 @@ trait AuditsRelationships
 
         $old = $relationCall->get($columns);
 
-        $pivotClass = $relationCall->getPivotClass();
-
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            $results = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $touch) {
-                return $relationCall->detach($ids, $touch);
-            });
-        } else {
-            $results = $relationCall->detach($ids, $touch);
-        }
+        $results = $this->withoutPivotAuditing($relationCall, fn () => $relationCall->detach($ids, $touch));
 
         $new = $relationCall->get($columns);
 
@@ -98,15 +90,7 @@ trait AuditsRelationships
 
         $old = $relationCall->get($columns);
 
-        $pivotClass = $relationCall->getPivotClass();
-
-        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
-            $changes = $pivotClass::withoutAuditing(function () use ($relationCall, $ids, $detaching) {
-                return $relationCall->sync($ids, $detaching);
-            });
-        } else {
-            $changes = $relationCall->sync($ids, $detaching);
-        }
+        $changes = $this->withoutPivotAuditing($relationCall, fn () => $relationCall->sync($ids, $detaching));
 
         if (collect($changes)->flatten()->isEmpty()) {
             $old = $new = collect([]);
@@ -177,6 +161,21 @@ trait AuditsRelationships
             $this->isCustomEvent = false;
             $this->auditEvent = null;
         }
+    }
+
+    /**
+     * Runs a pivot write with an Auditable pivot's own auditing suppressed, so
+     * only the one relation audit is recorded.
+     */
+    private function withoutPivotAuditing(BelongsToMany $relation, Closure $callback): mixed
+    {
+        $pivotClass = $relation->getPivotClass();
+
+        if ($pivotClass !== Pivot::class && is_a($pivotClass, ContractsAuditable::class, true)) {
+            return $pivotClass::withoutAuditing($callback);
+        }
+
+        return $callback();
     }
 
     private function validateRelationshipMethodExistence(string $relationName, string $methodName): void
