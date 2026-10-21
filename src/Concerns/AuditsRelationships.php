@@ -117,7 +117,9 @@ trait AuditsRelationships
         if (collect($changes)->flatten()->isEmpty()) {
             $old = $new = collect([]);
         } else {
-            $new = $this->relatedRows($relationCall, [...$changes['attached'], ...$changes['updated']], $columns);
+            // The same rows are read again, plus those attached: a row the sync
+            // kept must be on both sides, or the diff records it as removed.
+            $new = $this->relatedRows($relationCall, [...$before, ...$changes['attached']], $columns);
         }
 
         $this->dispatchRelationAuditEvent($relationName, 'sync', $old, $new);

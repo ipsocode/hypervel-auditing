@@ -51,6 +51,8 @@ The id has to fit the column, which the bundled migration creates with
 `uuid()`: a native UUID type on PostgreSQL and MariaDB 10.7+, which reject
 anything that is not a UUID, and `char(36)` on MySQL. An id in UUID form fits
 on every database.
+`withinBatch()` throws an `InvalidArgumentException` for an id that is not a
+UUID, before the callback runs.
 
 ## Nesting
 
