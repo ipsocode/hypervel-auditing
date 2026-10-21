@@ -10,7 +10,23 @@
     processIsolation="false"
     failOnWarning="true"
     failOnRisky="true"
+    enforceTimeLimit="true"
+    defaultTimeLimit="60"
 >
+    <!-- The time limit turns a test whose coroutines never return into a
+         failure that names it. A test parked on a wait that is never answered
+         (a child coroutine that never finishes, a channel nobody pushes to)
+         would otherwise hold its ParaTest worker until the CI job's own
+         timeout, and the run would end with a crashed worker and no test
+         name (#1). With a limit armed, the framework's test runner cancels
+         every coroutine of the test at the deadline and PHPUnit reports the
+         test as aborted, which failOnRisky above makes a failure, and the
+         worker goes on to the next test. It reaches the test's coroutines
+         only: a hang inside the engine's own teardown of the test's event
+         loop is beyond it. 60 seconds is the limit the framework's own suite
+         runs with; no test here takes more than a few. Needs pcntl, which
+         the CI image has. -->
+
     <testsuites>
         <!-- The package's pure logic, run without booting an application. Every
              method carries #[UnitTest], so anything that reaches for a facade or
@@ -61,6 +77,17 @@
         <env name="AUDITING_TABLE" value="audits"/>
         <env name="AUDITING_DETAILS_TABLE" value="audit_details"/>
         <env name="AUDITING_RUN_MIGRATIONS" value="true"/>
+        <!-- hypervel/components ships Telescope, and package discovery boots it
+             into the Workbench app, recording every query. At the end of each
+             test's coroutine its deferred store then fails against a
+             `telescope_entries` table the suite never migrates, and the error
+             and its stack trace are written to the log file from inside the
+             coroutine: a hooked file write, handed to Swoole's async thread
+             pool as the last thing before the test's event loop shuts that
+             pool down. Found while chasing #1, a worker deadlocked in that
+             very shutdown; the deadlock itself is Swoole 6.3.0RC1's, see
+             CONTRIBUTING.md. -->
+        <env name="TELESCOPE_ENABLED" value="false"/>
 
         <ini name="error_reporting" value="-1"/>
         <ini name="display_errors" value="on"/>

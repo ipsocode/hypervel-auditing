@@ -32,6 +32,10 @@ env:
   AUDITING_TABLE: audits
   AUDITING_DETAILS_TABLE: audit_details
   AUDITING_RUN_MIGRATIONS: true
+  # hypervel/components ships Telescope, and discovery boots it into the
+  # Workbench app. Off, or it records every query and fails at the end of each
+  # test against a table the suite never migrates; phpunit.xml says more.
+  TELESCOPE_ENABLED: false
 
 migrations:
   - workbench/database/migrations

@@ -36,7 +36,7 @@ Hypervel 0.4 is released.
 | Pin | Since | Why | It goes when |
 |---|---|---|---|
 | `"phpunit/phpunit": "~13.4.3"` | 2026-10-20 (`13.3.*` earlier that day, `>=13.0.3 <13.4` from 2026-10-02) | The constraint `hypervel/components` keeps in its own `require-dev`, with ParaTest `^7.27.2`, its floor for PHPUnit 13.4. Components' parallel runner builds PHPUnit's internal `PhpHandler`, whose constructor changed in 13.4.0, so an untested minor release can break `--parallel`, and with it `composer test:coverage`, before any test runs; Testbench conflicts with 13.5. | `hypervel/components` lifts its own constraint, once Testbench is verified on PHPUnit 13.5: move this one to match. Composer never reads a dependency's `require-dev`, and Dependabot is told to leave PHPUnit alone, so this is done by hand. |
-| `"config": {"platform": {"ext-swoole": "6.3.0RC1"}}` | 2026-10-19 | `hypervel/components` `0.4.x-dev` requires `ext-swoole` `^6.3.0RC1`, and the CI image runs 6.3.0RC1. The pin makes every install resolve for that Swoole, whatever the machine running Composer has; a pin below what components requires fails resolution. | Swoole 6.3.0 is released and the CI image carries it: move the pin to it. Dependabot never reads `config.platform`, so this one is moved by hand. |
+| `"config": {"platform": {"ext-swoole": "6.3.0RC1"}}` | 2026-10-19 | `hypervel/components` `0.4.x-dev` requires `ext-swoole` `^6.3.0RC1`, and the CI image runs 6.3.0RC1. The pin makes every install resolve for that Swoole, whatever the machine running Composer has; a pin below what components requires fails resolution. 6.3.0RC1 can deadlock a test worker: its async thread pool's `shutdown()` clears its running flag without the mutex its threads check it under, so a thread can go to sleep after the wake-up and the join at the end of a test's event loop waits forever (#1; `src/os/async_thread.cc`, fixed on Swoole's `master` after the RC). Under load it hits about one run in four here, and no per-test limit reaches it. | Swoole 6.3.0 is released and the CI image carries it: move the pin to it. Dependabot never reads `config.platform`, so this one is moved by hand. |
 | `"hypervel/components": "0.4.x-dev"`, with `"minimum-stability": "dev"` and `"prefer-stable": true` | the first release | Hypervel 0.4 exists only as the `0.4.x-dev` branch. | Hypervel 0.4 is released: require `^0.4` and drop both stability keys (#26). |
 
 ## Checks
@@ -49,6 +49,10 @@ Hypervel 0.4 is released.
 | `composer test` | The suite through the Testbench CLI |
 | `composer test:parallel` | The suite through ParaTest |
 | `composer test:coverage` | The suite under PCOV, failing below 100% line coverage |
+
+A test runs inside a coroutine, and one whose coroutines never return is
+aborted after 60 seconds and reported as risky, which fails the run
+(`phpunit.xml` says why); the worker goes on to the next test.
 
 php-cs-fixer and PHPStan are configured like `hypervel/components`:
 `.php-cs-fixer.dist.php` loads its rules, verbatim, from
