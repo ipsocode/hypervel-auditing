@@ -39,6 +39,9 @@ trait AuditsRelationships
             $this->applyClosureToRelationship($relationCall, $callback);
         }
 
+        // Only the given ids can change, so only they are read on either side.
+        $this->limitToRelatedKeys($relationCall, $this->relatedKeysOf($relationCall, $id));
+
         $old = $relationCall->get($columns);
         $this->withoutPivotAuditing($relationCall, fn () => $relationCall->attach($id, $attributes, $touch));
         $new = $relationCall->get($columns);
@@ -59,6 +62,12 @@ trait AuditsRelationships
 
         if ($callback instanceof Closure) {
             $this->applyClosureToRelationship($relationCall, $callback);
+        }
+
+        // Detaching everything (null) affects the whole relation; otherwise only
+        // the given ids can change.
+        if ($ids !== null) {
+            $this->limitToRelatedKeys($relationCall, $this->relatedKeysOf($relationCall, $ids));
         }
 
         $old = $relationCall->get($columns);
@@ -88,14 +97,25 @@ trait AuditsRelationships
             $this->applyClosureToRelationship($relationCall, $callback);
         }
 
-        $old = $relationCall->get($columns);
+        // The keys attached now are a pluck on the query (an Eloquent pluck would hydrate
+        // a model per row to cast the key), not hydrated models. A sync that
+        // detaches can remove any of them; one that does not only touches the
+        // given ids that are already attached.
+        $current = $relationCall->toBase()->pluck($relationCall->getQualifiedRelatedKeyName())->all();
+        $given = $this->relatedKeysOf($relationCall, $ids);
+
+        $before = $detaching
+            ? $current
+            : array_values(array_intersect(array_map('strval', $current), array_map('strval', $given)));
+
+        $old = $this->relatedRows($relationCall, $before, $columns);
 
         $changes = $this->withoutPivotAuditing($relationCall, fn () => $relationCall->sync($ids, $detaching));
 
         if (collect($changes)->flatten()->isEmpty()) {
             $old = $new = collect([]);
         } else {
-            $new = $relationCall->get($columns);
+            $new = $this->relatedRows($relationCall, [...$changes['attached'], ...$changes['updated']], $columns);
         }
 
         $this->dispatchRelationAuditEvent($relationName, 'sync', $old, $new);
@@ -135,6 +155,54 @@ trait AuditsRelationships
         return $this->auditSync($relationName, collect(Arr::wrap($ids))->mapWithKeys(function ($id) use ($values) {
             return [$id => $values];
         }), $detaching, $columns, $callback);
+    }
+
+    /**
+     * The related keys a attach, detach or sync argument names, in the shapes
+     * those methods accept: a model, a collection, or an array of keys, models or
+     * key => pivot attributes.
+     *
+     * @return array<int, mixed>
+     */
+    private function relatedKeysOf(BelongsToMany $relation, mixed $ids): array
+    {
+        $relatedKey = $relation->getRelatedKeyName();
+
+        if ($ids instanceof Model) {
+            return [$ids->{$relatedKey}];
+        }
+
+        if ($ids instanceof Collection || is_array($ids)) {
+            return collect($ids)
+                ->map(fn ($item, $key) => $item instanceof Model ? $item->{$relatedKey} : (is_array($item) ? $key : $item))
+                ->values()
+                ->all();
+        }
+
+        return (array) $ids;
+    }
+
+    /**
+     * @param array<int, mixed> $keys
+     */
+    private function limitToRelatedKeys(BelongsToMany $relation, array $keys): void
+    {
+        $relation->whereIn($relation->getQualifiedRelatedKeyName(), $keys);
+    }
+
+    /**
+     * Reads only the given related rows, under the constraints already on the relation.
+     *
+     * @param array<int, mixed> $keys
+     * @param array<int, string> $columns
+     */
+    private function relatedRows(BelongsToMany $relation, array $keys, array $columns): Collection
+    {
+        if ($keys === []) {
+            return collect([]);
+        }
+
+        return (clone $relation)->whereIn($relation->getQualifiedRelatedKeyName(), $keys)->get($columns);
     }
 
     private function dispatchRelationAuditEvent(string $relationName, string $event, Collection $old, Collection $new): void

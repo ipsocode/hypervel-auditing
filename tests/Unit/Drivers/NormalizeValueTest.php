@@ -45,6 +45,20 @@ class NormalizeValueTest extends TestCase
     }
 
     #[UnitTest]
+    public function testFloatsThatTheCastWouldChangeKeepFullPrecision(): void
+    {
+        foreach ([0.1 + 0.2, 1.0000000000000002] as $value) {
+            $stored = $this->normalize($value);
+
+            $this->assertSame($value, (float) $stored);
+        }
+
+        $this->assertSame('0.30000000000000004', $this->normalize(0.1 + 0.2));
+        $this->assertNotSame($this->normalize(1.0), $this->normalize(1.0000000000000002));
+        $this->assertSame('1', $this->normalize(1.0));
+    }
+
+    #[UnitTest]
     public function testBackedEnumsReduceToTheirValue(): void
     {
         $this->assertSame('high', $this->normalize(Priority::High));

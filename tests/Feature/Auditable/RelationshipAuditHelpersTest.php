@@ -229,4 +229,28 @@ class RelationshipAuditHelpersTest extends TestCase
 
         $this->assertSame(['title' => 'a clean update'], $audit->new_values);
     }
+
+    public function testRelationHelpersHydrateOnlyTheRowsTheChangeCanTouch(): void
+    {
+        $extra = Category::factory()->count(20)->create();
+        $this->article->categories()->attach($extra->modelKeys());
+
+        $retrieved = 0;
+        Event::listen('eloquent.retrieved: ' . Category::class, function () use (&$retrieved): void {
+            ++$retrieved;
+        });
+
+        $this->article->auditAttach('categories', $this->categories['php']->getKey());
+        $this->assertLessThanOrEqual(2, $retrieved, 'attach reads the given id before and after');
+
+        $retrieved = 0;
+        $this->article->auditDetach('categories', [$this->categories['php']->getKey()]);
+        $this->assertLessThanOrEqual(2, $retrieved);
+
+        $retrieved = 0;
+        $this->article->auditSyncWithoutDetaching('categories', [$this->categories['testing']->getKey()]);
+        $this->assertLessThanOrEqual(2, $retrieved);
+
+        $this->assertNotEmpty($this->soleAudit('sync')['new']);
+    }
 }
