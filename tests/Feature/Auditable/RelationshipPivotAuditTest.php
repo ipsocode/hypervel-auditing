@@ -113,6 +113,17 @@ class RelationshipPivotAuditTest extends TestCase
         $this->pivotArticle()->categories()->attach($this->categories['php']->getKey());
     }
 
+    public function testAuditAttachThroughAnAuditablePivotRecordsOnlyTheRelationAudit(): void
+    {
+        $article = $this->pivotArticle();
+
+        $article->auditAttach('categories', $this->categories['php']->getKey());
+
+        $this->assertSame([$this->categories['php']->getKey()], $this->categoryIdsOf($article));
+        $this->assertSame(1, $article->audits()->where('event', 'attach')->count());
+        $this->assertSame(0, $this->pivotAuditCount());
+    }
+
     public function testAuditDetachThroughAnAuditablePivotRecordsOnlyTheRelationAudit(): void
     {
         $article = $this->pivotArticle();

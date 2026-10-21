@@ -53,4 +53,18 @@ class RightRedactorTest extends TestCase
         $this->assertSame('cor##################', RightRedactor::redact($value));
         $this->assertSame('##################ery', LeftRedactor::redact($value));
     }
+
+    #[UnitTest]
+    public function testItCutsMultiByteTextByCharactersNotBytes(): void
+    {
+        foreach (['José', '田中', 'Hello 🙂'] as $value) {
+            $redacted = RightRedactor::redact($value);
+
+            $this->assertTrue(mb_check_encoding($redacted, 'UTF-8'));
+            $this->assertSame(mb_strlen($value, 'UTF-8'), mb_strlen($redacted, 'UTF-8'));
+        }
+
+        $this->assertSame('J###', RightRedactor::redact('José'));
+        $this->assertSame('田#', RightRedactor::redact('田中'));
+    }
 }
