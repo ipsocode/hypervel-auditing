@@ -112,9 +112,6 @@ class AuditableObserver
             return;
         }
 
-        // unsetRelations(): withoutRelations() returns a cleared clone and leaves this model untouched.
-        $model->unsetRelations();
-
         try {
             // DispatchAudit captures the payload, batch included, in its constructor.
             app()->make('events')->dispatch(new DispatchAudit($model));
