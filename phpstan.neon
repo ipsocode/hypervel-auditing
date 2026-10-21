@@ -28,11 +28,15 @@ parameters:
     # caches the whole of tests/.cache/, so this path and that step have to agree.
     tmpDir: tests/.cache/phpstan
 
-    # src/ only. tests/ and workbench/ are fixtures — the Workbench application exists to be
-    # a deliberately shaped host app, not to be type-correct — and analysing them would
-    # report on scaffolding rather than on shipped code.
+    # src/ only, plus tests/PHPStan/Fixtures/. PHPStan analyses a trait's body only through a
+    # class that uses it, and no class in src/ uses Auditable or CausesAudits (applications
+    # do), so two minimal fixture classes stand in for them. The rest of tests/ and
+    # workbench/ are fixtures — the Workbench application exists to be a deliberately shaped
+    # host app, not to be type-correct — and analysing them would report on scaffolding
+    # rather than on shipped code.
     paths:
         - src
+        - tests/PHPStan/Fixtures
 
     # The first of two deliberate divergences from components, which turns this off because
     # its global patterns belong to many packages and a run over a subset of them would
@@ -62,3 +66,8 @@ parameters:
         # properties, so PHPStan cannot see either.
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Models\\Audit::\$(batch_uuid|details)\.$#'
+
+        # The same for the Audit contract, which declares behaviour, not storage. The
+        # Auditable trait reads the audit's polymorphic columns off it in transitionTo().
+        - identifier: property.notFound
+          message: '#^Access to an undefined property Ipsocode\\Auditing\\Contracts\\Audit::\$auditable_(type|id)\.$#'

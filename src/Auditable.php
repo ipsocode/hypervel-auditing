@@ -25,15 +25,14 @@ use Ipsocode\Auditing\Support\ContextKeys;
 use Throwable;
 use UnitEnum;
 
-// @phpstan-ignore trait.unused (applications use it on their own models, outside src/)
 trait Auditable
 {
     use AuditsRelationships;
 
-    /** @var array */
+    /** @var array<int, string> */
     protected $excludedAttributes = [];
 
-    /** @var string */
+    /** @var null|string */
     public $auditEvent;
 
     /**
@@ -45,16 +44,16 @@ trait Auditable
      */
     public static $auditingDisabled = false;
 
-    /** @var null|array */
+    /** @var null|array<string, mixed> */
     public $auditCustomOld;
 
-    /** @var null|array */
+    /** @var null|array<string, mixed> */
     public $auditCustomNew;
 
     /** @var bool */
     public $isCustomEvent = false;
 
-    /** @var array */
+    /** @var array<string, mixed> */
     public $preloadedResolverData = [];
 
     /**
@@ -113,10 +112,17 @@ trait Auditable
         }
     }
 
+    /**
+     * @return MorphMany<AuditModel, Model>
+     */
     public function audits(): MorphMany
     {
+        /** @var class-string<AuditModel> $implementation */
+        $implementation = Config::get('auditing.implementation');
+
+        // @phpstan-ignore return.type (the contract declares the declaring model as Model, while morphMany() infers $this; the relation is the same)
         return $this->morphMany(
-            Config::get('auditing.implementation'),
+            $implementation,
             'auditable'
         );
     }
@@ -125,7 +131,7 @@ trait Auditable
      * This record's audits that recorded the field, oldest first, with their
      * details loaded. Returns the builder, so it can be narrowed further.
      *
-     * @return MorphMany<AuditModel, $this>
+     * @return MorphMany<AuditModel, Model>
      */
     public function auditHistory(string $field): MorphMany
     {
@@ -161,6 +167,7 @@ trait Auditable
                 $this->excludedAttributes[] = $this->getUpdatedAtColumn();
             }
             if (static::isSoftDeletable()) {
+                // @phpstan-ignore method.notFound (isSoftDeletable() is true only when the model uses SoftDeletes)
                 $this->excludedAttributes[] = $this->getDeletedAtColumn();
             }
         }
@@ -191,6 +198,9 @@ trait Auditable
         return $this->auditInclude ?? [];
     }
 
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>}
+     */
     protected function getRetrievedEventAttributes(): array
     {
         // A read changes no attributes; only metadata is stored.
@@ -200,6 +210,9 @@ trait Auditable
         ];
     }
 
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>}
+     */
     protected function getCreatedEventAttributes(): array
     {
         $new = [];
@@ -216,6 +229,9 @@ trait Auditable
         ];
     }
 
+    /**
+     * @return array{null|array<string, mixed>, null|array<string, mixed>}
+     */
     protected function getCustomEventAttributes(): array
     {
         return [
@@ -224,6 +240,9 @@ trait Auditable
         ];
     }
 
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>}
+     */
     protected function getUpdatedEventAttributes(): array
     {
         $old = [];
@@ -242,6 +261,9 @@ trait Auditable
         ];
     }
 
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>}
+     */
     protected function getDeletedEventAttributes(): array
     {
         $old = [];
@@ -258,6 +280,9 @@ trait Auditable
         ];
     }
 
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>}
+     */
     protected function getRestoredEventAttributes(): array
     {
         // A restored event is a deleted event in reverse.
@@ -349,6 +374,7 @@ trait Auditable
             'auditable_id' => $this->getKey(),
             'auditable_type' => $this->getMorphClass(),
             $morphPrefix . '_id' => $user ? $user->getAuthIdentifier() : null,
+            // @phpstan-ignore method.notFound (the resolved user is an Eloquent model, which Authenticatable does not declare)
             $morphPrefix . '_type' => $user ? $user->getMorphClass() : null,
             'tags' => empty($tags) ? null : $tags,
             'batch_uuid' => $this->getAuditBatchUuid(),
@@ -384,6 +410,9 @@ trait Auditable
         throw new AuditingException('Invalid UserResolver implementation');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function runResolvers(): array
     {
         $resolved = [];

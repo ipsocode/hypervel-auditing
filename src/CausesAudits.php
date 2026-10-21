@@ -11,7 +11,6 @@ use Ipsocode\Auditing\Models\Audit as AuditModel;
 /**
  * For the user model: the audits it caused, the inverse of an audit's `user` relation.
  */
-// @phpstan-ignore trait.unused (applications use it on their own user model, outside src/)
 trait CausesAudits
 {
     /**
@@ -21,8 +20,11 @@ trait CausesAudits
     {
         $morphPrefix = Config::get('auditing.user.morph_prefix');
 
+        /** @var class-string<AuditModel> $implementation */
+        $implementation = Config::get('auditing.implementation');
+
         return $this->morphMany(
-            Config::get('auditing.implementation'),
+            $implementation,
             $morphPrefix,
             $morphPrefix . '_type',
             $morphPrefix . '_id'
