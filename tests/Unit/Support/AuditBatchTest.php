@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing\Tests\Unit\Support;
 
 use Hypervel\Context\CoroutineContext;
 use Hypervel\Foundation\Testing\Attributes\UnitTest;
+use InvalidArgumentException;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\ContextKeys;
 use Ipsocode\Auditing\Tests\Unit\TestCase;
@@ -51,10 +52,28 @@ class AuditBatchTest extends TestCase
     #[UnitTest]
     public function testAnExplicitIdIsUsedAsGiven(): void
     {
-        $this->assertSame(
-            'request-42',
-            AuditBatch::within(fn () => AuditBatch::current(), 'request-42')
-        );
+        $uuid = '0197c0de-0000-7000-8000-000000000042';
+
+        $this->assertSame($uuid, AuditBatch::within(fn () => AuditBatch::current(), $uuid));
+    }
+
+    #[UnitTest]
+    public function testAnExplicitIdThatIsNotAUuidIsRejectedBeforeTheCallbackRuns(): void
+    {
+        $ran = false;
+
+        try {
+            AuditBatch::within(function () use (&$ran) {
+                $ran = true;
+            }, 'request-42');
+
+            $this->fail('A non-UUID batch id should have been rejected.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('request-42', $e->getMessage());
+        }
+
+        $this->assertFalse($ran);
+        $this->assertNull(AuditBatch::current());
     }
 
     #[UnitTest]
@@ -73,12 +92,12 @@ class AuditBatchTest extends TestCase
     public function testANestedCallWithItsOwnIdRestoresTheEnclosingBatch(): void
     {
         $seen = AuditBatch::within(function () {
-            AuditBatch::within(fn () => null, 'inner');
+            AuditBatch::within(fn () => null, '0197c0de-0000-7000-8000-00000000000a');
 
             return AuditBatch::current();
-        }, 'outer');
+        }, '0197c0de-0000-7000-8000-00000000000b');
 
-        $this->assertSame('outer', $seen);
+        $this->assertSame('0197c0de-0000-7000-8000-00000000000b', $seen);
     }
 
     #[UnitTest]

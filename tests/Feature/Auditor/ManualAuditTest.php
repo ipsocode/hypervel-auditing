@@ -221,17 +221,17 @@ class ManualAuditTest extends TestCase
 
         $audit = Auditor::withinBatch(
             fn () => Auditor::on($article)->as('exported')->log(),
-            'export-batch',
+            '0197c0de-0000-7000-8000-000000000101',
         );
 
-        $this->assertSame('export-batch', $audit->batch_uuid);
+        $this->assertSame('0197c0de-0000-7000-8000-000000000101', $audit->batch_uuid);
     }
 
     public function testAManualAuditDoesNotInheritABatchThatHasSinceClosed(): void
     {
         // The save's batch is never kept on the model, so a later manual audit
         // gets whatever batch is open when it is logged: here, none.
-        $article = Auditor::withinBatch(fn () => $this->article(), 'save-batch');
+        $article = Auditor::withinBatch(fn () => $this->article(), '00000000-0000-0000-0000-000000001184');
 
         $audit = Auditor::on($article)->as('exported')->log();
 
