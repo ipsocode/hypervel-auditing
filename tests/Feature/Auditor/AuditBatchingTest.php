@@ -78,10 +78,10 @@ class AuditBatchingTest extends TestCase
     {
         $article = Auditor::withinBatch(
             fn () => Article::factory()->create(),
-            'workflow-77',
+            '0197c0de-0000-7000-8000-000000000102',
         );
 
-        $this->assertSame('workflow-77', $article->audits()->sole()->batch_uuid);
+        $this->assertSame('0197c0de-0000-7000-8000-000000000102', $article->audits()->sole()->batch_uuid);
     }
 
     public function testWithinBatchReturnsTheCallbackResult(): void
@@ -91,10 +91,10 @@ class AuditBatchingTest extends TestCase
 
     public function testTheBatchIdReachesTheMetadata(): void
     {
-        $article = Auditor::withinBatch(fn () => Article::factory()->create(), 'metadata-batch');
+        $article = Auditor::withinBatch(fn () => Article::factory()->create(), '00000000-0000-0000-0000-000000001364');
 
         $this->assertSame(
-            'metadata-batch',
+            '00000000-0000-0000-0000-000000001364',
             $article->audits()->sole()->getMetadata()['audit_batch_uuid']
         );
     }
@@ -113,11 +113,11 @@ class AuditBatchingTest extends TestCase
             }], copyContext: true);
 
             [$concurrent] = Concurrency::run([fn () => Article::factory()->create()]);
-        }, 'parent-batch');
+        }, '0197c0de-0000-7000-8000-000000000103');
 
         $this->assertNull($fresh->audits()->sole()->batch_uuid);
-        $this->assertSame('parent-batch', $copied->audits()->sole()->batch_uuid);
-        $this->assertSame('parent-batch', $concurrent->audits()->sole()->batch_uuid);
+        $this->assertSame('0197c0de-0000-7000-8000-000000000103', $copied->audits()->sole()->batch_uuid);
+        $this->assertSame('0197c0de-0000-7000-8000-000000000103', $concurrent->audits()->sole()->batch_uuid);
     }
 
     public function testFlushingTestStateClosesAnAbandonedBatch(): void
@@ -143,7 +143,7 @@ class AuditBatchingTest extends TestCase
 
         $article = Auditor::withinBatch(
             fn () => Article::factory()->create(['title' => 'V1']),
-            'queued-batch',
+            '0197c0de-0000-7000-8000-000000000104',
         );
 
         // The batch is closed now — which is all a worker coroutine ever sees,
@@ -156,7 +156,7 @@ class AuditBatchingTest extends TestCase
         // replayed from the serialized event after it closed. Only the payload
         // that crossed serialization can explain the second.
         $this->assertSame(
-            ['queued-batch', 'queued-batch'],
+            ['0197c0de-0000-7000-8000-000000000104', '0197c0de-0000-7000-8000-000000000104'],
             $article->audits()->pluck('batch_uuid')->all()
         );
     }
@@ -169,14 +169,14 @@ class AuditBatchingTest extends TestCase
 
         $restored = Auditor::withinBatch(
             fn () => unserialize(serialize(new DispatchAudit($article))),
-            'round-trip-batch',
+            '0197c0de-0000-7000-8000-000000000105',
         );
 
         // No batch is open now; the restored model carries the one it was
         // dispatched under, and a second trip must not lose it.
         $again = unserialize(serialize($restored));
 
-        $this->assertSame('round-trip-batch', $again->model->getAuditBatchUuid());
+        $this->assertSame('0197c0de-0000-7000-8000-000000000105', $again->model->getAuditBatchUuid());
         $this->assertSame(['title' => 'V2'], $again->model->getDirty());
     }
 
@@ -186,7 +186,7 @@ class AuditBatchingTest extends TestCase
 
         $article = Auditor::withinBatch(
             fn () => Article::factory()->create(),
-            'queued-batch',
+            '0197c0de-0000-7000-8000-000000000104',
         );
 
         // The batch travels in the event's payload. Left on the model, it would
@@ -202,11 +202,11 @@ class AuditBatchingTest extends TestCase
 
         Auditor::withinBatch(
             fn () => $article->auditAttach('categories', $category),
-            'pivot-batch',
+            '0197c0de-0000-7000-8000-000000000106',
         );
 
         $this->assertSame(
-            'pivot-batch',
+            '0197c0de-0000-7000-8000-000000000106',
             $article->audits()->where('event', 'attach')->sole()->batch_uuid
         );
     }
@@ -215,7 +215,7 @@ class AuditBatchingTest extends TestCase
     {
         // Saving inside a batch must not leave anything on the model that a
         // later audit picks up: this attach belongs to no batch.
-        $article = Auditor::withinBatch(fn () => Article::factory()->create(), 'save-batch');
+        $article = Auditor::withinBatch(fn () => Article::factory()->create(), '00000000-0000-0000-0000-000000001185');
         $category = Category::factory()->create();
 
         $article->auditAttach('categories', $category);

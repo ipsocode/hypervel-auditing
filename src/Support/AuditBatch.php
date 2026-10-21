@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing\Support;
 
 use Hypervel\Context\CoroutineContext;
 use Hypervel\Support\Str;
+use InvalidArgumentException;
 
 /**
  * The batch the audits written by one logical operation belong to.
@@ -32,10 +33,16 @@ class AuditBatch
      * Run a callback with a batch open, stamping every audit it writes, and
      * return its result.
      *
-     * @param null|string $batchUuid an explicit id (e.g. a request or job id) instead of a generated one
+     * @param null|string $batchUuid an explicit UUID (e.g. the id of an import) instead of a generated one
+     *
+     * @throws InvalidArgumentException when the explicit id is not a UUID, which the `batch_uuid` column rejects
      */
     public static function within(callable $callback, ?string $batchUuid = null): mixed
     {
+        if ($batchUuid !== null && ! Str::isUuid($batchUuid)) {
+            throw new InvalidArgumentException("The batch id [{$batchUuid}] is not a UUID.");
+        }
+
         $previous = static::current();
 
         // A nested call joins the enclosing batch unless it names its own id, so

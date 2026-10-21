@@ -59,13 +59,13 @@ class AfterCommitDispatchTest extends TestCase
         // The batch closes before the transaction commits, so it is gone by the
         // time the payload is built unless the event captured it at dispatch.
         DB::transaction(function () use ($article): void {
-            Auditor::withinBatch(fn () => $article->update(['title' => 'V2']), 'closed-batch');
+            Auditor::withinBatch(fn () => $article->update(['title' => 'V2']), '00000000-0000-0000-0000-00000000101e');
 
             $this->assertNull(Auditor::currentBatch());
         });
 
         $this->assertSame(
-            'closed-batch',
+            '00000000-0000-0000-0000-00000000101e',
             $article->audits()->where('event', 'updated')->sole()->batch_uuid
         );
     }

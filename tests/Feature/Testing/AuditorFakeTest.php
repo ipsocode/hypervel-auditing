@@ -170,9 +170,9 @@ class AuditorFakeTest extends TestCase
             $article->update(['title' => 'Revised']);
 
             return $fake->recorded()->sole()->batch_uuid;
-        }, 'batch-1');
+        }, '00000000-0000-0000-0000-0000000011eb');
 
-        $this->assertSame('batch-1', $result);
+        $this->assertSame('00000000-0000-0000-0000-0000000011eb', $result);
         $this->assertNull(Auditor::currentBatch());
 
         $this->assertSame($user, Auditor::actingAs($user, fn () => Auditor::currentCauser()));
