@@ -32,9 +32,9 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
 
         $auditClass = get_class($model->audits()->getModel());
 
-        // Both writes run on the Audit model's own connection (`auditing.connection`
-        // or a custom implementation's override): a transaction on the default
-        // connection would not roll back a half-written audit.
+        // Both writes run on the Audit model's own connection (`auditing.connection`;
+        // AuditDetail::getConnectionName() reads nothing else): a transaction on the
+        // default connection would not roll back a half-written audit.
         return (new $auditClass)->getConnection()->transaction(function () use ($auditClass, $data, $oldValues, $newValues) {
             /** @var Audit $audit */
             $audit = call_user_func([$auditClass, 'create'], $data);
