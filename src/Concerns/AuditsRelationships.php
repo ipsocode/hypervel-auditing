@@ -14,6 +14,7 @@ use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Contracts\Auditable as ContractsAuditable;
 use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Swoole\Coroutine\CanceledException;
 use Throwable;
 
 /**
@@ -278,6 +279,8 @@ trait AuditsRelationships
     {
         try {
             $closure($relation);
+        } catch (CanceledException $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             throw new AuditingException(
                 "Invalid Closure for {$relation->getRelationName()} Relationship: {$exception->getMessage()}",

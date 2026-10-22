@@ -8,6 +8,7 @@ use Exception;
 use Hypervel\Support\Facades\Auth;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\UserResolver as Resolver;
+use Swoole\Coroutine\CanceledException;
 
 class UserResolver implements Resolver
 {
@@ -21,6 +22,8 @@ class UserResolver implements Resolver
         foreach ($guards as $guard) {
             try {
                 $authenticated = Auth::guard($guard)->check();
+            } catch (CanceledException $exception) {
+                throw $exception;
             } catch (Exception $exception) {
                 continue;
             }

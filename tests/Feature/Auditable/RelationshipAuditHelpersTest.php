@@ -10,6 +10,7 @@ use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Tests\TestCase;
 use RuntimeException;
+use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\Category;
 
@@ -158,6 +159,20 @@ class RelationshipAuditHelpersTest extends TestCase
             true,
             ['*'],
             fn () => throw new RuntimeException('bad closure')
+        );
+    }
+
+    public function testACancelledClosureIsRethrownUnwrapped(): void
+    {
+        $this->expectException(CanceledException::class);
+
+        $this->article->auditAttach(
+            'categories',
+            $this->categories['php']->getKey(),
+            [],
+            true,
+            ['*'],
+            fn () => throw new CanceledException
         );
     }
 

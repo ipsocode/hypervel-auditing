@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Resolvers;
 
+use Hypervel\Support\Facades\Auth;
+use Ipsocode\Auditing\Resolvers\UserResolver;
 use Ipsocode\Auditing\Tests\TestCase;
+use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\User;
 
@@ -58,5 +61,18 @@ class UserResolverTest extends TestCase
         $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
 
         $this->assertNull($audit->user_id);
+    }
+
+    public function testACancelledGuardCheckIsRethrownAndLaterGuardsAreNotTried(): void
+    {
+        $guard = $this->app->get('config')->get('auth.defaults.guard');
+
+        $this->app->get('config')->set('auditing.user.guards', [$guard, 'not-a-configured-guard']);
+
+        Auth::shouldReceive('guard')->once()->with($guard)->andThrow(new CanceledException);
+
+        $this->expectException(CanceledException::class);
+
+        UserResolver::resolve();
     }
 }
