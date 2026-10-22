@@ -8,6 +8,7 @@ use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
+use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\VisibleArticle;
 
@@ -111,6 +112,31 @@ class AuditableBranchesTest extends TestCase
         } finally {
             $this->app->setRunningInConsole(true);
         }
+    }
+
+    public function testACancellationWhileCheckingAuditingIsRethrown(): void
+    {
+        $model = new class extends Article {
+            public static bool $throws = false;
+
+            public static function isAuditingEnabled(): bool
+            {
+                if (self::$throws) {
+                    throw new CanceledException;
+                }
+
+                return parent::isAuditingEnabled();
+            }
+        };
+
+        $model::$throws = true;
+
+        $registers = (fn (): bool => static::shouldRegisterAuditObserver())
+            ->bindTo(null, $model::class);
+
+        $this->expectException(CanceledException::class);
+
+        $registers();
     }
 
     public function testAuditSettingsAcceptNumericStringConfigValues(): void
