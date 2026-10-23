@@ -10,7 +10,7 @@ use Ipsocode\Auditing\Contracts\Resolver;
 
 class IpAddressResolver implements Resolver
 {
-    public static function resolve(Auditable $auditable): string
+    public static function resolve(Auditable $auditable): ?string
     {
         return $auditable->preloadedResolverData['ip_address'] ?? Request::ip();
     }
