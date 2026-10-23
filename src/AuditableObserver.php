@@ -132,7 +132,12 @@ class AuditableObserver
 
     protected function fireDispatchingAuditEvent(Auditable $model): bool
     {
-        return app()->make('events')
-            ->until(new DispatchingAudit($model)) !== false;
+        $events = app()->make('events');
+
+        if (! $events->hasListeners(DispatchingAudit::class)) {
+            return true;
+        }
+
+        return $events->until(new DispatchingAudit($model)) !== false;
     }
 }

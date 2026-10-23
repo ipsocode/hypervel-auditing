@@ -347,7 +347,11 @@ trait Auditable
             ));
         }
 
-        $this->resolveAuditExclusions();
+        // A custom or retrieved audit reads no exclusions; every other getter,
+        // a mapped one included, may call isAttributeAuditable().
+        if (! $this->isCustomEvent && $attributeGetter !== 'getRetrievedEventAttributes') {
+            $this->resolveAuditExclusions();
+        }
 
         [$old, $new] = $this->{$attributeGetter}();
 
