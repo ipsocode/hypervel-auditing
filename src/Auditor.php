@@ -135,9 +135,11 @@ class Auditor extends Manager implements Contracts\Auditor
 
         $driver->prune($model);
 
-        $this->container->make('events')->dispatch(
-            new Audited($model, $driver, $audit)
-        );
+        $events = $this->container->make('events');
+
+        if ($events->hasListeners(Audited::class)) {
+            $events->dispatch(new Audited($model, $driver, $audit));
+        }
 
         return $audit;
     }
@@ -152,9 +154,12 @@ class Auditor extends Manager implements Contracts\Auditor
 
     protected function fireAuditingEvent(Auditable $model, AuditDriver $driver): bool
     {
-        return $this
-            ->container
-            ->make('events')
-            ->until(new Auditing($model, $driver)) !== false;
+        $events = $this->container->make('events');
+
+        if (! $events->hasListeners(Auditing::class)) {
+            return true;
+        }
+
+        return $events->until(new Auditing($model, $driver)) !== false;
     }
 }
