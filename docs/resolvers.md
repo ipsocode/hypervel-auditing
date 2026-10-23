@@ -12,7 +12,7 @@ audits are queued.
 | Key | Class | Value |
 |---|---|---|
 | `ip_address` | `Resolvers\IpAddressResolver` | `Request::ip()` |
-| `user_agent` | `Resolvers\UserAgentResolver` | The `User-Agent` header, or `''` |
+| `user_agent` | `Resolvers\UserAgentResolver` | The `User-Agent` header, or `''`, cut to the column's 1 023 characters |
 | `url` | `Resolvers\UrlResolver` | `Request::fullUrl()` for a request. In a console process, the command line, such as `artisan import:articles --fresh`, or `'console'` when there is none |
 
 The command line comes from `$_SERVER['argv']`, because the request Hypervel
