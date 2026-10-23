@@ -113,19 +113,21 @@ Each audit path reads the two keys at a different point:
 
 | Path | `auditing.enabled` | `auditing.console` |
 |---|---|---|
-| Model events, written inline | Once, when the model class boots in the worker | Once, at the same point |
-| Model events, queued | At boot, and again when the job runs | At boot only |
+| Model events, written inline | When the class boots, and on every event | On every event |
+| Model events, queued | When the class boots, on every event, and again when the job runs | On every event |
 | Relationship helpers | Every time, by `Listeners\RecordCustomAudit` | Not read |
 | Manual audits (`Auditor::on()`) | Not read | Not read |
 
-At boot, the trait registers the model's observer only when auditing is
-enabled for the process, and a class boots once per worker. This means:
+At boot, the trait registers the model's observer only when `auditing.enabled`
+is true, and a class boots once per worker. The observer checks both keys on
+every event. This means:
 
-- A runtime change reaches relationship audits and the jobs that write queued
-  audits, because both read the key each time. A model class that has already
-  booted keeps writing its inline audits until the worker restarts.
-- A model class that boots while auditing is off records no model events for
-  the rest of the worker's life, even after the switch is turned back on.
+- A runtime change reaches model events, relationship audits and the jobs that
+  write queued audits, because each reads the keys every time. Both keys are
+  worker-global: change them at boot or in tests, not from a request.
+- A model class that boots while `auditing.enabled` is off registers no
+  observer and records no model events for the rest of the worker's life, even
+  after the switch is turned back on. `auditing.console` has no such limit.
 - Queued audits handed over from a request are written on a `queue:work`
   worker whatever `auditing.console` says, but models saved by jobs on that
   worker are audited only when it is `true`.

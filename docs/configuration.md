@@ -70,19 +70,20 @@ matching contract throws an `AuditingException` whenever an audit needs it.
 
 ## Switches read at boot
 
-`enabled` and `console` are read when each model class boots. The class
-registers its audit observer only if `enabled` is true and, in a console
-process, `console` is true too. Artisan commands, `queue:work` included, are
-console processes; the HTTP server is not. A class that boots with either
-switch off records no model events until the process restarts.
+A model class registers its audit observer when it boots, only if `enabled`
+is true. The observer then checks `enabled` and, in a console process,
+`console` on every event it audits, so a class that booted with `console` off
+records its next event once `console` is turned on. Artisan commands,
+`queue:work` included, are console processes; the HTTP server is not. A class
+that boots with `enabled` off registers no observer and records no model events
+until the process restarts.
 
-After boot, `enabled` is still read on every audit by the two listeners that
-write [pivot audits](relationship-auditing.md) and
-[queued model audits](queued-auditing.md), so turning it off at runtime stops
-those two paths at once. It does not stop inline model audits of classes that
-have already booted, and [manual audits](manual-audits.md) never read it.
-To pause auditing for a stretch of code, use `withoutAuditing()`; see
-[Disabling auditing](disabling-auditing.md).
+`enabled` is also read when a [queued model audit](queued-auditing.md) is
+written and for every [pivot audit](relationship-auditing.md), and
+[manual audits](manual-audits.md) never read either switch. Both values are
+worker-global, as the framework's config is: change them at boot or in tests,
+not from a request. To pause auditing for a stretch of code, use
+`withoutAuditing()`; see [Disabling auditing](disabling-auditing.md).
 
 ## The audit connection
 

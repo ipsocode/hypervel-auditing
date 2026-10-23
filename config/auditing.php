@@ -8,11 +8,12 @@ return [
     | Auditing Enabled
     |--------------------------------------------------------------------------
     |
-    | A model class checks this once, when it first boots on the worker, and
-    | registers its audit observer only if it is true (in a console process,
-    | `console` below must be true as well). Pivot/custom audits and queued
-    | model audits check it again on every audit, so turning it off after boot
-    | stops those paths only. Manual audits (Auditor::on()) never check it.
+    | A model class registers its audit observer when it first boots on the
+    | worker, only if this is true. The observer then checks it, and in a
+    | console process `console` below, on every audited event, as do pivot/custom
+    | audits and queued model audits, so changing it after boot takes effect. The
+    | value is worker-global: change it at boot or in tests, not from a request.
+    | Manual audits (Auditor::on()) never check it.
     |
     */
 
@@ -286,7 +287,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Whether model events are audited in a console process, such as
-    | `php artisan db:seed`. It is checked together with `enabled` above.
+    | `php artisan db:seed`. It is checked together with `enabled` above, on
+    | every audited event, so it can be turned on after a model class has booted.
     |
     */
 

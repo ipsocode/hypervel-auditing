@@ -94,7 +94,7 @@ trait Auditable
     protected static function shouldRegisterAuditObserver(): bool
     {
         try {
-            return (bool) App::getFacadeRoot() && static::isAuditingEnabled();
+            return (bool) App::getFacadeRoot() && (bool) Config::get('auditing.enabled');
         } catch (Throwable $e) {
             // Logged: a class that never gets its observer is hard to diagnose.
             // The log call is guarded too, since it can fail against the same

@@ -5,13 +5,14 @@ audit holds, and the per-model properties and hooks that change either.
 
 ## When a model is audited
 
-A model class decides once, when it boots, whether to register its audit
-observer: it does so only if `auditing.enabled` is true and, in a console
-process, `auditing.console` is true as well. Artisan commands run as console
-processes, `db:seed` and `queue:work` included; the HTTP server, although
-started from Artisan, does not. A class that boots while either switch is off
-records no model events for the rest of that process, even if the switch is
-turned on later.
+A model class registers its audit observer when it boots, only if
+`auditing.enabled` is true. On each event the model audits, the observer
+checks `auditing.enabled` and, in a console process, `auditing.console` as
+well. Artisan commands run as console processes, `db:seed` and `queue:work`
+included; the HTTP server, although started from Artisan, does not. A class
+that boots while `auditing.enabled` is off records no model events for the rest
+of that process; one that boots with `auditing.console` off records its next
+event once that is turned on.
 
 Once registered, the observer handles the five model events below, audits the
 ones enabled for the model, and writes each audit inline, on the coroutine that
