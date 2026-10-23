@@ -135,8 +135,8 @@ trait Auditable
      */
     public function auditHistory(string $field): MorphMany
     {
-        // `created_at` has whole-second precision, so same-second audits tie
-        // on it; the auto-incrementing key breaks the tie in insertion order.
+        // Two audits can still share a millisecond, so the auto-incrementing
+        // key breaks the tie in insertion order.
         $audits = $this->audits();
 
         return $audits->forField($field)

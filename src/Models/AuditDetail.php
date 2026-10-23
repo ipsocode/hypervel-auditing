@@ -23,6 +23,11 @@ class AuditDetail extends Model
      */
     public const ?string UPDATED_AT = null;
 
+    /**
+     * The column holds milliseconds; the grammar default would write whole seconds.
+     */
+    protected ?string $dateFormat = 'Y-m-d H:i:s.v';
+
     protected array $fillable = [
         'audit_id',
         'field',
