@@ -61,19 +61,33 @@ trait Auditable
     /**
      * Registers the observer's methods as bound callables on one instance: the
      * observer is stateless, so every coroutine shares it, and nothing is
-     * resolved per fire (`retrieved` fires for every hydrated row). Deferred
-     * with whenBooted() so it registers once the class has booted, after the
-     * listeners the model adds in boot() and booted().
+     * resolved per fire. Deferred with whenBooted() so it registers once the
+     * class has booted, after the listeners the model adds in boot() and
+     * booted().
+     *
+     * `retrieved` fires for every hydrated row, so it is listened for only when
+     * the class audits it. That is decided here, once per class, from
+     * `$auditEvents` or `auditing.events`; the other events are checked on
+     * every fire. The instance is safe to build: the class is marked booted
+     * before this runs, and the framework's observe() does the same.
      */
     public static function bootAuditable(): void
     {
         static::whenBooted(function () {
-            if (static::shouldRegisterAuditObserver()) {
-                $observer = new AuditableObserver;
+            if (! static::shouldRegisterAuditObserver()) {
+                return;
+            }
 
-                foreach (AuditableObserver::EVENTS as $event) {
-                    static::registerModelEvent($event, [$observer, $event]);
+            $observer = new AuditableObserver;
+            // @phpstan-ignore new.static (an Eloquent model is built with no arguments, as the framework's observe() builds it)
+            $auditsRetrieved = (new static)->isEventAuditable('retrieved');
+
+            foreach (AuditableObserver::EVENTS as $event) {
+                if ($event === 'retrieved' && ! $auditsRetrieved) {
+                    continue;
                 }
+
+                static::registerModelEvent($event, [$observer, $event]);
             }
         });
     }
@@ -285,9 +299,9 @@ trait Auditable
 
     public function readyForAuditing(): bool
     {
-        // The event check first: it is cheap and turns away unaudited events (by
-        // default `retrieved`, fired per hydrated row) before the scoped-disable
-        // check walks the class hierarchy through the coroutine context.
+        // The event check first: it is cheap and turns away unaudited events
+        // before the scoped-disable check walks the class hierarchy through the
+        // coroutine context.
         if (! $this->isCustomEvent && ! $this->isEventAuditable($this->auditEvent)) {
             return false;
         }
@@ -491,8 +505,8 @@ trait Auditable
     /**
      * A pattern is an unanchored regex with `*` as a wildcard. Without regex
      * metacharacters that is a substring test, which is what the default config
-     * holds; this runs per configured entry on every model event, `retrieved`
-     * included, so a plain name skips the regex.
+     * holds; this runs per configured entry on every observed model event, so a
+     * plain name skips the regex.
      */
     private function auditEventMatches(string $pattern, string $event): bool
     {

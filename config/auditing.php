@@ -95,6 +95,7 @@ return [
     | deleted and restored. An entry is matched as a pattern (`*` is a
     | wildcard); a keyed entry maps the events it matches to the method that
     | supplies their values. A model's `$auditEvents` replaces this list.
+    | Whether `retrieved` is audited is read once, when a model class boots.
     |
     */
 

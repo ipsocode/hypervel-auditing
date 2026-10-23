@@ -33,7 +33,7 @@ Several keys can also be set per model, on the model itself; the table in
 | `resolvers.ip_address` | `Resolvers\IpAddressResolver::class` | Fills `ip_address` |
 | `resolvers.user_agent` | `Resolvers\UserAgentResolver::class` | Fills `user_agent` |
 | `resolvers.url` | `Resolvers\UrlResolver::class` | Fills `url`: the request URL, or the command line in a console process |
-| `events` | `['created', 'updated', 'deleted', 'restored']` | Events that are audited; `retrieved` is the fifth available. See [Recording](recording.md) |
+| `events` | `['created', 'updated', 'deleted', 'restored']` | Events that are audited; `retrieved` is the fifth available, and is read when a model class boots. See [Recording](recording.md#retrieved) |
 | `strict` | `false` | Also exclude `$hidden`, and everything outside a non-empty `$visible` |
 | `exclude` | `[]` | Attributes never audited; a model's `$auditExclude` replaces it |
 | `empty_values` | `true` | Write an audit even when both its sides are empty |
@@ -78,6 +78,10 @@ records its next event once `console` is turned on. Artisan commands,
 `queue:work` included, are console processes; the HTTP server is not. A class
 that boots with `enabled` off registers no observer and records no model events
 until the process restarts.
+
+`events` is read at boot for `retrieved` alone: a class whose list leaves it
+out never listens for it, and adding it later takes effect on restart. See
+[Recording](recording.md#retrieved).
 
 `enabled` is also read when a [queued model audit](queued-auditing.md) is
 written and for every [pivot audit](relationship-auditing.md), and

@@ -54,6 +54,13 @@ A `retrieved` audit always has two empty sides. `retrieved` is in
 `auditing.allowed_empty_values` by default, so its audits are written even when
 `auditing.empty_values` is off.
 
+Whether a model audits `retrieved` is decided once, when its class boots: the
+observer listens for `retrieved` only on a class whose `$auditEvents`, or
+`auditing.events` when it has none, includes it, so hydrating any other model
+runs no audit code. Adding `retrieved` to either list after the class has
+booted takes effect when the worker restarts. The other events are checked
+each time they fire.
+
 ### Empty audits
 
 With `auditing.empty_values` on, the default, an audit is written even when
