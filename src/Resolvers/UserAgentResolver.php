@@ -10,8 +10,15 @@ use Ipsocode\Auditing\Contracts\Resolver;
 
 class UserAgentResolver implements Resolver
 {
+    /**
+     * The length of the `user_agent` column in the audits migration.
+     */
+    public const MAX_LENGTH = 1023;
+
     public static function resolve(Auditable $auditable): string
     {
-        return $auditable->preloadedResolverData['user_agent'] ?? Request::header('User-Agent', '');
+        $userAgent = $auditable->preloadedResolverData['user_agent'] ?? Request::header('User-Agent', '');
+
+        return mb_substr((string) $userAgent, 0, self::MAX_LENGTH);
     }
 }

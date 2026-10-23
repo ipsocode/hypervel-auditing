@@ -12,7 +12,7 @@ audits are queued.
 | Key | Class | Value |
 |---|---|---|
 | `ip_address` | `Resolvers\IpAddressResolver` | `Request::ip()` |
-| `user_agent` | `Resolvers\UserAgentResolver` | The `User-Agent` header, or `''` |
+| `user_agent` | `Resolvers\UserAgentResolver` | The `User-Agent` header, or `''`, cut to the column's 1 023 characters |
 | `url` | `Resolvers\UrlResolver` | `Request::fullUrl()` for a request. In a console process, the command line, such as `artisan import:articles --fresh`, or `'console'` when there is none |
 
 The command line comes from `$_SERVER['argv']`, because the request Hypervel
@@ -45,7 +45,8 @@ interface UserResolver
 The bundled `Resolvers\UserResolver` tries the guards in `auditing.user.guards`
 in order (`web`, then `sanctum`, by default) and returns the user of the first
 one that has an authenticated user. A guard that throws an exception, such as
-one the application does not define, is skipped.
+one the application does not define, is skipped. A `Swoole\Coroutine\CanceledException`
+is not skipped: it is rethrown, so a cancelled coroutine stops auditing.
 
 The user's `getAuthIdentifier()` and `getMorphClass()` are stored in `user_id`
 and `user_type`, so a custom user resolver should return an Eloquent model.
