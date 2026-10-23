@@ -60,14 +60,8 @@ parameters:
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Contracts\\Auditable::\$\w+\.$#'
 
-        # Eloquent attribute and relation access on the Audit model — `batch_uuid` is a table
-        # column reached through __get, `details` is the hasMany defined on the model. Both
-        # resolve at runtime. The framework's extensions above cover methods, not model
-        # properties, so PHPStan cannot see either.
-        - identifier: property.notFound
-          message: '#^Access to an undefined property Ipsocode\\Auditing\\Models\\Audit::\$(batch_uuid|details)\.$#'
-
-        # The same for the Audit contract, which declares behaviour, not storage. The
-        # Auditable trait reads the audit's polymorphic columns off it in transitionTo().
+        # The Audit contract declares behaviour, not storage. The Auditable trait reads the
+        # audit's polymorphic columns off it in transitionTo(); PHPStan does not take
+        # @property tags on the interface, so they cannot be declared there instead.
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Contracts\\Audit::\$auditable_(type|id)\.$#'
