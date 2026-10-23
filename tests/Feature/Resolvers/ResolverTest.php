@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Resolvers;
 
 use Hypervel\Support\Facades\Config;
+use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\Resolver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
@@ -81,6 +82,28 @@ class ResolverTest extends TestCase
         $this->assertSame('https://preloaded.test/path', UrlResolver::resolve($article));
         $this->assertSame('10.0.0.1', IpAddressResolver::resolve($article));
         $this->assertSame('PreloadedAgent/1.0', UserAgentResolver::resolve($article));
+    }
+
+    public function testAnOverlongUserAgentIsCutToTheColumnLength(): void
+    {
+        $article = $this->article();
+
+        $article->preloadedResolverData = ['user_agent' => str_repeat('é', 2000)];
+
+        $userAgent = UserAgentResolver::resolve($article);
+
+        $this->assertSame(1023, mb_strlen($userAgent));
+        $this->assertTrue(mb_check_encoding($userAgent, 'UTF-8'));
+    }
+
+    public function testARequestWithoutAClientAddressResolvesToNull(): void
+    {
+        $article = $this->article();
+
+        $article->preloadedResolverData = [];
+        Request::shouldReceive('ip')->once()->andReturnNull();
+
+        $this->assertNull(IpAddressResolver::resolve($article));
     }
 
     public function testPreloadedDataIsCapturedBeforeTheAuditIsWritten(): void

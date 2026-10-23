@@ -41,7 +41,7 @@ class NormalizeValueTest extends TestCase
         $this->assertSame('42', $this->normalize(42));
         $this->assertSame('4.5', $this->normalize(4.5));
         $this->assertSame('1', $this->normalize(true));
-        $this->assertSame('', $this->normalize(false));
+        $this->assertSame('0', $this->normalize(false));
     }
 
     #[UnitTest]

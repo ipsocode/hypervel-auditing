@@ -22,6 +22,7 @@ use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
+use Swoole\Coroutine\CanceledException;
 use Throwable;
 use UnitEnum;
 
@@ -95,6 +96,8 @@ trait Auditable
     {
         try {
             return (bool) App::getFacadeRoot() && static::isAuditingEnabled();
+        } catch (CanceledException $e) {
+            throw $e;
         } catch (Throwable $e) {
             // Logged: a class that never gets its observer is hard to diagnose.
             // The log call is guarded too, since it can fail against the same
@@ -105,6 +108,8 @@ trait Auditable
                     static::class,
                     $e->getMessage()
                 ));
+            } catch (CanceledException $canceled) {
+                throw $canceled;
             } catch (Throwable) {
             }
 
