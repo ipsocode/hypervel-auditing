@@ -30,39 +30,33 @@ trait Auditable
     use AuditsRelationships;
 
     /** @var array<int, string> */
-    protected $excludedAttributes = [];
+    protected array $excludedAttributes = [];
 
-    /** @var null|string */
-    public $auditEvent;
+    public ?string $auditEvent = null;
 
     /**
      * Worker-global, set by disableAuditing() and enableAuditing(): it affects
      * every concurrent coroutine, so change it at boot or in tests only. Use
      * withoutAuditing() to disable auditing for one coroutine.
-     *
-     * @var bool
      */
-    public static $auditingDisabled = false;
+    public static bool $auditingDisabled = false;
 
     /** @var null|array<string, mixed> */
-    public $auditCustomOld;
+    public ?array $auditCustomOld = null;
 
     /** @var null|array<string, mixed> */
-    public $auditCustomNew;
+    public ?array $auditCustomNew = null;
 
-    /** @var bool */
-    public $isCustomEvent = false;
+    public bool $isCustomEvent = false;
 
     /** @var array<string, mixed> */
-    public $preloadedResolverData = [];
+    public array $preloadedResolverData = [];
 
     /**
      * The batch id captured when this model was dispatched to the queue; null
      * means the batch open on the current coroutine. See DispatchAudit::capture().
-     *
-     * @var null|string
      */
-    public $auditBatchUuid;
+    public ?string $auditBatchUuid = null;
 
     /**
      * Registers the observer's methods as bound callables on one instance: the

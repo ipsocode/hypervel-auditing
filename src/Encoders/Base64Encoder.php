@@ -18,7 +18,7 @@ class Base64Encoder implements AttributeEncoder
         return base64_encode((string) $value);
     }
 
-    public static function decode(mixed $value): string|false|null
+    public static function decode(mixed $value): ?string
     {
         if ($value === null) {
             return null;

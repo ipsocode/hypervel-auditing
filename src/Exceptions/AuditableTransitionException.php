@@ -9,7 +9,7 @@ use Throwable;
 class AuditableTransitionException extends AuditingException
 {
     /** @var array<string> audited attributes the model does not have */
-    protected $incompatibilities = [];
+    protected array $incompatibilities = [];
 
     /**
      * @param array<string> $incompatibilities
