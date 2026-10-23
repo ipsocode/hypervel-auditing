@@ -74,4 +74,27 @@ class AuditingServiceProviderTest extends TestCase
         $this->assertSame(realpath(dirname(__DIR__, 2) . '/database/migrations'), realpath($migrationSource));
         $this->assertSame(database_path('migrations'), $migrationPaths[$migrationSource]);
     }
+
+    public function testTheAboutCommandShowsAnAuditingSection(): void
+    {
+        $this->artisan('about', ['--only' => 'auditing'])
+            ->expectsOutputToContain('Auditing')
+            ->expectsOutputToContain('Console')
+            ->expectsOutputToContain('audit_details')
+            ->expectsOutputToContain('Enabled')
+            ->expectsOutputToContain('365 days')
+            ->expectsOutputToContain('Queue')
+            ->expectsOutputToContain('Version')
+            ->assertExitCode(0);
+    }
+
+    public function testTheAboutSectionReadsConfigAtTheTimeTheCommandRuns(): void
+    {
+        config(['auditing.driver' => 'late_driver', 'auditing.delete_records_older_than_days' => 7]);
+
+        $this->artisan('about', ['--only' => 'auditing'])
+            ->expectsOutputToContain('late_driver')
+            ->expectsOutputToContain('7 days')
+            ->assertExitCode(0);
+    }
 }
