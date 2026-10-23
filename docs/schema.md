@@ -25,9 +25,9 @@ created_at, updated_at
 | Column | Type | Holds |
 |---|---|---|
 | `id` | auto-incrementing unsigned big integer | |
-| `user_type`, `user_id` | string, unsigned big integer; both nullable | The causer, or null. The `user` prefix is `auditing.user.morph_prefix`. Indexed together |
+| `user_type`, `user_id` | string, key column (unsigned big integer by default); both nullable | The causer, or null. The `user` prefix is `auditing.user.morph_prefix`. Indexed together |
 | `event` | string | The event name: `created`, `updated`, `deleted`, `restored`, `retrieved`, a pivot helper's `attach`/`detach`/`sync`, or the name a mapped or manual audit was given |
-| `auditable_type`, `auditable_id` | string, unsigned big integer | The audited model. Indexed together |
+| `auditable_type`, `auditable_id` | string, key column (unsigned big integer by default) | The audited model. Indexed together |
 | `url` | text, nullable | Filled by the `url` resolver |
 | `ip_address` | IP address (`varchar(45)` on MySQL), nullable | Filled by the `ip_address` resolver |
 | `user_agent` | string of 1023, nullable | Filled by the `user_agent` resolver |
@@ -38,9 +38,11 @@ created_at, updated_at
 Each key of `auditing.resolvers` is written to the column of the same name, so a
 resolver you add needs its own column (see [Resolvers](resolvers.md)).
 
-`auditable_id` and `user_id` are unsigned big integers. Models keyed by UUIDs,
-ULIDs or other strings need the migrations
-[published](installation.md#publishing) and those columns changed.
+`auditable_id` and `user_id` are unsigned big integers by default. For models or
+users keyed by UUIDs, ULIDs or other strings, set `auditing.key_types.auditable`
+and `auditing.key_types.user` to `uuid`, `ulid` or `string` before the first
+`migrate`; the migration then creates the columns of that type. A table that
+exists already is never altered, and an unknown value fails the migration.
 
 ### `audit_details`
 

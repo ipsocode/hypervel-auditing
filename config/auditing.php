@@ -55,6 +55,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Key Types
+    |--------------------------------------------------------------------------
+    |
+    | The column type the audits migration gives `auditable_id` (the audited
+    | models' keys) and `user_id` (the users' keys): `bigint`, `uuid`, `ulid`
+    | or `string`. Set them before the first `migrate`; an existing table is
+    | never altered.
+    |
+    */
+
+    'key_types' => [
+        'auditable' => 'bigint',
+        'user' => 'bigint',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Audit Resolvers
     |--------------------------------------------------------------------------
     |
