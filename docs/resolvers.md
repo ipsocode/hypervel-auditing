@@ -33,14 +33,15 @@ for none:
 ```php
 namespace Ipsocode\Auditing\Contracts;
 
+use Hypervel\Contracts\Auth\Authenticatable;
+
 interface UserResolver
 {
-    /**
-     * @return null|\Hypervel\Contracts\Auth\Authenticatable
-     */
-    public static function resolve();
+    public static function resolve(): ?Authenticatable;
 }
 ```
+
+A custom resolver must declare the `?Authenticatable` return type.
 
 The bundled `Resolvers\UserResolver` tries the guards in `auditing.user.guards`
 in order (`web`, then `sanctum`, by default) and returns the user of the first
