@@ -117,9 +117,11 @@ for anything request-scoped; see [Disabling auditing](disabling-auditing.md).
 `bootAuditable()` in `src/Auditable.php` runs when a model class first boots
 in a worker, which happens once, in whichever coroutine first constructs the
 model. It decides then whether to register the audit observer, from
-`auditing.enabled` and, in a console process, `auditing.console`, and that
-decision holds for the life of the worker; see
-[Configuration](configuration.md#switches-read-at-boot).
+`auditing.enabled`, and that decision holds for the life of the worker. The
+observer reads `auditing.enabled` and, in a console process, `auditing.console`
+again on every audited event; see
+[Configuration](configuration.md#switches-read-at-boot). Both are worker-global
+config, so change them at boot or in tests, not from a request.
 
 Hypervel marks a class booted only once its `boot()` method has returned, so
 constructing the model from inside `boot()`, which is where trait boot methods

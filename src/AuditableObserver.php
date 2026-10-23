@@ -94,6 +94,14 @@ class AuditableObserver
             return;
         }
 
+        // Per event, so `auditing.console` and `auditing.enabled` can change after
+        // the class booted. After readyForAuditing(): an event the model does not
+        // audit, `retrieved` on every hydrated row by default, reads no config.
+        // @phpstan-ignore staticMethod.notFound (the Auditable trait provides it; the contract does not declare it)
+        if (! $model::isAuditingEnabled()) {
+            return;
+        }
+
         if (! Config::get('auditing.queue.enable')) {
             Auditor::execute($model);
 

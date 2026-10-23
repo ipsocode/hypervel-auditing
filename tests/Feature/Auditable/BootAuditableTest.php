@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 
 use Hypervel\Contracts\Container\Container as ContainerContract;
+use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Facade;
 use Ipsocode\Auditing\AuditableObserver;
 use Ipsocode\Auditing\Tests\TestCase;
@@ -50,6 +51,51 @@ class BootAuditableTest extends TestCase
         }
 
         $this->assertCount(1, array_unique(array_map(spl_object_id(...), $observers)));
+    }
+
+    public function testTheConsoleSwitchIsCheckedOnEachEventNotAtBoot(): void
+    {
+        Config::set('auditing.console', false);
+
+        $article = Article::factory()->create();
+
+        $this->assertSame(0, $article->audits()->count());
+
+        Config::set('auditing.console', true);
+
+        $article->update(['title' => 'Changed']);
+
+        $this->assertSame(1, $article->audits()->where('event', 'updated')->count());
+
+        Article::disableAuditing();
+
+        try {
+            $article->update(['title' => 'Again']);
+        } finally {
+            Article::enableAuditing();
+        }
+
+        $this->assertSame(1, $article->audits()->count());
+    }
+
+    public function testAnEventTheModelDoesNotAuditReadsNoConfig(): void
+    {
+        $article = new class extends Article {
+            protected array $auditEvents = ['created'];
+        };
+
+        $original = $this->app->get('config');
+        $config = Mockery::spy($original);
+        Config::swap($config);
+
+        try {
+            (new AuditableObserver)->retrieved($article);
+        } finally {
+            Config::swap($original);
+        }
+
+        $config->shouldNotHaveReceived('get');
+        $this->addToAssertionCount(1);
     }
 
     public function testConstructingAnAuditableModelSurvivesATornDownContainer(): void

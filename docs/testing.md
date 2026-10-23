@@ -10,10 +10,8 @@ audited only when `auditing.console` is `true`. It defaults to `false`, and the
 bundled config reads no environment variable for it, so a test suite has to
 turn it on or no model audits are recorded.
 
-The setting is read when each model class boots, and a class that boots with
-it off records no model events from then on. Set it before the first
-auditable model is constructed in the test, for example in the base test
-case:
+The observer checks the setting on every audited event, so it can be set at
+any point before the event, for example in the base test case:
 
 ```php
 namespace Tests;
@@ -31,12 +29,11 @@ abstract class TestCase extends BaseTestCase
 }
 ```
 
-The application is rebuilt for each test, and with it every model class boots
-again, so the setting applies to every test. A model constructed earlier than
-this, while `parent::setUp()` seeds the database for instance, boots with
-auditing off for that test.
+The application is rebuilt for each test, so the setting applies to every
+test. A model saved earlier than this, while `parent::setUp()` seeds the
+database for instance, is not audited.
 
-To have the value in place before anything boots, have your published
+To have the value in place before anything runs, have your published
 `config/auditing.php` read it from an environment variable of your choosing,
 and set that variable in `phpunit.xml`:
 
@@ -55,8 +52,8 @@ A package tested with Testbench can set the key in `defineEnvironment()`
 instead, which runs before the service providers boot; this package's own
 suite does that in `tests/TestCase.php`.
 
-[Configuration](configuration.md#switches-read-at-boot) explains the two
-switches read at boot.
+[Configuration](configuration.md#switches-read-at-boot) explains where the two
+switches are read.
 
 ## What is reset after every test
 
@@ -197,8 +194,8 @@ listener is handed an audit that was never saved. With queued auditing on the
 `sync` connection the job records through the fake like any other audit.
 
 Model events still need `auditing.console` on, as in
-[Recording audits in tests](#recording-audits-in-tests): the observer is
-registered when a class boots, and the fake does not change that.
+[Recording audits in tests](#recording-audits-in-tests): the observer checks it
+on every event, and the fake does not change that.
 
 To check what is stored, read the audits back through the model, which runs the
 real driver and so needs the audit tables:
