@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 
 use Hypervel\Support\Facades\Config;
+use Hypervel\Support\Facades\Log;
 use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
+use RuntimeException;
 use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\VisibleArticle;
@@ -130,6 +132,25 @@ class AuditableBranchesTest extends TestCase
         };
 
         $model::$throws = true;
+
+        $registers = (fn (): bool => static::shouldRegisterAuditObserver())
+            ->bindTo(null, $model::class);
+
+        $this->expectException(CanceledException::class);
+
+        $registers();
+    }
+
+    public function testACancellationWhileLoggingTheDeclinedRegistrationIsRethrown(): void
+    {
+        $model = new class extends Article {
+            public static function isAuditingEnabled(): bool
+            {
+                throw new RuntimeException('torn down');
+            }
+        };
+
+        Log::shouldReceive('warning')->once()->andThrow(new CanceledException);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
             ->bindTo(null, $model::class);

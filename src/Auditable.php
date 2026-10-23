@@ -108,6 +108,8 @@ trait Auditable
                     static::class,
                     $e->getMessage()
                 ));
+            } catch (CanceledException $canceled) {
+                throw $canceled;
             } catch (Throwable) {
             }
 
