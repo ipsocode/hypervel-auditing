@@ -55,12 +55,12 @@ class AuditingServiceProvider extends ServiceProvider
 
     /**
      * Config arrays merged one level deep: an app that sets one resolver, user
-     * option, queue option or table name keeps the package's others.
+     * option, key type, queue option or table name keeps the package's others.
      *
      * @return array<int, string>
      */
     protected function mergeableOptions(string $name): array
     {
-        return $name === 'auditing' ? ['resolvers', 'user', 'queue', 'tables'] : [];
+        return $name === 'auditing' ? ['resolvers', 'user', 'key_types', 'queue', 'tables'] : [];
     }
 }

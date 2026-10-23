@@ -11,6 +11,9 @@ php artisan auditing:install
 php artisan migrate
 ```
 
+If your models or users are keyed by UUIDs, ULIDs or strings, set
+`auditing.key_types` in the published config before that first `migrate`.
+
 The package is installed from Packagist and builds on development releases of
 Hypervel 0.4, so your application's `composer.json` needs the
 stability settings described in the [README](../README.md#installation).
@@ -130,7 +133,8 @@ file is still merged with the package defaults, as
 [Configuration](configuration.md) explains.
 
 `auditing-migrations` copies the two migrations into `database/migrations` for
-editing, for example to change the key columns for models with string keys.
+editing. Models or users with UUID, ULID or string keys need no edit: set
+`auditing.key_types` before the first `migrate` (see [Schema](schema.md)).
 After publishing them, set `auditing.run_migrations` to `false`, so that
 `migrate` runs your copy and not the bundled one as well.
 

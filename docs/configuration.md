@@ -10,8 +10,8 @@ Publish a copy to change anything (`php artisan vendor:publish
 --tag=auditing-config`, or let `auditing:install` do it; see
 [Installation](installation.md)).
 
-A key you set replaces the package's value for that key, with four exceptions:
-`resolvers`, `user`, `queue` and `tables` merge entry by entry. A config file
+A key you set replaces the package's value for that key, with five exceptions:
+`resolvers`, `user`, `key_types`, `queue` and `tables` merge entry by entry. A config file
 that sets only `resolvers.ip_address` keeps the package's `user_agent` and `url`
 resolvers, and one that sets only `queue.enable` keeps the package's
 `connection`, `queue` and `delay`. The merge goes one level deep, so a
@@ -43,6 +43,7 @@ Several keys can also be set per model, on the model itself; the table in
 | `threshold` | `0` | The most audits kept per record; `0` keeps them all. See [Retention](retention.md) |
 | `delete_records_older_than_days` | `365` | The age `auditing:prune` deletes from when `--days` is not given |
 | `driver` | `'audit_details'` | A driver name or class; see [Drivers](drivers.md) |
+| `key_types.auditable`, `key_types.user` | `'bigint'` | The column type of `auditable_id` and `user_id`: `bigint`, `uuid`, `ulid` or `string`. Set before the first `migrate`; an existing table is never altered |
 | `connection` | `null` | The connection both audit tables live on; null means the default connection |
 | `tables.audits` | `env('AUDITING_TABLE', 'audits')` | The metadata table |
 | `tables.audit_details` | `env('AUDITING_DETAILS_TABLE', 'audit_details')` | The per-field table |
