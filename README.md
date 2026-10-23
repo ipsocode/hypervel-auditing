@@ -164,6 +164,7 @@ The examples above are covered in full in
 | Causer scoping | None | `Auditor::actingAs()` (the `Contracts\Auditor` gained methods: a breaking change for custom implementations) |
 | Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()` |
 | `withoutAuditing()` | Static flag | Coroutine-scoped |
+| `retrieved` | Observed on every model, checked per row | Observed only on a class that audits it, decided when the class boots |
 | Table names | Fixed | `auditing.tables.*` |
 | Sensitive attributes | `Base64Encoder`, `LeftRedactor`, `RightRedactor` | Also `EncryptedEncoder` and `HashRedactor` |
 
