@@ -10,8 +10,8 @@ Publish a copy to change anything (`php artisan vendor:publish
 --tag=auditing-config`, or let `auditing:install` do it; see
 [Installation](installation.md)).
 
-A key you set replaces the package's value for that key, with four exceptions:
-`resolvers`, `user`, `queue` and `tables` merge entry by entry. A config file
+A key you set replaces the package's value for that key, with five exceptions:
+`resolvers`, `user`, `key_types`, `queue` and `tables` merge entry by entry. A config file
 that sets only `resolvers.ip_address` keeps the package's `user_agent` and `url`
 resolvers, and one that sets only `queue.enable` keeps the package's
 `connection`, `queue` and `delay`. The merge goes one level deep, so a
@@ -33,7 +33,7 @@ Several keys can also be set per model, on the model itself; the table in
 | `resolvers.ip_address` | `Resolvers\IpAddressResolver::class` | Fills `ip_address` |
 | `resolvers.user_agent` | `Resolvers\UserAgentResolver::class` | Fills `user_agent` |
 | `resolvers.url` | `Resolvers\UrlResolver::class` | Fills `url`: the request URL, or the command line in a console process |
-| `events` | `['created', 'updated', 'deleted', 'restored']` | Events that are audited; `retrieved` is the fifth available. See [Recording](recording.md) |
+| `events` | `['created', 'updated', 'deleted', 'restored']` | Events that are audited; `retrieved` is the fifth available, and is read when a model class boots. See [Recording](recording.md#retrieved) |
 | `strict` | `false` | Also exclude `$hidden`, and everything outside a non-empty `$visible` |
 | `exclude` | `[]` | Attributes never audited; a model's `$auditExclude` replaces it |
 | `empty_values` | `true` | Write an audit even when both its sides are empty |
@@ -43,6 +43,7 @@ Several keys can also be set per model, on the model itself; the table in
 | `threshold` | `0` | The most audits kept per record; `0` keeps them all. See [Retention](retention.md) |
 | `delete_records_older_than_days` | `365` | The age `auditing:prune` deletes from when `--days` is not given |
 | `driver` | `'audit_details'` | A driver name or class; see [Drivers](drivers.md) |
+| `key_types.auditable`, `key_types.user` | `'bigint'` | The column type of `auditable_id` and `user_id`: `bigint`, `uuid`, `ulid` or `string`. Set before the first `migrate`; an existing table is never altered |
 | `connection` | `null` | The connection both audit tables live on; null means the default connection |
 | `tables.audits` | `env('AUDITING_TABLE', 'audits')` | The metadata table |
 | `tables.audit_details` | `env('AUDITING_DETAILS_TABLE', 'audit_details')` | The per-field table |
@@ -70,19 +71,24 @@ matching contract throws an `AuditingException` whenever an audit needs it.
 
 ## Switches read at boot
 
-`enabled` and `console` are read when each model class boots. The class
-registers its audit observer only if `enabled` is true and, in a console
-process, `console` is true too. Artisan commands, `queue:work` included, are
-console processes; the HTTP server is not. A class that boots with either
-switch off records no model events until the process restarts.
+A model class registers its audit observer when it boots, only if `enabled`
+is true. The observer then checks `enabled` and, in a console process,
+`console` on every event it audits, so a class that booted with `console` off
+records its next event once `console` is turned on. Artisan commands,
+`queue:work` included, are console processes; the HTTP server is not. A class
+that boots with `enabled` off registers no observer and records no model events
+until the process restarts.
 
-After boot, `enabled` is still read on every audit by the two listeners that
-write [pivot audits](relationship-auditing.md) and
-[queued model audits](queued-auditing.md), so turning it off at runtime stops
-those two paths at once. It does not stop inline model audits of classes that
-have already booted, and [manual audits](manual-audits.md) never read it.
-To pause auditing for a stretch of code, use `withoutAuditing()`; see
-[Disabling auditing](disabling-auditing.md).
+`events` is read at boot for `retrieved` alone: a class whose list leaves it
+out never listens for it, and adding it later takes effect on restart. See
+[Recording](recording.md#retrieved).
+
+`enabled` is also read when a [queued model audit](queued-auditing.md) is
+written and for every [pivot audit](relationship-auditing.md), and
+[manual audits](manual-audits.md) never read either switch. Both values are
+worker-global, as the framework's config is: change them at boot or in tests,
+not from a request. To pause auditing for a stretch of code, use
+`withoutAuditing()`; see [Disabling auditing](disabling-auditing.md).
 
 ## The audit connection
 

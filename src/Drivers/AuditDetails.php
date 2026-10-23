@@ -82,9 +82,8 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
             // has to be captured first or it would inherit that join too.
             $subQuery = (clone $relation->getQuery())
                 ->select($keyName)
-                // `created_at` has whole-second precision, so same-second
-                // audits tie on it; the auto-incrementing key breaks the tie
-                // in insertion order.
+                // Two audits can still share a millisecond, so the
+                // auto-incrementing key breaks the tie in insertion order.
                 ->latest()
                 ->orderByDesc($keyName)
                 ->limit($threshold);

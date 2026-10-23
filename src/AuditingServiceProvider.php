@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing;
 
+use Composer\InstalledVersions;
 use Hypervel\Contracts\Foundation\Application;
+use Hypervel\Foundation\Console\AboutCommand;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Event;
 use Hypervel\Support\ServiceProvider;
@@ -41,6 +43,16 @@ class AuditingServiceProvider extends ServiceProvider
             ], 'auditing-migrations');
 
             $this->commands([InstallCommand::class, PruneCommand::class]);
+
+            // The closure runs only when `about` does, so it reads config then.
+            AboutCommand::add('Auditing', static fn (): array => [
+                'Version' => InstalledVersions::getPrettyVersion('ipsocode/hypervel-auditing') ?? 'unknown',
+                'Enabled' => AboutCommand::format((bool) Config::get('auditing.enabled'), console: static fn (bool $on): string => $on ? '<fg=green;options=bold>ENABLED</>' : '<fg=yellow;options=bold>DISABLED</>'),
+                'Console' => AboutCommand::format((bool) Config::get('auditing.console'), console: static fn (bool $on): string => $on ? '<fg=green;options=bold>ENABLED</>' : '<fg=yellow;options=bold>DISABLED</>'),
+                'Driver' => Config::get('auditing.driver'),
+                'Queue' => AboutCommand::format((bool) Config::get('auditing.queue.enable'), console: static fn (bool $on): string => $on ? 'ENABLED (' . Config::get('auditing.queue.connection') . ')' : '<fg=yellow;options=bold>DISABLED</>', json: static fn (bool $on): string => $on ? 'enabled (' . Config::get('auditing.queue.connection') . ')' : 'disabled'),
+                'Pruning' => (int) Config::get('auditing.delete_records_older_than_days') . ' days',
+            ]);
         }
 
         if (Config::get('auditing.run_migrations')) {
@@ -55,12 +67,12 @@ class AuditingServiceProvider extends ServiceProvider
 
     /**
      * Config arrays merged one level deep: an app that sets one resolver, user
-     * option, queue option or table name keeps the package's others.
+     * option, key type, queue option or table name keeps the package's others.
      *
      * @return array<int, string>
      */
     protected function mergeableOptions(string $name): array
     {
-        return $name === 'auditing' ? ['resolvers', 'user', 'queue', 'tables'] : [];
+        return $name === 'auditing' ? ['resolvers', 'user', 'key_types', 'queue', 'tables'] : [];
     }
 }

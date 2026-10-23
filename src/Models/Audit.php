@@ -4,25 +4,41 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Models;
 
+use Carbon\CarbonInterface;
 use DateTimeInterface;
+use Hypervel\Database\Eloquent\Collection;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\HasMany;
 use Ipsocode\Auditing\Audit as AuditTrait;
 use Ipsocode\Auditing\Contracts\Audit as AuditContract;
 
 /**
+ * @property string $auditable_type
+ * @property int|string $auditable_id
+ * @property null|string $batch_uuid
+ * @property null|string $url
+ * @property null|string $ip_address
+ * @property null|string $user_agent
+ * @property null|CarbonInterface $created_at
+ * @property null|CarbonInterface $updated_at
  * @property string $tags
  * @property string $event
  * @property array<string,mixed> $new_values
  * @property array<string,mixed> $old_values
  * @property mixed $user
  * @property mixed $auditable
+ * @property-read Collection<int, AuditDetail> $details
  */
 class Audit extends Model implements AuditContract
 {
     use AuditTrait;
 
     protected array $guarded = [];
+
+    /**
+     * The columns hold milliseconds; the grammar default would write whole seconds.
+     */
+    protected ?string $dateFormat = 'Y-m-d H:i:s.v';
 
     /**
      * Worker-global like `Auditable::$auditingDisabled`; boot or tests only.

@@ -31,56 +31,64 @@ trait Auditable
     use AuditsRelationships;
 
     /** @var array<int, string> */
-    protected $excludedAttributes = [];
+    protected array $excludedAttributes = [];
 
-    /** @var null|string */
-    public $auditEvent;
+    public ?string $auditEvent = null;
 
     /**
      * Worker-global, set by disableAuditing() and enableAuditing(): it affects
      * every concurrent coroutine, so change it at boot or in tests only. Use
      * withoutAuditing() to disable auditing for one coroutine.
-     *
-     * @var bool
      */
-    public static $auditingDisabled = false;
+    public static bool $auditingDisabled = false;
 
     /** @var null|array<string, mixed> */
-    public $auditCustomOld;
+    public ?array $auditCustomOld = null;
 
     /** @var null|array<string, mixed> */
-    public $auditCustomNew;
+    public ?array $auditCustomNew = null;
 
-    /** @var bool */
-    public $isCustomEvent = false;
+    public bool $isCustomEvent = false;
 
     /** @var array<string, mixed> */
-    public $preloadedResolverData = [];
+    public array $preloadedResolverData = [];
 
     /**
      * The batch id captured when this model was dispatched to the queue; null
      * means the batch open on the current coroutine. See DispatchAudit::capture().
-     *
-     * @var null|string
      */
-    public $auditBatchUuid;
+    public ?string $auditBatchUuid = null;
 
     /**
      * Registers the observer's methods as bound callables on one instance: the
      * observer is stateless, so every coroutine shares it, and nothing is
-     * resolved per fire (`retrieved` fires for every hydrated row). Deferred
-     * with whenBooted() so it registers once the class has booted, after the
-     * listeners the model adds in boot() and booted().
+     * resolved per fire. Deferred with whenBooted() so it registers once the
+     * class has booted, after the listeners the model adds in boot() and
+     * booted().
+     *
+     * `retrieved` fires for every hydrated row, so it is listened for only when
+     * the class audits it. That is decided here, once per class, from
+     * `$auditEvents` or `auditing.events`; the other events are checked on
+     * every fire. The instance is safe to build: the class is marked booted
+     * before this runs, and the framework's observe() does the same.
      */
     public static function bootAuditable(): void
     {
         static::whenBooted(function () {
-            if (static::shouldRegisterAuditObserver()) {
-                $observer = new AuditableObserver;
+            if (! static::shouldRegisterAuditObserver()) {
+                return;
+            }
 
-                foreach (AuditableObserver::EVENTS as $event) {
-                    static::registerModelEvent($event, [$observer, $event]);
+            $observer = new AuditableObserver;
+            // @phpstan-ignore new.static (an Eloquent model is built with no arguments, as the framework's observe() builds it)
+            $auditsRetrieved = (new static)->isEventAuditable('retrieved');
+
+            foreach (AuditableObserver::EVENTS as $event) {
+                if ($event === 'retrieved' && ! $auditsRetrieved) {
+                    continue;
                 }
+
+                static::registerModelEvent($event, [$observer, $event]);
             }
         });
     }
@@ -95,7 +103,8 @@ trait Auditable
     protected static function shouldRegisterAuditObserver(): bool
     {
         try {
-            return (bool) App::getFacadeRoot() && static::isAuditingEnabled();
+            // `auditing.console` is not read here: the observer checks it on every event.
+            return (bool) App::getFacadeRoot() && (bool) Config::get('auditing.enabled');
         } catch (CanceledException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -140,8 +149,8 @@ trait Auditable
      */
     public function auditHistory(string $field): MorphMany
     {
-        // `created_at` has whole-second precision, so same-second audits tie
-        // on it; the auto-incrementing key breaks the tie in insertion order.
+        // Two audits can still share a millisecond, so the auto-incrementing
+        // key breaks the tie in insertion order.
         $audits = $this->audits();
 
         return $audits->forField($field)
@@ -296,9 +305,9 @@ trait Auditable
 
     public function readyForAuditing(): bool
     {
-        // The event check first: it is cheap and turns away unaudited events (by
-        // default `retrieved`, fired per hydrated row) before the scoped-disable
-        // check walks the class hierarchy through the coroutine context.
+        // The event check first: it is cheap and turns away unaudited events
+        // before the scoped-disable check walks the class hierarchy through the
+        // coroutine context.
         if (! $this->isCustomEvent && ! $this->isEventAuditable($this->auditEvent)) {
             return false;
         }
@@ -352,7 +361,11 @@ trait Auditable
             ));
         }
 
-        $this->resolveAuditExclusions();
+        // A custom or retrieved audit reads no exclusions; every other getter,
+        // a mapped one included, may call isAttributeAuditable().
+        if (! $this->isCustomEvent && $attributeGetter !== 'getRetrievedEventAttributes') {
+            $this->resolveAuditExclusions();
+        }
 
         [$old, $new] = $this->{$attributeGetter}();
 
@@ -498,8 +511,8 @@ trait Auditable
     /**
      * A pattern is an unanchored regex with `*` as a wildcard. Without regex
      * metacharacters that is a substring test, which is what the default config
-     * holds; this runs per configured entry on every model event, `retrieved`
-     * included, so a plain name skips the regex.
+     * holds; this runs per configured entry on every observed model event, so a
+     * plain name skips the regex.
      */
     private function auditEventMatches(string $pattern, string $event): bool
     {

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Contracts;
 
+use Hypervel\Contracts\Auth\Authenticatable;
+
 interface UserResolver
 {
-    /**
-     * @return null|\Hypervel\Contracts\Auth\Authenticatable
-     */
-    public static function resolve();
+    public static function resolve(): ?Authenticatable;
 }

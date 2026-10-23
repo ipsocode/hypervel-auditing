@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Hypervel\Database\Migrations\Migration;
 use Hypervel\Database\Schema\Blueprint;
 use Hypervel\Database\Schema\Builder;
+use Hypervel\Database\Schema\ColumnDefinition;
 use Hypervel\Support\Facades\Schema;
 use Ipsocode\Auditing\Support\AuditTables;
 
@@ -53,12 +54,12 @@ return new class extends Migration {
         return [
             'id' => fn (Blueprint $t) => $t->bigIncrements('id'),
             $morphPrefix . '_type' => fn (Blueprint $t) => $t->string($morphPrefix . '_type')->nullable(),
-            $morphPrefix . '_id' => fn (Blueprint $t) => $t->unsignedBigInteger($morphPrefix . '_id')->nullable(),
+            $morphPrefix . '_id' => fn (Blueprint $t) => $this->keyColumn($t, $morphPrefix . '_id', 'user')->nullable(),
             // Free-form: a model event ("created", "restored"), a relation
             // event ("attach", "sync") or a manual audit's own name.
             'event' => fn (Blueprint $t) => $t->string('event'),
             'auditable_type' => fn (Blueprint $t) => $t->string('auditable_type'),
-            'auditable_id' => fn (Blueprint $t) => $t->unsignedBigInteger('auditable_id'),
+            'auditable_id' => fn (Blueprint $t) => $this->keyColumn($t, 'auditable_id', 'auditable'),
             'url' => fn (Blueprint $t) => $t->text('url')->nullable(),
             'ip_address' => fn (Blueprint $t) => $t->ipAddress('ip_address')->nullable(),
             'user_agent' => fn (Blueprint $t) => $t->string('user_agent', 1023)->nullable(),
@@ -69,6 +70,29 @@ return new class extends Migration {
             'created_at' => fn (Blueprint $t) => $t->timestamp('created_at', 3)->nullable(),
             'updated_at' => fn (Blueprint $t) => $t->timestamp('updated_at', 3)->nullable(),
         ];
+    }
+
+    /**
+     * A key column of the type `auditing.key_types.<key>` names; an unknown
+     * type fails the migration rather than falling back to a default.
+     */
+    private function keyColumn(Blueprint $table, string $column, string $key): ColumnDefinition
+    {
+        $type = config('auditing.key_types.' . $key, 'bigint');
+
+        return match ($type) {
+            'bigint' => $table->unsignedBigInteger($column),
+            'uuid' => $table->uuid($column),
+            'ulid' => $table->ulid($column),
+            'string' => $table->string($column),
+            default => throw new InvalidArgumentException(
+                sprintf(
+                    'auditing.key_types.%s must be one of bigint, uuid, ulid or string, [%s] given.',
+                    $key,
+                    is_scalar($type) ? (string) $type : get_debug_type($type),
+                ),
+            ),
+        };
     }
 
     /**

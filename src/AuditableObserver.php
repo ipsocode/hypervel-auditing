@@ -16,7 +16,8 @@ use WeakMap;
 class AuditableObserver
 {
     /**
-     * The model events this observer handles, one method each.
+     * The model events this observer handles, one method each. `retrieved` is
+     * registered only on a class that audits it; see Auditable::bootAuditable().
      *
      * @var list<string>
      */
@@ -94,6 +95,14 @@ class AuditableObserver
             return;
         }
 
+        // Per event, so `auditing.console` and `auditing.enabled` can change after
+        // the class booted. After readyForAuditing(): an event the model does not
+        // audit reads no further config.
+        // @phpstan-ignore staticMethod.notFound (the Auditable trait provides it; the contract does not declare it)
+        if (! $model::isAuditingEnabled()) {
+            return;
+        }
+
         if (! Config::get('auditing.queue.enable')) {
             Auditor::execute($model);
 
@@ -124,7 +133,12 @@ class AuditableObserver
 
     protected function fireDispatchingAuditEvent(Auditable $model): bool
     {
-        return app()->make('events')
-            ->until(new DispatchingAudit($model)) !== false;
+        $events = app()->make('events');
+
+        if (! $events->hasListeners(DispatchingAudit::class)) {
+            return true;
+        }
+
+        return $events->until(new DispatchingAudit($model)) !== false;
     }
 }

@@ -51,7 +51,7 @@ modifier being called, and reads back as `null` without a decoder being called.
 A redactor implements `Contracts\AttributeRedactor`:
 
 ```php
-public static function redact($value): string;
+public static function redact(mixed $value): string;
 ```
 
 Redaction is one-way. The audit never holds the real value, so reading it back
@@ -71,8 +71,8 @@ rest with `#`, preserving the length:
 | `'a'` | `'#'` | `'#'` |
 | `''` | `''` | `''` |
 
-A single character is always fully masked. Lengths are counted in bytes, so in
-a multibyte string the kept part can end partway through a character.
+A single character is always fully masked. Lengths are counted in characters, so
+the kept part is always whole characters, in a multibyte string too.
 
 A model with any redactor registered cannot be
 [transitioned](transitions.md): `transitionTo()` throws, whichever attributes
@@ -94,7 +94,7 @@ use Ipsocode\Auditing\Contracts\AttributeRedactor;
 class EmailRedactor implements AttributeRedactor
 {
     // jane.doe@example.com becomes j*******@example.com
-    public static function redact($value): string
+    public static function redact(mixed $value): string
     {
         $value = (string) $value;
         $at = strpos($value, '@');
@@ -113,9 +113,9 @@ class EmailRedactor implements AttributeRedactor
 An encoder implements `Contracts\AttributeEncoder`:
 
 ```php
-public static function encode($value);
+public static function encode(mixed $value): ?string;
 
-public static function decode($value);
+public static function decode(mixed $value): mixed;
 ```
 
 Encoding is two-way. The encoded form is what the `audit_details` row holds,
