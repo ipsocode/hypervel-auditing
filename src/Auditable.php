@@ -103,7 +103,8 @@ trait Auditable
     protected static function shouldRegisterAuditObserver(): bool
     {
         try {
-            return (bool) App::getFacadeRoot() && static::isAuditingEnabled();
+            // `auditing.console` is not read here: the observer checks it on every event.
+            return (bool) App::getFacadeRoot() && (bool) Config::get('auditing.enabled');
         } catch (CanceledException $e) {
             throw $e;
         } catch (Throwable $e) {

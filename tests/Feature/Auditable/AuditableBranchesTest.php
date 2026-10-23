@@ -9,6 +9,7 @@ use Hypervel\Support\Facades\Log;
 use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
+use Mockery;
 use RuntimeException;
 use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
@@ -118,46 +119,41 @@ class AuditableBranchesTest extends TestCase
 
     public function testACancellationWhileCheckingAuditingIsRethrown(): void
     {
-        $model = new class extends Article {
-            public static bool $throws = false;
-
-            public static function isAuditingEnabled(): bool
-            {
-                if (self::$throws) {
-                    throw new CanceledException;
-                }
-
-                return parent::isAuditingEnabled();
-            }
-        };
-
-        $model::$throws = true;
+        $original = $this->app->get('config');
+        $config = Mockery::mock($original)->makePartial();
+        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new CanceledException);
+        Config::swap($config);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
-            ->bindTo(null, $model::class);
+            ->bindTo(null, Article::class);
 
         $this->expectException(CanceledException::class);
 
-        $registers();
+        try {
+            $registers();
+        } finally {
+            Config::swap($original);
+        }
     }
 
     public function testACancellationWhileLoggingTheDeclinedRegistrationIsRethrown(): void
     {
-        $model = new class extends Article {
-            public static function isAuditingEnabled(): bool
-            {
-                throw new RuntimeException('torn down');
-            }
-        };
-
+        $original = $this->app->get('config');
+        $config = Mockery::mock($original)->makePartial();
+        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new RuntimeException('torn down'));
+        Config::swap($config);
         Log::shouldReceive('warning')->once()->andThrow(new CanceledException);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
-            ->bindTo(null, $model::class);
+            ->bindTo(null, Article::class);
 
         $this->expectException(CanceledException::class);
 
-        $registers();
+        try {
+            $registers();
+        } finally {
+            Config::swap($original);
+        }
     }
 
     public function testAuditSettingsAcceptNumericStringConfigValues(): void
