@@ -13,7 +13,7 @@ interface Auditor
     /**
      * @return null|Audit the Audit written, or null when nothing was
      */
-    public function execute(Auditable $model);
+    public function execute(Auditable $model): ?Audit;
 
     /**
      * Start a manual audit for a model, for an event with no column behind it.

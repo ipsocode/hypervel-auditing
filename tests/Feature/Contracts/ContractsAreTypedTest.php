@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Contracts;
 
+use Ipsocode\Auditing\Contracts\AcceptsResolvedAudit;
+use Ipsocode\Auditing\Contracts\AttributeEncoder;
+use Ipsocode\Auditing\Contracts\AttributeRedactor;
 use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
+use Ipsocode\Auditing\Contracts\AuditDriver;
+use Ipsocode\Auditing\Contracts\Auditor;
+use Ipsocode\Auditing\Contracts\Resolver;
+use Ipsocode\Auditing\Contracts\UserResolver;
 use Ipsocode\Auditing\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionClass;
@@ -30,6 +37,8 @@ class ContractsAreTypedTest extends TestCase
     }
 
     /**
+     * Every interface in src/Contracts but the AttributeModifier marker, which declares no method.
+     *
      * @return array<string, array{class-string}>
      */
     public static function contracts(): array
@@ -37,6 +46,13 @@ class ContractsAreTypedTest extends TestCase
         return [
             'Auditable' => [Auditable::class],
             'Audit' => [Audit::class],
+            'AcceptsResolvedAudit' => [AcceptsResolvedAudit::class],
+            'AttributeEncoder' => [AttributeEncoder::class],
+            'AttributeRedactor' => [AttributeRedactor::class],
+            'AuditDriver' => [AuditDriver::class],
+            'Auditor' => [Auditor::class],
+            'Resolver' => [Resolver::class],
+            'UserResolver' => [UserResolver::class],
         ];
     }
 

@@ -21,13 +21,13 @@ use JsonException;
 trait Audit
 {
     /** @var array<string,mixed> the metadata and the `new_*`/`old_*` values, flattened by resolveData() */
-    protected $data = [];
+    protected array $data = [];
 
     /** @var array<int,string> the keys of the resolved data that are metadata */
-    protected $metadata = [];
+    protected array $metadata = [];
 
     /** @var array<int,string> the keys of the resolved data that hold modified values */
-    protected $modified = [];
+    protected array $modified = [];
 
     /**
      * @return MorphTo<Model, $this>
