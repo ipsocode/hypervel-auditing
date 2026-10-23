@@ -16,15 +16,21 @@ use UnitEnum;
 trait NormalizesAuditValues
 {
     /**
-     * Reduce an attribute value to a string for one column: scalars are cast (a
-     * float that the cast would change keeps its full precision),
-     * enums give their value or name, stringable objects their string form, and
+     * Reduce an attribute value to a string for one column: booleans give '1'
+     * and '0', other scalars are cast (a float that the cast would change keeps
+     * its full precision), enums give their value or name, stringable objects their string form, and
      * anything else is JSON-encoded.
      */
     protected function normalizeValue(mixed $value): ?string
     {
         if ($value === null || is_string($value)) {
             return $value;
+        }
+
+        // (string) false is '', which reads as an emptied attribute and differs from
+        // the '0' a database that returns an int stores.
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
         }
 
         // A float is cast at `precision` digits, which can erase a real change

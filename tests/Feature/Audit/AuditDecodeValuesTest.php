@@ -7,6 +7,7 @@ namespace Ipsocode\Auditing\Tests\Feature\Audit;
 use Hypervel\Support\Carbon;
 use Ipsocode\Auditing\Redactors\RightRedactor;
 use Ipsocode\Auditing\Tests\TestCase;
+use Workbench\App\Models\Article;
 use Workbench\App\Models\NullableEncodedArticle;
 use Workbench\App\Models\RedactedArticle;
 
@@ -58,5 +59,21 @@ class AuditDecodeValuesTest extends TestCase
         // An unredacted round trip cannot satisfy this: the audit never held the
         // plain text in the first place.
         $this->assertSame('He############', $audit->getModified()['content']['new']);
+    }
+
+    public function testAFalseBooleanIsStoredAsZeroAndReadsBackAsFalse(): void
+    {
+        $article = Article::create([
+            'title' => 'Title',
+            'content' => 'Body',
+            'reviewed' => true,
+        ]);
+
+        $article->update(['reviewed' => false]);
+
+        $audit = $article->audits()->where('event', 'updated')->sole();
+
+        $this->assertSame('0', $audit->details->firstWhere('field', 'reviewed')->new_value);
+        $this->assertSame(['new' => false, 'old' => true], $audit->getModified()['reviewed']);
     }
 }
