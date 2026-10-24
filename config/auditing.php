@@ -284,11 +284,11 @@ return [
     | Hypervel's queue config enables `after_commit` on these ('database'
     | aside), so an audit dispatched inside a transaction is written after it
     | commits and dropped if it rolls back. See
-    | https://github.com/ipsocode/hypervel-auditing/blob/main/docs/queued-auditing.md
+    | https://github.com/ipsocode/hypervel-auditing/blob/main/src/docs/queued-auditing.md
     |
     | Pivot/custom audits (auditAttach/auditDetach/auditSync) never read this
     | config; they always write inline. See
-    | https://github.com/ipsocode/hypervel-auditing/blob/main/docs/relationship-auditing.md
+    | https://github.com/ipsocode/hypervel-auditing/blob/main/src/docs/relationship-auditing.md
     |
     */
 

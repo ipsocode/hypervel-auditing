@@ -47,7 +47,7 @@ The bundled `Resolvers\UserResolver` tries the guards in `auditing.user.guards`
 in order (`web`, then `sanctum`, by default) and returns the user of the first
 one that has an authenticated user. A guard that throws an exception, such as
 one the application does not define, is skipped. A `Swoole\Coroutine\CanceledException`
-is not skipped: it is rethrown, so a cancelled coroutine stops auditing.
+is not skipped: it is rethrown, so a canceled coroutine stops auditing.
 
 The user's `getAuthIdentifier()` and `getMorphClass()` are stored in `user_id`
 and `user_type`, so a custom user resolver should return an Eloquent model.
