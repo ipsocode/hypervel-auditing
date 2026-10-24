@@ -76,10 +76,11 @@ fails once the count stops matching either way.
 
 Reviews follow the `pr-review` skill, `.claude/skills/pr-review/SKILL.md`, which
 every Claude Code session in a checkout has: ask Claude Code to review your
-branch with it before you push, or a pull request by its number. It reads this
-package's focus in `docs/ai/review.md`, and its scan flags what a diff adds or
-removes: `git diff origin/main...HEAD | bash .claude/skills/pr-review/scan.sh`.
-No review runs in CI.
+branch with it before you push, or a pull request by its number. Its scan flags
+what a diff adds or removes: `git diff origin/main...HEAD | bash
+.claude/skills/pr-review/scan.sh`. The maintainers' reviews also load
+`review-auditing`, a skill on their Claude accounts that says where in this
+package to look first. No review runs in CI.
 
 CI (`.github/workflows/tests.yml`) runs for every pull request into `main`, each
 job once the one it needs has passed: the conventions check, on the bare runner
@@ -107,9 +108,8 @@ which `CLAUDE.md` imports, and the `pr-review` skill in
 in its first lines. A pull request may still change one; the maintainer carries
 the change into the shared copy, and the next import brings it to every package.
 One part of `.github/` is this package's own: `conventions.php`, the check's
-settings. `docs/ai/review.md` tells a review what this package is and where to
-look. `.gitignore` leaves Claude Code's local state in `.claude/` out, all but
-`.claude/skills/`.
+settings. `.gitignore` leaves Claude Code's local state in `.claude/` out, all
+but `.claude/skills/`.
 
 ## Coroutine safety
 
