@@ -1,7 +1,8 @@
 # Installation
 
-This page covers installing the package, naming its two tables, adopting tables
-you already have, and publishing the config file and migrations.
+This page covers installing the package and the stability settings it needs,
+naming its two tables, adopting tables you already have, and publishing the
+config file and migrations.
 
 ## Install the package
 
@@ -15,8 +16,8 @@ If your models or users are keyed by UUIDs, ULIDs or strings, set
 `auditing.key_types` in the published config before that first `migrate`.
 
 The package is installed from Packagist and builds on development releases of
-Hypervel 0.4, so your application's `composer.json` needs the
-stability settings described in the [README](../../README.md#installation).
+Hypervel 0.4, so your application's `composer.json` needs the stability
+settings described in [Stability and versions](#stability-and-versions).
 
 There is nothing to register by hand. Hypervel reads `extra.hypervel` from the
 package's `composer.json` and loads `AuditingServiceProvider` and the `Auditor`
@@ -24,6 +25,23 @@ facade alias from it. The provider merges the package's config defaults into
 `auditing`, binds the auditor, and registers the bundled migrations while
 `auditing.run_migrations` is true. In a console process it also registers the
 `auditing:install` and `auditing:prune` commands and the two publish tags.
+
+### Stability and versions
+
+Hypervel 0.4 is only available as a dev branch, so your application's
+`composer.json` must already allow it: `"minimum-stability": "dev"` together
+with `"prefer-stable": true`.
+
+Tags are not re-tested as `0.4.x-dev` moves on. `main` is: every night, the
+repository's `upstream` workflow re-tests it against the head of `0.4.x-dev`
+when that has moved since its last run, and while `main` fails against the
+current `0.4.x-dev`, an issue titled "Nightly components check failed" is open
+in the [repository's issues](https://github.com/ipsocode/hypervel-auditing/issues).
+To pick up changes as they land, require `ipsocode/hypervel-auditing:dev-main`
+instead of a tagged version.
+
+Each release's notes, breaking changes first, are on the
+[Releases](https://github.com/ipsocode/hypervel-auditing/releases) page.
 
 ## Name the tables: `auditing:install`
 

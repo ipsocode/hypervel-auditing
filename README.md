@@ -13,31 +13,11 @@ Audit changes to your Eloquent models on [Hypervel](https://github.com/hypervel/
 > configuration and the database schema included. Use it to evaluate or to build
 > against Hypervel 0.4, and pin the version you tested.
 
-```php
-$article->update(['title' => 'Revised title']);
-
-$article->audits()->latest()->first()->getModified();
-// ['title' => ['old' => 'Draft title', 'new' => 'Revised title']]
-```
-
-## What this is
-
-A port of [`owen-it/laravel-auditing`](https://github.com/owen-it/laravel-auditing) to
-Hypervel — the same class topology (an `Auditable` trait, an `Auditor` manager,
-resolvers, redactors, encoders, `AuditableTransitionException`), so upstream's
-documentation and mental model mostly carry over.
-
-**It is not a drop-in replacement.** Two things differ enough to break an
-assumption before you write a line of code:
-
-1. **There are no `old_values` / `new_values` columns.** Audits are stored
-   normalized across two tables — see [Schema](src/docs/schema.md).
-2. **Auditing is coroutine-aware.** On a long-lived Swoole worker, "process
-   state" is shared by every concurrent request. Anything you plug in has rules
-   to honor — see [Coroutines](src/docs/coroutines.md).
-
-[Differences from `owen-it/laravel-auditing`](#differences-from-owen-itlaravel-auditing)
-lists the rest.
+A port of [`owen-it/laravel-auditing`](https://github.com/owen-it/laravel-auditing)
+with the same class topology, so upstream's documentation and mental model
+mostly carry over. It is not a drop-in replacement: audits are stored normalized
+across two tables, and auditing is coroutine-aware;
+[Differences](src/docs/differences.md) lists the rest.
 
 ## Requirements
 
@@ -47,28 +27,19 @@ lists the rest.
 
 ## Installation
 
+Hypervel 0.4 is only available as a dev branch, so your application's
+`composer.json` must already allow it: `"minimum-stability": "dev"` together
+with `"prefer-stable": true`. [Installation](src/docs/installation.md) covers the
+table names `auditing:install` asks for, adopting existing tables, publishing,
+and how releases track `0.4.x-dev`.
+
 ```sh
 composer require ipsocode/hypervel-auditing
 php artisan auditing:install
 php artisan migrate
 ```
 
-Hypervel 0.4 is only available as a dev branch, so your application's
-`composer.json` must already allow it: `"minimum-stability": "dev"` together
-with `"prefer-stable": true`. Tags are not re-tested as `0.4.x-dev` moves on.
-`main` is, every night, by a scheduled check that runs outside this
-repository's workflows: while `main` fails against the current `0.4.x-dev`,
-an issue titled "Nightly components check failed" is open here. To pick up
-changes as they land, require `ipsocode/hypervel-auditing:dev-main` instead. Each release's notes,
-breaking changes first, are on the
-[Releases](https://github.com/ipsocode/hypervel-auditing/releases) page.
-
-`auditing:install` picks the two table names and writes them to
-`config/auditing.php`; [Installation](src/docs/installation.md) explains the
-prompts, the non-interactive options, adopting existing tables and the publish
-tags.
-
-Then make a model auditable:
+## Usage
 
 ```php
 use Hypervel\Database\Eloquent\Model;
@@ -79,101 +50,28 @@ class Article extends Model implements AuditableContract
 {
     use Auditable;
 }
-```
 
-Both parts are required: the trait supplies the behavior, the interface is what
-the `Auditor` and the driver type-hint against.
-
-## Usage at a glance
-
-```php
-use Ipsocode\Auditing\Facades\Auditor;
-
-// Creates, updates, deletes and restores are audited by default.
 $article->update(['title' => 'Revised title']);
 $article->audits()->latest()->first()->getModified();
-
-// Skip auditing Article models for one callback, on the current coroutine only.
-Article::withoutAuditing(fn () => $article->update(['title' => 'Quietly']));
-
-// Record an event that has no column behind it.
-Auditor::on($article)->as('exported')->with(['format' => 'pdf'])->log();
-
-// Name the causer of every audit written inside the callback.
-Auditor::actingAs($admin, fn () => $article->update(['title' => 'Edited']));
-
-// Audits a user caused (add the CausesAudits trait to the user model).
-$admin->causedAudits()->latest()->get();
-
-// Stamp every audit written inside the callback with the same batch_uuid.
-Auditor::withinBatch(function () use ($article, $author) {
-    $article->save();
-    $author->save();
-});
+// ['title' => ['new' => 'Revised title', 'old' => 'Draft title']]
 ```
 
-```sh
-php artisan auditing:prune   # delete audits past the retention period (365 days by default)
-```
-
-In a console process (an Artisan command, a seeder, a queue worker, a test
-run) model events are audited only once `auditing.console` is `true`; see
-[Recording](src/docs/recording.md#when-a-model-is-audited).
-
-The examples above are covered in full in
-[Reading audits](src/docs/reading-audits.md),
-[Disabling auditing](src/docs/disabling-auditing.md),
-[Manual audits](src/docs/manual-audits.md), [Batches](src/docs/batches.md) and
-[Retention](src/docs/retention.md).
+The model needs both the trait and the interface: the trait supplies the
+behavior, and the `Auditor` and the driver type-hint the interface.
+In a console process, tests included, model events are audited only once
+`auditing.console` is `true`; see [Recording](src/docs/recording.md#when-a-model-is-audited).
 
 ## Documentation
 
-| Page | Covers |
-|---|---|
-| [Installation](src/docs/installation.md) | Table names, adopting existing tables, publishing the config and migrations |
-| [Schema](src/docs/schema.md) | The `audits` and `audit_details` tables and how values are stored |
-| [Recording](src/docs/recording.md) | Which events and attributes are audited; per-model properties and hooks |
-| [Attribute modifiers](src/docs/attribute-modifiers.md) | Redactors and encoders for sensitive attributes |
-| [Reading audits](src/docs/reading-audits.md) | `getModified()`, `getMetadata()`, tags and the audit's relations |
-| [Disabling auditing](src/docs/disabling-auditing.md) | `withoutAuditing()`, the worker-wide switches, `auditing.enabled` and `auditing.console` |
-| [Relationship auditing](src/docs/relationship-auditing.md) | Audited attach, detach and sync on many-to-many relations |
-| [Manual audits](src/docs/manual-audits.md) | `Auditor::on()` for events with no column behind them |
-| [Batches](src/docs/batches.md) | Grouping the audits of one operation under a `batch_uuid` |
-| [Retention](src/docs/retention.md) | The per-row threshold and `auditing:prune` |
-| [Queued auditing](src/docs/queued-auditing.md) | Writing model audits through a queue connection, and what crosses it |
-| [Events](src/docs/events.md) | The events dispatched around an audit, and vetoing one |
-| [Drivers](src/docs/drivers.md) | The `audit_details` driver and writing your own |
-| [Resolvers](src/docs/resolvers.md) | How the causer, `url`, `ip_address` and `user_agent` are filled; custom resolvers |
-| [Audit model](src/docs/audit-model.md) | Extending or replacing the `Audit` model |
-| [Transitions](src/docs/transitions.md) | Filling a model with an audit's old or new values |
-| [Testing](src/docs/testing.md) | Recording audits in tests, the state reset after each test, and asserting on audits with `Auditor::fake()` |
-| [Coroutines](src/docs/coroutines.md) | The coroutine-safety rules the package follows, and that extensions must follow |
-| [Configuration](src/docs/configuration.md) | Every `config/auditing.php` key and its default |
-
-## Differences from `owen-it/laravel-auditing`
-
-| | `owen-it/laravel-auditing` | This package |
-|---|---|---|
-| Storage | `old_values` / `new_values` JSON columns on `audits` | Normalized: `audits` + one `audit_details` row per field |
-| Drivers | `Database` driver | `audit_details` driver; no `Database` driver |
-| `old_values` / `new_values` | Columns | Accessors, built from the detail rows |
-| `auditing:install` | Publishes the config | Chooses and persists the table names, can adopt existing tables |
-| Driver generator | `make:audit-driver` | None |
-| Retention | Threshold only | Threshold plus `auditing:prune` |
-| Batches | None | `Auditor::withinBatch()`, `batch_uuid` column |
-| Causer scoping | None | `Auditor::actingAs()` (the `Contracts\Auditor` gained methods: a breaking change for custom implementations) |
-| Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()` |
-| `withoutAuditing()` | Static flag | Coroutine-scoped |
-| `retrieved` | Observed on every model, checked per row | Observed only on a class that audits it, decided when the class boots |
-| Table names | Fixed | `auditing.tables.*` |
-| Sensitive attributes | `Base64Encoder`, `LeftRedactor`, `RightRedactor` | Also `EncryptedEncoder` and `HashRedactor` |
+Start at the [documentation index](src/docs/index.md), which lists every page in
+reading order; [Configuration](src/docs/configuration.md) lists every key.
 
 ## Contributing
 
 The development setup, the checks CI runs, the coroutine-safety rules every
-change is held to, and how releases are cut are in
-[CONTRIBUTING.md](CONTRIBUTING.md). Report security issues privately, as
-described in [SECURITY.md](.github/SECURITY.md), rather than in a public issue.
+change is held to, and how releases are cut are in [CONTRIBUTING.md](CONTRIBUTING.md).
+Report security issues privately, as described in [SECURITY.md](.github/SECURITY.md),
+rather than in a public issue.
 
 ## Credits
 
