@@ -31,10 +31,10 @@ documentation and mental model mostly carry over.
 assumption before you write a line of code:
 
 1. **There are no `old_values` / `new_values` columns.** Audits are stored
-   normalized across two tables — see [Schema](docs/schema.md).
+   normalized across two tables — see [Schema](src/docs/schema.md).
 2. **Auditing is coroutine-aware.** On a long-lived Swoole worker, "process
    state" is shared by every concurrent request. Anything you plug in has rules
-   to honour — see [Coroutines](docs/coroutines.md).
+   to honor — see [Coroutines](src/docs/coroutines.md).
 
 [Differences from `owen-it/laravel-auditing`](#differences-from-owen-itlaravel-auditing)
 lists the rest.
@@ -64,7 +64,7 @@ breaking changes first, are on the
 [Releases](https://github.com/ipsocode/hypervel-auditing/releases) page.
 
 `auditing:install` picks the two table names and writes them to
-`config/auditing.php`; [Installation](docs/installation.md) explains the
+`config/auditing.php`; [Installation](src/docs/installation.md) explains the
 prompts, the non-interactive options, adopting existing tables and the publish
 tags.
 
@@ -81,7 +81,7 @@ class Article extends Model implements AuditableContract
 }
 ```
 
-Both parts are required: the trait supplies the behaviour, the interface is what
+Both parts are required: the trait supplies the behavior, the interface is what
 the `Auditor` and the driver type-hint against.
 
 ## Usage at a glance
@@ -118,37 +118,37 @@ php artisan auditing:prune   # delete audits past the retention period (365 days
 
 In a console process (an Artisan command, a seeder, a queue worker, a test
 run) model events are audited only once `auditing.console` is `true`; see
-[Recording](docs/recording.md#when-a-model-is-audited).
+[Recording](src/docs/recording.md#when-a-model-is-audited).
 
 The examples above are covered in full in
-[Reading audits](docs/reading-audits.md),
-[Disabling auditing](docs/disabling-auditing.md),
-[Manual audits](docs/manual-audits.md), [Batches](docs/batches.md) and
-[Retention](docs/retention.md).
+[Reading audits](src/docs/reading-audits.md),
+[Disabling auditing](src/docs/disabling-auditing.md),
+[Manual audits](src/docs/manual-audits.md), [Batches](src/docs/batches.md) and
+[Retention](src/docs/retention.md).
 
 ## Documentation
 
 | Page | Covers |
 |---|---|
-| [Installation](docs/installation.md) | Table names, adopting existing tables, publishing the config and migrations |
-| [Schema](docs/schema.md) | The `audits` and `audit_details` tables and how values are stored |
-| [Recording](docs/recording.md) | Which events and attributes are audited; per-model properties and hooks |
-| [Attribute modifiers](docs/attribute-modifiers.md) | Redactors and encoders for sensitive attributes |
-| [Reading audits](docs/reading-audits.md) | `getModified()`, `getMetadata()`, tags and the audit's relations |
-| [Disabling auditing](docs/disabling-auditing.md) | `withoutAuditing()`, the worker-wide switches, `auditing.enabled` and `auditing.console` |
-| [Relationship auditing](docs/relationship-auditing.md) | Audited attach, detach and sync on many-to-many relations |
-| [Manual audits](docs/manual-audits.md) | `Auditor::on()` for events with no column behind them |
-| [Batches](docs/batches.md) | Grouping the audits of one operation under a `batch_uuid` |
-| [Retention](docs/retention.md) | The per-row threshold and `auditing:prune` |
-| [Queued auditing](docs/queued-auditing.md) | Writing model audits through a queue connection, and what crosses it |
-| [Events](docs/events.md) | The events dispatched around an audit, and vetoing one |
-| [Drivers](docs/drivers.md) | The `audit_details` driver and writing your own |
-| [Resolvers](docs/resolvers.md) | How the causer, `url`, `ip_address` and `user_agent` are filled; custom resolvers |
-| [Audit model](docs/audit-model.md) | Extending or replacing the `Audit` model |
-| [Transitions](docs/transitions.md) | Filling a model with an audit's old or new values |
-| [Testing](docs/testing.md) | Recording audits in tests, the state reset after each test, and asserting on audits with `Auditor::fake()` |
-| [Coroutines](docs/coroutines.md) | The coroutine-safety rules the package follows, and that extensions must follow |
-| [Configuration](docs/configuration.md) | Every `config/auditing.php` key and its default |
+| [Installation](src/docs/installation.md) | Table names, adopting existing tables, publishing the config and migrations |
+| [Schema](src/docs/schema.md) | The `audits` and `audit_details` tables and how values are stored |
+| [Recording](src/docs/recording.md) | Which events and attributes are audited; per-model properties and hooks |
+| [Attribute modifiers](src/docs/attribute-modifiers.md) | Redactors and encoders for sensitive attributes |
+| [Reading audits](src/docs/reading-audits.md) | `getModified()`, `getMetadata()`, tags and the audit's relations |
+| [Disabling auditing](src/docs/disabling-auditing.md) | `withoutAuditing()`, the worker-wide switches, `auditing.enabled` and `auditing.console` |
+| [Relationship auditing](src/docs/relationship-auditing.md) | Audited attach, detach and sync on many-to-many relations |
+| [Manual audits](src/docs/manual-audits.md) | `Auditor::on()` for events with no column behind them |
+| [Batches](src/docs/batches.md) | Grouping the audits of one operation under a `batch_uuid` |
+| [Retention](src/docs/retention.md) | The per-row threshold and `auditing:prune` |
+| [Queued auditing](src/docs/queued-auditing.md) | Writing model audits through a queue connection, and what crosses it |
+| [Events](src/docs/events.md) | The events dispatched around an audit, and vetoing one |
+| [Drivers](src/docs/drivers.md) | The `audit_details` driver and writing your own |
+| [Resolvers](src/docs/resolvers.md) | How the causer, `url`, `ip_address` and `user_agent` are filled; custom resolvers |
+| [Audit model](src/docs/audit-model.md) | Extending or replacing the `Audit` model |
+| [Transitions](src/docs/transitions.md) | Filling a model with an audit's old or new values |
+| [Testing](src/docs/testing.md) | Recording audits in tests, the state reset after each test, and asserting on audits with `Auditor::fake()` |
+| [Coroutines](src/docs/coroutines.md) | The coroutine-safety rules the package follows, and that extensions must follow |
+| [Configuration](src/docs/configuration.md) | Every `config/auditing.php` key and its default |
 
 ## Differences from `owen-it/laravel-auditing`
 

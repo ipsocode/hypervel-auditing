@@ -53,7 +53,7 @@ class AuditMetadataTest extends TestCase
 
     public function testHiddenUserAttributesStayOutOfTheMetadata(): void
     {
-        // User attributes come through getArrayableAttributes(), which honours
+        // User attributes come through getArrayableAttributes(), which honors
         // $hidden, so a password hash never reaches an audit's metadata.
         $this->actingAs($this->user());
 

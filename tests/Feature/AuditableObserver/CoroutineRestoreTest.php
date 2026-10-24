@@ -22,7 +22,7 @@ class CoroutineRestoreTest extends TestCase
      * forced: the first restore is held after `restoring`, already marked, while
      * the second runs start to finish; a shared marker would be cleared by the
      * second and let the first model's `updated` audit through. The hold also
-     * serialises the two audit writes: every coroutine here shares one in-memory
+     * serializes the two audit writes: every coroutine here shares one in-memory
      * SQLite connection, where interleaved transactions corrupt each other's
      * savepoints.
      */

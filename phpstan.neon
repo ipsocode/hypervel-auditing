@@ -28,11 +28,11 @@ parameters:
     # caches the whole of tests/.cache/, so this path and that step have to agree.
     tmpDir: tests/.cache/phpstan
 
-    # src/ only, plus tests/PHPStan/Fixtures/. PHPStan analyses a trait's body only through a
+    # src/ only, plus tests/PHPStan/Fixtures/. PHPStan analyzes a trait's body only through a
     # class that uses it, and no class in src/ uses Auditable or CausesAudits (applications
     # do), so two minimal fixture classes stand in for them. The rest of tests/ and
     # workbench/ are fixtures — the Workbench application exists to be a deliberately shaped
-    # host app, not to be type-correct — and analysing them would report on scaffolding
+    # host app, not to be type-correct — and analyzing them would report on scaffolding
     # rather than on shipped code.
     paths:
         - src
@@ -54,13 +54,13 @@ parameters:
         # The audit state an Auditable carries between the observer firing and the driver
         # writing the row — $auditEvent, $auditCustomOld/$auditCustomNew, $isCustomEvent,
         # $auditBatchUuid, $preloadedResolverData — is set dynamically on the model by the
-        # Auditable trait. The contract declares behaviour, not storage, so PHPStan sees an
+        # Auditable trait. The contract declares behavior, not storage, so PHPStan sees an
         # interface with no properties. Keep these covered by tests: it cannot tell a real
         # field from a typo here. The audit-state names live in Support\AuditState::PROPERTIES.
         - identifier: property.notFound
           message: '#^Access to an undefined property Ipsocode\\Auditing\\Contracts\\Auditable::\$\w+\.$#'
 
-        # The Audit contract declares behaviour, not storage. The Auditable trait reads the
+        # The Audit contract declares behavior, not storage. The Auditable trait reads the
         # audit's polymorphic columns off it in transitionTo(); PHPStan does not take
         # @property tags on the interface, so they cannot be declared there instead.
         - identifier: property.notFound

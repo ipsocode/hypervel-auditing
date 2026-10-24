@@ -16,7 +16,7 @@ If your models or users are keyed by UUIDs, ULIDs or strings, set
 
 The package is installed from Packagist and builds on development releases of
 Hypervel 0.4, so your application's `composer.json` needs the
-stability settings described in the [README](../README.md#installation).
+stability settings described in the [README](../../README.md#installation).
 
 There is nothing to register by hand. Hypervel reads `extra.hypervel` from the
 package's `composer.json` and loads `AuditingServiceProvider` and the `Auditor`

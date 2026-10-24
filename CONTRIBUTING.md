@@ -109,16 +109,16 @@ config, the security policy, and the automated review's skill and brief in
 `.github/claude/`, which the review installs on its runner for the review only.
 Each of them but the pull request template says so in its first lines. A pull
 request may still change one; the maintainer carries the change into the shared
-copy, and the next import brings it to every package. Two parts of `.github/`
-are this package's own: `conventions.php`, the check's settings, and `review/`,
-which tells the automated review what this package is and where to look. The
-package keeps no `.claude/`: `.gitignore` leaves Claude Code's local state out.
+copy, and the next import brings it to every package. One part of `.github/` is
+this package's own: `conventions.php`, the check's settings. `docs/ai/review.md`
+tells a review what this package is and where to look. `.gitignore` leaves
+Claude Code's local state in `.claude/` out, all but `.claude/skills/`.
 
 ## Coroutine safety
 
 A Hypervel worker is long-lived and serves many requests at once as coroutines,
 so state that would be per-request in PHP-FPM is shared here. Every change is
-held to these rules; [Coroutines](docs/coroutines.md) explains why.
+held to these rules; [Coroutines](src/docs/coroutines.md) explains why.
 
 - No new `static` property unless it has a `flushState()` and is reset from
   `src/Testing/TestState.php`.
@@ -130,7 +130,7 @@ held to these rules; [Coroutines](docs/coroutines.md) explains why.
   boot-only.
 - No native `sleep()`/`usleep()`, blocking I/O or `exit()` on a request path.
 - Hypervel APIs only, never `Illuminate\*`.
-- New behaviour comes with a test. `@codeCoverageIgnore` is not a way past the
+- New behavior comes with a test. `@codeCoverageIgnore` is not a way past the
   coverage gate.
 
 ## Pull requests
@@ -139,7 +139,7 @@ Fill in the pull request template and label the pull request with the type it
 ticks. There is no changelog file: each release's notes are generated from the
 titles of the pull requests it contains, grouped by those labels
 (`.github/release.yml`), so write the title for someone reading the release. A
-pull request labelled `breaking-change` makes the next release at least a minor
+pull request labeled `breaking-change` makes the next release at least a minor
 version.
 
 ## Releasing
@@ -150,7 +150,7 @@ hook on the repository, so nothing is uploaded.
 
 Run the **publish** workflow on `main` (Actions → publish → *Run workflow*).
 Leave the bump on `auto` — minor if a pull request merged since the previous
-tag is labelled `breaking-change`, patch otherwise — or pick `patch`, `minor`
+tag is labeled `breaking-change`, patch otherwise — or pick `patch`, `minor`
 or `major`, or type an exact version. *Highlights* go at the top of the notes;
 *dry run* shows the plan without tagging.
 
@@ -160,6 +160,7 @@ generated from the pull requests merged since the previous tag. A `v*` tag
 pushed by hand goes through the same suite and gets the same Release.
 
 Composer installs a release as GitHub's archive of its tag, which leaves out
-every path `.gitattributes` marks `export-ignore`: `.github/`, the tests,
-the workbench and the development configs. A new top-level file or directory
-ships unless it is added there; `git archive HEAD | tar -t` lists what would.
+every path `.gitattributes` marks `export-ignore`: `.github/`, the agent docs
+in `docs/ai/`, the tests, the workbench and the development configs. A new
+top-level file or directory ships unless it is added there;
+`git archive HEAD | tar -t` lists what would.

@@ -13,7 +13,7 @@ use Workbench\App\Models\MutatorArticle;
 
 /**
  * Detail rows hold the raw column values, so reading an audit has to put each
- * one back through the auditable's own read side — accessors of both flavours
+ * one back through the auditable's own read side — accessors of both flavors
  * and casts, including those that decode the model's attributes rather than the
  * value they are handed.
  */
