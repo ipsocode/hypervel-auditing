@@ -1,5 +1,3 @@
-# hypervel-auditing
-
 @AGENTS.md
 
-- `docs/ai/framework.md`: read before changing a part of `src/`, for the Hypervel pages that cover it.
+Read and follow ./AGENTS.md. It is the authoritative instruction file for this repo.
