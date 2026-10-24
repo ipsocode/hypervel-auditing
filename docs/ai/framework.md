@@ -19,8 +19,9 @@ elsewhere the pages are in `vendor/hypervel/components/src/docs/`.
 | `AuditingServiceProvider.php` | packages.md › Configuration; packages.md › Merging Configuration Arrays; packages.md › Migrations; packages.md › Commands; packages.md › "About" Artisan Command |
 | `database/migrations/`, beside `src/` | migrations.md › Migration Structure; migrations.md › Creating Tables; migrations.md › Updating Tables; migrations.md › Determining Table / Column Existence |
 
-## Every package
+## Default References
 
 - packages.md › Package Discovery
 - packages.md › Service Providers
 - packages.md › Test State Cleanup
+- coroutines.md
