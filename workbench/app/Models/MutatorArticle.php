@@ -7,7 +7,7 @@ namespace Workbench\App\Models;
 use Hypervel\Database\Eloquent\Casts\Attribute;
 
 /**
- * Carries both flavours of read accessor, because the Audit trait formats
+ * Carries both flavors of read accessor, because the Audit trait formats
  * historical values through whichever one the auditable declares:
  * the classic `getFooAttribute()` and the `Attribute`-returning kind.
  */

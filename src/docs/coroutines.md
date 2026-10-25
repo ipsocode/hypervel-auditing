@@ -163,4 +163,4 @@ request first, and a resolver of your own has to use what it stored; see
 - [Testing](testing.md)
 - [Queued auditing](queued-auditing.md)
 - [Configuration](configuration.md)
-- [Contributing: coroutine safety](../CONTRIBUTING.md#coroutine-safety)
+- [Contributing: coroutine safety](../../CONTRIBUTING.md#coroutine-safety)

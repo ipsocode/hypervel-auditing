@@ -16,7 +16,7 @@ use Workbench\App\Models\Article;
 
 /**
  * `auditing.connection` puts the two audit tables on a database of their own. The
- * models honour it; so must the transaction that writes them, or a failure part
+ * models honor it; so must the transaction that writes them, or a failure part
  * way through leaves a metadata row committed with only some of its details.
  */
 class AuditConnectionTest extends TestCase

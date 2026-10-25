@@ -118,7 +118,7 @@ protected function createdAuditAttributes(): array
 The exclusions listed under
 [Which attributes are recorded](#which-attributes-are-recorded) are resolved
 before the getter runs but are not applied to what it returns. Call
-`$this->isAttributeAuditable($attribute)` to honour `$auditExclude`,
+`$this->isAttributeAuditable($attribute)` to honor `$auditExclude`,
 `$auditInclude`, strict mode and the timestamp setting.
 [Attribute modifiers](attribute-modifiers.md) still apply to the values it
 returns.

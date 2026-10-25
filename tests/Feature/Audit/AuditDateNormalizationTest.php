@@ -13,7 +13,7 @@ use Workbench\App\Models\CustomDateFormatArticle;
  * `audit_details` stores every value as text, so a datetime comes back in
  * whatever shape was written: by this package, into an adopted table, or by an
  * import. The Audit trait pins known shapes to UTC before the auditable's cast
- * runs, and stays readable when it recognises none of them.
+ * runs, and stays readable when it recognizes none of them.
  */
 class AuditDateNormalizationTest extends TestCase
 {
@@ -56,7 +56,7 @@ class AuditDateNormalizationTest extends TestCase
     {
         $article = $this->customFormatArticle();
 
-        // An ISO-8601 value with a `T` separator matches neither recognised
+        // An ISO-8601 value with a `T` separator matches neither recognized
         // shape nor `d/m/Y H:i:s`. Parsing it against the model's format throws;
         // the trait swallows that so one odd row cannot fail getModified().
         $modified = $this->modifiedAfterRewriting($article, 'old_value', '2026-06-05T07:08:09+00:00');

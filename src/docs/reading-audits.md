@@ -97,7 +97,7 @@ For each value, in order:
    stored before the column held JSON, comes back as stored. Before a
    `datetime` cast, and for the model's created-at and updated-at columns, the
    stored text is read as UTC: `Y-m-d` is taken as midnight, and `Y-m-d H:i:s`
-   and the model's date format are recognised. Text in no recognised shape is
+   and the model's date format are recognized. Text in no recognized shape is
    handed on as it is.
 
 Steps 2 and 3 run on a copy of the auditable that holds the stored value. Casts
