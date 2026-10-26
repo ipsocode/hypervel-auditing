@@ -112,6 +112,7 @@ class PruneCommand extends Command
 
     private function audit(): Audit
     {
+        /** @var class-string<Audit> $class */
         $class = Config::get('auditing.implementation');
 
         return new $class;
