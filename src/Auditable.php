@@ -422,7 +422,7 @@ trait Auditable
         $userResolver = Config::get('auditing.user.resolver');
 
         if (is_subclass_of($userResolver, \Ipsocode\Auditing\Contracts\UserResolver::class)) {
-            return call_user_func([$userResolver, 'resolve'], $this);
+            return $userResolver::resolve();
         }
 
         throw new AuditingException('Invalid UserResolver implementation');
@@ -444,7 +444,7 @@ trait Auditable
             if (! is_subclass_of($implementation, Resolver::class)) {
                 throw new AuditingException('Invalid Resolver implementation for: ' . $name);
             }
-            $resolved[$name] = call_user_func([$implementation, 'resolve'], $this);
+            $resolved[$name] = $implementation::resolve($this);
         }
 
         return $resolved;

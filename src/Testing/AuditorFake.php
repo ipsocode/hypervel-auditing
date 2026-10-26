@@ -90,7 +90,9 @@ class AuditorFake implements Auditor, Fake
             return null;
         }
 
+        /** @var array<string, mixed> $oldValues */
         $oldValues = $data['old_values'] ?? [];
+        /** @var array<string, mixed> $newValues */
         $newValues = $data['new_values'] ?? [];
 
         unset($data['old_values'], $data['new_values']);
