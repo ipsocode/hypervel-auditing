@@ -62,4 +62,4 @@ start with Installation, then read the groups that cover what you are doing.
 - [Configuration](configuration.md): every `config/auditing.php` key and its
   default.
 
-To work on the package itself, read [CONTRIBUTING.md](../../CONTRIBUTING.md).
+To work on the package itself, read [CONTRIBUTING.md](https://github.com/ipsocode/hypervel-auditing/blob/main/CONTRIBUTING.md).

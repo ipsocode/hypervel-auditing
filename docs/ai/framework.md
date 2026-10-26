@@ -15,6 +15,11 @@ elsewhere the pages are in `vendor/hypervel/components/src/docs/`.
 | `Console/`: `auditing:install` and `auditing:prune` | artisan.md › Command Structure; artisan.md › Defining Input Expectations; artisan.md › Prompting for Input; migrations.md › Determining Table / Column Existence; eloquent.md › Deleting Models Using Queries |
 | `Resolvers/`: the causer, URL, IP address and user agent | authentication.md › Retrieving the Authenticated User; authentication.md › Accessing Specific Guard Instances; requests.md › Retrieving the Request URL; requests.md › Request Headers; requests.md › Request IP Address |
 | `Encoders/` | encryption.md › Using the Encrypter |
+| `Redactors/`: the attribute redactors; `HashRedactor` keys its HMAC with `app.key` | encryption.md › Configuration; hashing.md › Introduction |
+| `Facades/`: the `Auditor` facade and its `fake()` | facades.md › How Facades Work; facades.md › Facade Class Reference; mocking.md › Mocking Facades |
+| `Contracts/`: the interfaces applications implement or bind | contracts.md › Introduction; contracts.md › How to Use Contracts; contracts.md › Contract Reference |
+| `Exceptions/`: the exceptions the package throws | errors.md › Handling Exceptions; errors.md › Reporting Exceptions |
+| `PendingAudit.php`: the fluent manual audit behind `Auditor::on()` | facades.md › How Facades Work; eloquent.md › Events |
 | `Testing/`: `Auditor::fake()` and the state reset after each test | testing.md › Test State Cleanup; mocking.md › Mocking Facades; events.md › Testing |
 | `AuditingServiceProvider.php` | packages.md › Configuration; packages.md › Merging Configuration Arrays; packages.md › Migrations; packages.md › Commands; packages.md › "About" Artisan Command |
 | `database/migrations/`, beside `src/` | migrations.md › Migration Structure; migrations.md › Creating Tables; migrations.md › Updating Tables; migrations.md › Determining Table / Column Existence |

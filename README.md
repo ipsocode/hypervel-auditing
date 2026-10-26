@@ -69,8 +69,8 @@ reading order; [Configuration](src/docs/configuration.md) lists every key.
 ## Contributing
 
 The development setup, the checks CI runs, the coroutine-safety rules every
-change is held to, and how releases are cut are in [CONTRIBUTING.md](CONTRIBUTING.md).
-Report security issues privately, as described in [SECURITY.md](.github/SECURITY.md),
+change is held to, and how releases are cut are in [CONTRIBUTING.md](https://github.com/ipsocode/hypervel-auditing/blob/main/CONTRIBUTING.md).
+Report security issues privately, as described in [SECURITY.md](https://github.com/ipsocode/hypervel-auditing/blob/main/.github/SECURITY.md),
 rather than in a public issue.
 
 ## Credits
