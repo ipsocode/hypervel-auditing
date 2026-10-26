@@ -64,8 +64,10 @@ and says why: `@phpstan-ignore <identifier> (<reason>)`.
 The conventions check, `.github/scripts/conventions.php`, fails CI on what
 would otherwise be checked by eye: `Illuminate\` or `Laravel\` anywhere
 (docblocks and strings too), container array-access, `@codeCoverageIgnore`, a
-bare `@phpstan-ignore-line`, a coverage gate below 100%, and raw SQL, `eval()`,
-`unserialize()`, shell commands, `sleep()` or `exit` in shipped code. It also
+bare `@phpstan-ignore-line`, a coverage gate below 100%, raw SQL, `eval()`,
+`unserialize()`, shell commands, `sleep()` or `exit` in shipped code, a
+`CLAUDE.md` without the line `@AGENTS.md` (`agent-guide`), and any file under
+`.claude/` that git would commit (`claude-dir`, with no exceptions). It also
 holds the names this package writes where the application writes too: context
 keys `__auditing.*`, cache and lock keys `auditing:*`, commands
 `auditing:<verb>`, publish tags `auditing-*`, env vars `AUDITING_*` and
@@ -76,10 +78,12 @@ fails once the count stops matching either way.
 
 Reviews follow the maintainers' `pr-review` skill, with `review-auditing`, which
 says where in this package to look first; both are skills on their Claude
-accounts. Ask Claude Code to review your branch with them before you push, or a
-pull request by its number. The scan they run needs no skill:
-`bin/review-scan.sh` flags what a diff adds or removes, `git diff
-origin/main...HEAD | bash bin/review-scan.sh`. No review runs in CI.
+accounts. If you have them, ask Claude Code to review your branch with them
+before you push, or a pull request by its number. Without them, review the diff
+against `AGENTS.md` and say so in the pull request. The scan they run needs no
+skill: `bin/review-scan.sh` flags what a diff adds or removes, and `main`'s copy
+scans a branch that might edit its own: `git diff origin/main...HEAD | bash
+<(git show origin/main:bin/review-scan.sh)`. No review runs in CI.
 
 CI (`.github/workflows/tests.yml`) runs for every pull request into `main`, each
 job once the one it needs has passed: the conventions check, on the bare runner
@@ -104,8 +108,9 @@ pull request templates, `CODEOWNERS`, `dependabot.yml`, the release-notes config
 and the security policy. So are this package's guide, the root `AGENTS.md`,
 which `CLAUDE.md` imports, and the review's scan, `bin/review-scan.sh`. Each of
 them but the pull request template says so in its first lines. A pull request
-may still change one; the maintainer carries the change into the shared copy,
-and the next import brings it to every package. One part of `.github/` is this
+does not change one, since the next import overwrites it: report the change it
+needs, and the maintainer makes it in the shared copy, which the next import
+brings to every package. One part of `.github/` is this
 package's own: `conventions.php`, the check's settings. `.gitignore` leaves
 Claude Code's local state in `.claude/` out.
 
@@ -134,8 +139,8 @@ Fill in the pull request template and label the pull request with the type it
 ticks. There is no changelog file: each release's notes are generated from the
 titles of the pull requests it contains, grouped by those labels
 (`.github/release.yml`), so write the title for someone reading the release. A
-pull request labeled `breaking-change` makes the next release at least a minor
-version.
+pull request labeled `breaking-change` or `enhancement` makes the next release
+at least a minor version, and the publish workflow refuses a `patch` bump then.
 
 ## Releasing
 
@@ -145,8 +150,9 @@ hook on the repository, so nothing is uploaded.
 
 Run the **publish** workflow on `main` (Actions → publish → *Run workflow*).
 Leave the bump on `auto` — minor if a pull request merged since the previous
-tag is labeled `breaking-change`, patch otherwise — or pick `patch`, `minor`
-or `major`, or type an exact version. *Highlights* go at the top of the notes;
+tag is labeled `breaking-change` or `enhancement`, patch otherwise — or pick
+`minor` or `major` (`patch` fails while such a pull request is in the release),
+or type an exact version. *Highlights* go at the top of the notes;
 *dry run* shows the plan without tagging.
 
 The workflow runs the full suite on PHP 8.4 and 8.5, with the coverage gate on
