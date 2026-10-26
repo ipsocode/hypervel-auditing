@@ -66,8 +66,10 @@ would otherwise be checked by eye: `Illuminate\` or `Laravel\` anywhere
 (docblocks and strings too), container array-access, `@codeCoverageIgnore`, a
 bare `@phpstan-ignore-line`, a coverage gate below 100%, raw SQL, `eval()`,
 `unserialize()`, shell commands, `sleep()` or `exit` in shipped code, a
-`CLAUDE.md` without the line `@AGENTS.md` (`agent-guide`), and any file under
-`.claude/` that git would commit (`claude-dir`, with no exceptions). It also
+`CLAUDE.md` without the line `@AGENTS.md` or a missing `AGENTS.md`
+(`agent-guide`), and any file under `.claude/` that git would commit
+(`claude-dir`, with no exceptions; skipped with a notice where git cannot list
+them, as in a worktree whose repository the container does not mount). It also
 holds the names this package writes where the application writes too: context
 keys `__auditing.*`, cache and lock keys `auditing:*`, commands
 `auditing:<verb>`, publish tags `auditing-*`, env vars `AUDITING_*` and
