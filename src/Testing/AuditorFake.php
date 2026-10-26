@@ -95,6 +95,7 @@ class AuditorFake implements Auditor, Fake
 
         unset($data['old_values'], $data['new_values']);
 
+        /** @var class-string<Audit&Model> $auditClass */
         $auditClass = Config::get('auditing.implementation');
 
         $audit = new $auditClass($data);

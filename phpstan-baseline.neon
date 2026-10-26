@@ -1,0 +1,31 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(int\|string\)\: mixed\)\|null, Closure\(string\)\: Ipsocode\\Auditing\\Models\\AuditDetail given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Testing/AuditorFake.php
+
+		-
+			message: '#^Argument of an invalid type array\<string, mixed\>\|string supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: tests/PHPStan/Fixtures/AuditableModel.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_diff_key expects array, array\<string, mixed\>\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/PHPStan/Fixtures/AuditableModel.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function call_user_func expects callable\(\)\: mixed, array\{class\-string\<Ipsocode\\Auditing\\Contracts\\Resolver\>\|Ipsocode\\Auditing\\Contracts\\Resolver, ''resolve''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/PHPStan/Fixtures/AuditableModel.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function call_user_func expects callable\(\)\: mixed, array\{class\-string\<Ipsocode\\Auditing\\Contracts\\UserResolver\>\|Ipsocode\\Auditing\\Contracts\\UserResolver, ''resolve''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/PHPStan/Fixtures/AuditableModel.php
