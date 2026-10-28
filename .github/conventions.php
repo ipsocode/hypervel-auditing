@@ -6,7 +6,7 @@ declare(strict_types=1);
  * This package's settings for the conventions check, .github/scripts/conventions.php,
  * which initial.yml runs ahead of the test jobs and `composer conventions` runs locally.
  * The check is imported, the same in every ipsocode/hypervel-* package; this file is
- * the part that is this package's own. The script's header lists the rules.
+ * the part that is this package's own. The rules are in the script's rule checks and described in CONTRIBUTING.md.
  */
 
 return [

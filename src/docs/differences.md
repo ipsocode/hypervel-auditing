@@ -28,8 +28,8 @@ assumption before you write a line of code:
 | Storage | `old_values` / `new_values` JSON columns on `audits` | Normalized: `audits` + one `audit_details` row per field | [Schema](schema.md) |
 | Drivers | `Database` driver | `audit_details` driver; no `Database` driver | [Drivers](drivers.md) |
 | `old_values` / `new_values` | Columns | Accessors, built from the detail rows | [Schema](schema.md#old_values-and-new_values) |
-| `auditing:install` | Publishes the config | Chooses and persists the table names, can adopt existing tables | [Installation](installation.md) |
-| Driver generator | `make:audit-driver` | None | [Drivers](drivers.md#writing-a-driver) |
+| `auditing:install` | Publishes the config and the migrations, and registers the service provider | Chooses and persists the table names, can adopt existing tables | [Installation](installation.md) |
+| Driver generator | `auditing:audit-driver` | None | [Drivers](drivers.md#writing-a-driver) |
 | Retention | Threshold only | Threshold plus `auditing:prune` | [Retention](retention.md) |
 | Batches | None | `Auditor::withinBatch()`, `batch_uuid` column | [Batches](batches.md) |
 | Causer scoping | None | `Auditor::actingAs()` (the `Contracts\Auditor` gained methods: a breaking change for custom implementations) | [Resolvers](resolvers.md#the-causer) |
