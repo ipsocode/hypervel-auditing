@@ -51,7 +51,7 @@ interface Audit
      * Modified attributes by name, each with its `old` and/or `new` value.
      *
      * @param int<1, max> $depth
-     * @return array<string,mixed>|string a JSON string when $json is true
+     * @return ($json is true ? string : array<string, mixed>) a JSON string when $json is true
      */
     public function getModified(bool $json = false, int $options = 0, int $depth = 512): array|string;
 }
