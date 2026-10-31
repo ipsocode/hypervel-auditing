@@ -9,7 +9,7 @@ use Hypervel\Support\Facades\Log;
 use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
-use Mockery;
+use Mockery as m;
 use RuntimeException;
 use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
@@ -120,7 +120,7 @@ class AuditableBranchesTest extends TestCase
     public function testACancellationWhileCheckingAuditingIsRethrown(): void
     {
         $original = $this->app->get('config');
-        $config = Mockery::mock($original)->makePartial();
+        $config = m::mock($original)->makePartial();
         $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new CanceledException);
         Config::swap($config);
 
@@ -139,7 +139,7 @@ class AuditableBranchesTest extends TestCase
     public function testACancellationWhileLoggingTheDeclinedRegistrationIsRethrown(): void
     {
         $original = $this->app->get('config');
-        $config = Mockery::mock($original)->makePartial();
+        $config = m::mock($original)->makePartial();
         $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new RuntimeException('torn down'));
         Config::swap($config);
         Log::shouldReceive('warning')->once()->andThrow(new CanceledException);
