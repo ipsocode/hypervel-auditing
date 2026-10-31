@@ -10,7 +10,7 @@ use Hypervel\Foundation\Testing\Attributes\UnitTest;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
 use Ipsocode\Auditing\Tests\Unit\TestCase;
-use Mockery;
+use Mockery as m;
 use RuntimeException;
 
 /**
@@ -28,7 +28,7 @@ class AuditCauserTest extends TestCase
 
     private function user(): Authenticatable
     {
-        return Mockery::mock(Authenticatable::class);
+        return m::mock(Authenticatable::class);
     }
 
     #[UnitTest]
