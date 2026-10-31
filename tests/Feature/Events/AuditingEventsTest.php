@@ -9,7 +9,7 @@ use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Events\Audited;
 use Ipsocode\Auditing\Events\Auditing;
 use Ipsocode\Auditing\Tests\TestCase;
-use Mockery;
+use Mockery as m;
 use Workbench\App\Models\Article;
 
 class AuditingEventsTest extends TestCase
@@ -70,14 +70,14 @@ class AuditingEventsTest extends TestCase
 
     public function testNoListenerMeansNeitherEventIsConstructedNorDispatched(): void
     {
-        $dispatcher = Mockery::spy($this->app->make('events'));
+        $dispatcher = m::spy($this->app->make('events'));
         $this->app->instance('events', $dispatcher);
 
         $article = $this->makeArticle();
 
         $this->assertSame(1, $article->audits()->count());
         $dispatcher->shouldNotHaveReceived('until');
-        $dispatcher->shouldNotHaveReceived('dispatch', [Mockery::type(Audited::class)]);
+        $dispatcher->shouldNotHaveReceived('dispatch', [m::type(Audited::class)]);
     }
 
     public function testAFakedAuditedEventIsStillDispatched(): void
