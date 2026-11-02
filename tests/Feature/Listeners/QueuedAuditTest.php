@@ -10,7 +10,7 @@ use Ipsocode\Auditing\Events\DispatchAudit;
 use Ipsocode\Auditing\Events\DispatchingAudit;
 use Ipsocode\Auditing\Listeners\ProcessDispatchAudit;
 use Ipsocode\Auditing\Tests\TestCase;
-use Mockery;
+use Mockery as m;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\User;
 
@@ -71,13 +71,13 @@ class QueuedAuditTest extends TestCase
 
     public function testNoListenerMeansDispatchingAuditIsNotDispatched(): void
     {
-        $dispatcher = Mockery::spy($this->app->make('events'));
+        $dispatcher = m::spy($this->app->make('events'));
         $this->app->instance('events', $dispatcher);
 
         $this->article();
 
         $dispatcher->shouldNotHaveReceived('until');
-        $dispatcher->shouldHaveReceived('dispatch', [Mockery::type(DispatchAudit::class)]);
+        $dispatcher->shouldHaveReceived('dispatch', [m::type(DispatchAudit::class)]);
     }
 
     public function testARestoredDispatchAuditCarriesAModelWithNoLoadedRelations(): void

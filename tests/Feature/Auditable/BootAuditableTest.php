@@ -10,7 +10,7 @@ use Hypervel\Support\Facades\Facade;
 use Ipsocode\Auditing\AuditableObserver;
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Tests\TestCase;
-use Mockery;
+use Mockery as m;
 use RuntimeException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\RetrievedArticle;
@@ -67,7 +67,7 @@ class BootAuditableTest extends TestCase
         // The observer is what reads the event list on a retrieved fire; with no
         // listener, hydrating rows reads it not once.
         $original = $this->app->get('config');
-        $config = Mockery::spy($original);
+        $config = m::spy($original);
         Config::swap($config);
 
         try {
@@ -137,7 +137,7 @@ class BootAuditableTest extends TestCase
         };
 
         $original = $this->app->get('config');
-        $config = Mockery::spy($original);
+        $config = m::spy($original);
         Config::swap($config);
 
         try {
@@ -157,7 +157,7 @@ class BootAuditableTest extends TestCase
         // A flushed container as the trait sees it: a non-null facade root that
         // resolves nothing. A guard against a *null* root alone would let the
         // lookups run and throw out of the constructor.
-        $torn = Mockery::mock(ContainerContract::class);
+        $torn = m::mock(ContainerContract::class);
         $torn->shouldReceive('make', 'get')
             ->andThrow(new RuntimeException('Target class [app] does not exist.'));
 
