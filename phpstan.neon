@@ -12,9 +12,10 @@ includes:
     # are included by path, as components includes them itself.
     - vendor/hypervel/components/src/database/extension.neon
     - vendor/hypervel/components/src/foundation/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
-    level: 7
+    level: 8
     inferPrivatePropertyTypeFromConstructor: true
     treatPhpDocTypesAsCertain: false
 
