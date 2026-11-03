@@ -32,7 +32,9 @@ class TestState
      */
     public static function flushState(): void
     {
-        Audit::flushState();
+        // Reset here rather than in an Audit::flushState(), which would shadow
+        // Model::flushState(), the framework's reset of Eloquent's static state.
+        Audit::$auditingGloballyDisabled = Audit::DEFAULT_AUDITING_GLOBALLY_DISABLED;
 
         $keys = [ContextKeys::DISABLED_GLOBALLY, ContextKeys::RESTORING, ContextKeys::BATCH, ContextKeys::CAUSER];
 

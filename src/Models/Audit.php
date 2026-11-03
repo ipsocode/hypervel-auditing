@@ -118,12 +118,4 @@ class Audit extends Model implements AuditContract
     {
         return $this->serializeDate($date);
     }
-
-    /**
-     * Flush all static state.
-     */
-    public static function flushState(): void
-    {
-        static::$auditingGloballyDisabled = self::DEFAULT_AUDITING_GLOBALLY_DISABLED;
-    }
 }
