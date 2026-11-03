@@ -574,9 +574,10 @@ trait Auditable
         }
 
         // Walk the hierarchy so a scope opened on a parent covers its subclasses,
-        // the way the inherited static property does.
-        for ($class = static::class; $class !== false; $class = get_parent_class($class)) {
-            if (CoroutineContext::get(ContextKeys::disabledFor($class), false) === true) {
+        // the way the inherited static property does. Each class names its own key,
+        // so an override is honored; the walk ends above the classes that use this trait.
+        for ($class = static::class; $class !== false && method_exists($class, 'auditingDisabledContextKey'); $class = get_parent_class($class)) {
+            if (CoroutineContext::get($class::auditingDisabledContextKey(), false) === true) {
                 return true;
             }
         }
