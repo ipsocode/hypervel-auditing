@@ -8,6 +8,9 @@ use Hypervel\Contracts\Foundation\Application;
 use Hypervel\Foundation\Testing\RefreshDatabase;
 use Hypervel\Testbench\Concerns\WithWorkbench;
 use Hypervel\Testbench\TestCase as BaseTestCase;
+use Ipsocode\Auditing\Tests\Fixtures\CountingUrlResolver;
+use Ipsocode\Auditing\Tests\Fixtures\LevelRecordingDriver;
+use Workbench\App\Drivers\NullDriver;
 
 use function Hypervel\Testbench\default_migration_path;
 use function Hypervel\Testbench\workbench_path;
@@ -16,6 +19,17 @@ abstract class TestCase extends BaseTestCase
 {
     use RefreshDatabase;
     use WithWorkbench;
+
+    protected function tearDown(): void
+    {
+        // Counters on the fixtures and workbench drivers are worker-lifetime
+        // statics, so reset them after every test rather than in each test.
+        CountingUrlResolver::flushState();
+        LevelRecordingDriver::flushState();
+        NullDriver::flushState();
+
+        parent::tearDown();
+    }
 
     protected function defineEnvironment(Application $app): void
     {

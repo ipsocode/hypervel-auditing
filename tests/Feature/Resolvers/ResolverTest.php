@@ -6,12 +6,11 @@ namespace Ipsocode\Auditing\Tests\Feature\Resolvers;
 
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Request;
-use Ipsocode\Auditing\Contracts\Auditable;
-use Ipsocode\Auditing\Contracts\Resolver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Resolvers\IpAddressResolver;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Resolvers\UserAgentResolver;
+use Ipsocode\Auditing\Tests\Fixtures\CountingUrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
 use stdClass;
 use Workbench\App\Models\Article;
@@ -57,7 +56,6 @@ class ResolverTest extends TestCase
 
     public function testAnInlineAuditRunsEachResolverOnce(): void
     {
-        CountingUrlResolver::$calls = 0;
         Config::set('auditing.resolvers.url', CountingUrlResolver::class);
 
         $article = $this->article();
@@ -145,20 +143,5 @@ class ResolverTest extends TestCase
         $this->expectExceptionMessage('Invalid UserResolver implementation');
 
         $this->article();
-    }
-}
-
-/**
- * Counts how often the audit pipeline asks for the URL.
- */
-class CountingUrlResolver implements Resolver
-{
-    public static int $calls = 0;
-
-    public static function resolve(Auditable $auditable): string
-    {
-        ++static::$calls;
-
-        return 'https://counted.test';
     }
 }

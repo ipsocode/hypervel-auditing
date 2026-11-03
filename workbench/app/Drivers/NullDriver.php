@@ -19,6 +19,15 @@ class NullDriver implements AuditDriver
 
     public static int $pruneCalls = 0;
 
+    /**
+     * Flush all static state.
+     */
+    public static function flushState(): void
+    {
+        static::$auditCalls = 0;
+        static::$pruneCalls = 0;
+    }
+
     public function audit(Auditable $model): ?Audit
     {
         ++static::$auditCalls;

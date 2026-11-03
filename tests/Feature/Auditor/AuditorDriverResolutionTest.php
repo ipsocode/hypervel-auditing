@@ -22,14 +22,6 @@ use Workbench\App\Models\Article;
  */
 class AuditorDriverResolutionTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        NullDriver::$auditCalls = 0;
-        NullDriver::$pruneCalls = 0;
-    }
-
     private function auditor(): AuditorContract
     {
         return $this->app->get(AuditorContract::class);

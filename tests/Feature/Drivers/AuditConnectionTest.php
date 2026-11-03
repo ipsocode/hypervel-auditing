@@ -11,6 +11,7 @@ use Hypervel\Support\Facades\DB;
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Models\AuditDetail;
 use Ipsocode\Auditing\Support\AuditTables;
+use Ipsocode\Auditing\Tests\Fixtures\LevelRecordingDriver;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
 
@@ -57,7 +58,6 @@ class AuditConnectionTest extends TestCase
     public function testTheDriverRunsItsTransactionOnTheAuditConnection(): void
     {
         Config::set('auditing.driver', LevelRecordingDriver::class);
-        LevelRecordingDriver::$levels = [];
 
         $defaultConnection = Config::get('database.default');
 
@@ -95,25 +95,5 @@ class AuditConnectionTest extends TestCase
         }
 
         $this->assertSame($before, DB::connection('audit_db')->table(AuditTables::audits())->count());
-    }
-}
-
-/**
- * Records both connections' transaction levels while the driver builds its
- * detail rows, inside the transaction it opened.
- */
-class LevelRecordingDriver extends \Ipsocode\Auditing\Drivers\AuditDetails
-{
-    /** @var array<int, array{default: int, audit: int}> */
-    public static array $levels = [];
-
-    protected function normalizeValue(mixed $value): ?string
-    {
-        static::$levels[] = [
-            'default' => DB::connection(Config::get('database.default'))->transactionLevel(),
-            'audit' => DB::connection('audit_db')->transactionLevel(),
-        ];
-
-        return parent::normalizeValue($value);
     }
 }
