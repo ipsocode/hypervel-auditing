@@ -27,11 +27,11 @@ class ProcessDispatchAudit implements ShouldQueue
      * Null, not 0, when no delay is set: the dispatcher sends any non-null delay
      * through the connection's later(), which on `deferred` and `background` arms
      * an in-memory timer, so a `deferred` audit would be written as soon as the
-     * request coroutine yields, not when it ends. Cast: env values are strings.
+     * request coroutine yields, not when it ends.
      */
     public function withDelay(DispatchAudit $event): ?int
     {
-        $delay = (int) Config::get('auditing.queue.delay');
+        $delay = Config::integer('auditing.queue.delay');
 
         return $delay > 0 ? $delay : null;
     }

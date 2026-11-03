@@ -86,42 +86,11 @@ class AuditableBranchesTest extends TestCase
         }
     }
 
-    public function testNumericStringMasterSwitchIsReadAsABoolOffConsole(): void
-    {
-        try {
-            $this->app->setRunningInConsole(false);
-
-            Config::set('auditing.enabled', '1');
-            $this->assertTrue(Article::isAuditingEnabled());
-
-            Config::set('auditing.enabled', '0');
-            $this->assertFalse(Article::isAuditingEnabled());
-        } finally {
-            $this->app->setRunningInConsole(true);
-        }
-    }
-
-    public function testObserverIsRegisteredOffConsoleWhenTheMasterSwitchIsANumericString(): void
-    {
-        Config::set('auditing.enabled', '1');
-
-        try {
-            $this->app->setRunningInConsole(false);
-
-            $registers = (fn (): bool => static::shouldRegisterAuditObserver())
-                ->bindTo(null, Article::class);
-
-            $this->assertTrue($registers());
-        } finally {
-            $this->app->setRunningInConsole(true);
-        }
-    }
-
     public function testACancellationWhileCheckingAuditingIsRethrown(): void
     {
         $original = $this->app->get('config');
         $config = m::mock($original)->makePartial();
-        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new CanceledException);
+        $config->shouldReceive('boolean')->with('auditing.enabled')->once()->andThrow(new CanceledException);
         Config::swap($config);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
@@ -140,7 +109,7 @@ class AuditableBranchesTest extends TestCase
     {
         $original = $this->app->get('config');
         $config = m::mock($original)->makePartial();
-        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new RuntimeException('torn down'));
+        $config->shouldReceive('boolean')->with('auditing.enabled')->once()->andThrow(new RuntimeException('torn down'));
         Config::swap($config);
         Log::shouldReceive('warning')->once()->andThrow(new CanceledException);
 
@@ -156,11 +125,11 @@ class AuditableBranchesTest extends TestCase
         }
     }
 
-    public function testAuditSettingsAcceptNumericStringConfigValues(): void
+    public function testAuditSettingsAreReadFromConfig(): void
     {
-        Config::set('auditing.strict', '1');
-        Config::set('auditing.timestamps', '1');
-        Config::set('auditing.threshold', '5');
+        Config::set('auditing.strict', true);
+        Config::set('auditing.timestamps', true);
+        Config::set('auditing.threshold', 5);
 
         $article = new Article;
 

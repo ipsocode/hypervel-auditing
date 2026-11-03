@@ -78,7 +78,7 @@ return new class extends Migration {
      */
     private function keyColumn(Blueprint $table, string $column, string $key): ColumnDefinition
     {
-        $type = config('auditing.key_types.' . $key, 'bigint');
+        $type = config('auditing.key_types.' . $key);
 
         return match ($type) {
             'bigint' => $table->unsignedBigInteger($column),

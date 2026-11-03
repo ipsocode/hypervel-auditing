@@ -60,7 +60,8 @@ hold jobs in memory, so an audit that is not yet written when the worker exits
 is lost. `deferred` needs a coroutine to attach the job to: a command that
 sets `$coroutine = false` should use `sync` or `background`.
 
-`delay` is in seconds; a numeric string, as `env()` returns, works too. A
+`delay` is an integer number of seconds; to read it from the environment,
+cast it in the config file, as in `(int) env('AUDITING_QUEUE_DELAY', 0)`. A
 positive delay sends the job through the connection's `later()`, which on
 `deferred` and `background` is an in-memory timer that writes the audit that
 many seconds afterwards. With `0` the job is pushed as usual.

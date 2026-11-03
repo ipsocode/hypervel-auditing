@@ -107,13 +107,14 @@ class KeyTypesTest extends TestCase
         $this->mysqlDdl();
     }
 
-    public function testAMissingKeyTypeFallsBackToBigint(): void
+    public function testAMissingKeyTypeFailsTheMigration(): void
     {
         Config::set('auditing.key_types', []);
 
-        $ddl = implode("\n", $this->mysqlDdl());
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('auditing.key_types.user must be one of bigint, uuid, ulid or string, [null] given.');
 
-        $this->assertStringContainsString('`auditable_id` bigint unsigned not null', $ddl);
+        $this->mysqlDdl();
     }
 
     public function testAUuidKeyedModelChangedByAUuidKeyedUserIsAudited(): void
