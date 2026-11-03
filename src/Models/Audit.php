@@ -11,6 +11,7 @@ use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\HasMany;
 use Ipsocode\Auditing\Audit as AuditTrait;
 use Ipsocode\Auditing\Contracts\Audit as AuditContract;
+use Ipsocode\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @property string $auditable_type
@@ -21,12 +22,12 @@ use Ipsocode\Auditing\Contracts\Audit as AuditContract;
  * @property null|string $user_agent
  * @property null|CarbonInterface $created_at
  * @property null|CarbonInterface $updated_at
- * @property string $tags
+ * @property null|string $tags
  * @property string $event
  * @property array<string,mixed> $new_values
  * @property array<string,mixed> $old_values
- * @property mixed $user
- * @property mixed $auditable
+ * @property null|Model $user
+ * @property null|(AuditableContract&Model) $auditable
  * @property-read Collection<int, AuditDetail> $details
  */
 class Audit extends Model implements AuditContract
@@ -40,10 +41,12 @@ class Audit extends Model implements AuditContract
      */
     protected ?string $dateFormat = 'Y-m-d H:i:s.v';
 
+    public const bool DEFAULT_AUDITING_GLOBALLY_DISABLED = false;
+
     /**
      * Worker-global like `Auditable::$auditingDisabled`; boot or tests only.
      */
-    public static bool $auditingGloballyDisabled = false;
+    public static bool $auditingGloballyDisabled = self::DEFAULT_AUDITING_GLOBALLY_DISABLED;
 
     /**
      * Events with no "old" side. An `audit_details` row always has both columns,
@@ -114,5 +117,13 @@ class Audit extends Model implements AuditContract
     public function getSerializedDate(DateTimeInterface $date): string
     {
         return $this->serializeDate($date);
+    }
+
+    /**
+     * Flush all static state.
+     */
+    public static function flushState(): void
+    {
+        static::$auditingGloballyDisabled = self::DEFAULT_AUDITING_GLOBALLY_DISABLED;
     }
 }

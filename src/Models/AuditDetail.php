@@ -8,6 +8,7 @@ use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\BelongsTo;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\Audit as AuditContract;
+use Ipsocode\Auditing\Support\AuditTables;
 
 /**
  * @property int $id
@@ -42,7 +43,7 @@ class AuditDetail extends Model
 
     public function getTable(): string
     {
-        return \Ipsocode\Auditing\Support\AuditTables::auditDetails();
+        return AuditTables::auditDetails();
     }
 
     /**

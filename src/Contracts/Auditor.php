@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Contracts;
 
 use Hypervel\Contracts\Auth\Authenticatable;
+use Ipsocode\Auditing\PendingAudit;
 
 interface Auditor
 {
@@ -18,7 +19,7 @@ interface Auditor
     /**
      * Start a manual audit for a model, for an event with no column behind it.
      */
-    public function on(Auditable $model): \Ipsocode\Auditing\PendingAudit;
+    public function on(Auditable $model): PendingAudit;
 
     /**
      * Run a callback with an audit batch open, grouping every audit it writes,

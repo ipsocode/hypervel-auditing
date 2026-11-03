@@ -13,7 +13,7 @@ class UserMorph
 {
     public static function prefix(): string
     {
-        return (string) Config::get('auditing.user.morph_prefix');
+        return Config::string('auditing.user.morph_prefix');
     }
 
     public static function typeColumn(): string

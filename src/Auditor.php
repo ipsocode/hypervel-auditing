@@ -23,7 +23,7 @@ class Auditor extends Manager implements Contracts\Auditor
 {
     public function getDefaultDriver(): string
     {
-        return Config::get('auditing.driver');
+        return Config::string('auditing.driver');
     }
 
     /**

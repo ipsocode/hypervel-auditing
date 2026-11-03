@@ -21,11 +21,11 @@ class AuditPayload
      */
     public static function isEmpty(Auditable $model, array $data): bool
     {
-        if (Config::get('auditing.empty_values')) {
+        if (Config::boolean('auditing.empty_values')) {
             return false;
         }
 
-        if (in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values'))) {
+        if (in_array($model->getAuditEvent(), Config::array('auditing.allowed_empty_values'), true)) {
             return false;
         }
 

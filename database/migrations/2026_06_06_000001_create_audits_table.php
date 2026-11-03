@@ -12,10 +12,10 @@ use Ipsocode\Auditing\Support\AuditTables;
 return new class extends Migration {
     public function up(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
         $schema = Schema::connection($connection);
         $table = AuditTables::audits();
-        $morphPrefix = config('auditing.user.morph_prefix', 'user');
+        $morphPrefix = config('auditing.user.morph_prefix');
 
         if (! $schema->hasTable($table)) {
             $schema->create($table, function (Blueprint $table) use ($morphPrefix) {
@@ -38,7 +38,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
 
         Schema::connection($connection)->drop(AuditTables::audits());
     }

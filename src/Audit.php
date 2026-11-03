@@ -16,6 +16,7 @@ use Hypervel\Support\Facades\Date;
 use Hypervel\Support\Str;
 use InvalidArgumentException;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
+use Ipsocode\Auditing\Support\AuditTables;
 use Ipsocode\Auditing\Support\UserMorph;
 use JsonException;
 
@@ -107,7 +108,7 @@ trait Audit
 
     public function getTable(): string
     {
-        return \Ipsocode\Auditing\Support\AuditTables::audits();
+        return AuditTables::audits();
     }
 
     public function resolveData(): array
@@ -201,7 +202,7 @@ trait Audit
         }
 
         if ($model->hasCast($key)) {
-            if ($model->getCastType($key) == 'datetime') {
+            if ($model->getCastType($key) === 'datetime') {
                 $value = $this->castDatetimeUTC($model, $value);
             }
 

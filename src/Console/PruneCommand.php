@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Console;
 
+use Carbon\CarbonInterface;
 use Hypervel\Console\Command;
 use Hypervel\Database\Eloquent\Builder;
 use Hypervel\Database\Eloquent\Relations\Relation;
-use Hypervel\Support\Carbon;
 use Hypervel\Support\Facades\Config;
+use Hypervel\Support\Facades\Date;
 use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Support\AuditTables;
 
@@ -28,7 +29,7 @@ class PruneCommand extends Command
 
     public function handle(): int
     {
-        $days = $this->option('days') ?? Config::get('auditing.delete_records_older_than_days');
+        $days = $this->option('days') ?? Config::integer('auditing.delete_records_older_than_days');
 
         // Without this, `--days=nonsense` casts to 0 and quietly deletes the
         // whole trail.
@@ -38,7 +39,7 @@ class PruneCommand extends Command
             return self::FAILURE;
         }
 
-        $cutoff = Carbon::now()->subDays((int) $days);
+        $cutoff = Date::now()->subDays((int) $days);
         $query = $this->query($cutoff);
 
         if ($this->option('dry-run')) {
@@ -67,7 +68,7 @@ class PruneCommand extends Command
      *
      * @return Builder<*>
      */
-    private function query(Carbon $cutoff): Builder
+    private function query(CarbonInterface $cutoff): Builder
     {
         $audit = $this->audit();
 

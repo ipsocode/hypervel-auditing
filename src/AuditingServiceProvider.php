@@ -10,6 +10,7 @@ use Hypervel\Foundation\Console\AboutCommand;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Event;
 use Hypervel\Support\ServiceProvider;
+use Ipsocode\Auditing\Auditor as AuditorManager;
 use Ipsocode\Auditing\Console\InstallCommand;
 use Ipsocode\Auditing\Console\PruneCommand;
 use Ipsocode\Auditing\Contracts\Auditor;
@@ -25,7 +26,7 @@ class AuditingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/auditing.php', 'auditing');
 
         $this->app->singleton(Auditor::class, function (Application $app) {
-            return new \Ipsocode\Auditing\Auditor($app);
+            return new AuditorManager($app);
         });
 
         $this->app->alias(Auditor::class, 'auditor');
@@ -49,15 +50,15 @@ class AuditingServiceProvider extends ServiceProvider
 
             AboutCommand::add('Auditing', static fn (): array => [
                 'Version' => InstalledVersions::getPrettyVersion('ipsocode/hypervel-auditing') ?? 'unknown',
-                'Enabled' => AboutCommand::format((bool) Config::get('auditing.enabled'), console: $onOff),
-                'Console' => AboutCommand::format((bool) Config::get('auditing.console'), console: $onOff),
-                'Driver' => Config::get('auditing.driver'),
-                'Queue' => AboutCommand::format((bool) Config::get('auditing.queue.enable'), console: static fn (bool $on): string => $on ? 'ENABLED (' . Config::get('auditing.queue.connection') . ')' : '<fg=yellow;options=bold>DISABLED</>', json: static fn (bool $on): string => $on ? 'enabled (' . Config::get('auditing.queue.connection') . ')' : 'disabled'),
-                'Pruning' => (int) Config::get('auditing.delete_records_older_than_days') . ' days',
+                'Enabled' => AboutCommand::format(Config::boolean('auditing.enabled'), console: $onOff),
+                'Console' => AboutCommand::format(Config::boolean('auditing.console'), console: $onOff),
+                'Driver' => Config::string('auditing.driver'),
+                'Queue' => AboutCommand::format(Config::boolean('auditing.queue.enable'), console: static fn (bool $on): string => $on ? 'ENABLED (' . Config::get('auditing.queue.connection') . ')' : '<fg=yellow;options=bold>DISABLED</>', json: static fn (bool $on): string => $on ? 'enabled (' . Config::get('auditing.queue.connection') . ')' : 'disabled'),
+                'Pruning' => Config::integer('auditing.delete_records_older_than_days') . ' days',
             ]);
         }
 
-        if (Config::get('auditing.run_migrations')) {
+        if (Config::boolean('auditing.run_migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         }
 

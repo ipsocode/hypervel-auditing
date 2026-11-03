@@ -15,12 +15,12 @@ class ProcessDispatchAudit implements ShouldQueue
 
     public function viaConnection(): string
     {
-        return Config::get('auditing.queue.connection');
+        return Config::string('auditing.queue.connection');
     }
 
     public function viaQueue(): string
     {
-        return Config::get('auditing.queue.queue');
+        return Config::string('auditing.queue.queue');
     }
 
     /**

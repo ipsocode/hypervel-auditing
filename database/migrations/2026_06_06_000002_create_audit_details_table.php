@@ -11,7 +11,7 @@ use Ipsocode\Auditing\Support\AuditTables;
 return new class extends Migration {
     public function up(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
         $schema = Schema::connection($connection);
         $table = AuditTables::auditDetails();
         $auditsTable = AuditTables::audits();
@@ -38,7 +38,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
 
         Schema::connection($connection)->drop(AuditTables::auditDetails());
     }

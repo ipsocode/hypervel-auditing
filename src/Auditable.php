@@ -16,6 +16,7 @@ use Ipsocode\Auditing\Concerns\AuditsRelationships;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
 use Ipsocode\Auditing\Contracts\AttributeRedactor;
 use Ipsocode\Auditing\Contracts\Resolver;
+use Ipsocode\Auditing\Contracts\UserResolver as UserResolverContract;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Models\Audit as AuditModel;
@@ -36,12 +37,14 @@ trait Auditable
 
     public ?string $auditEvent = null;
 
+    public const bool DEFAULT_AUDITING_DISABLED = false;
+
     /**
      * Worker-global, set by disableAuditing() and enableAuditing(): it affects
      * every concurrent coroutine, so change it at boot or in tests only. Use
      * withoutAuditing() to disable auditing for one coroutine.
      */
-    public static bool $auditingDisabled = false;
+    public static bool $auditingDisabled = self::DEFAULT_AUDITING_DISABLED;
 
     /** @var null|array<string, mixed> */
     public ?array $auditCustomOld = null;
@@ -133,7 +136,7 @@ trait Auditable
     public function audits(): MorphMany
     {
         /** @var class-string<AuditModel> $implementation */
-        $implementation = Config::get('auditing.implementation');
+        $implementation = Config::string('auditing.implementation');
 
         // @phpstan-ignore return.type (the contract declares the declaring model as Model, while morphMany() infers $this; the relation is the same)
         return $this->morphMany(
@@ -193,7 +196,7 @@ trait Auditable
             // Arrays pass only with `allowed_array_values`; objects only when
             // they stringify or are enums.
             if (
-                (is_array($value) && ! Config::get('auditing.allowed_array_values'))
+                (is_array($value) && ! Config::boolean('auditing.allowed_array_values'))
                 || (is_object($value)
                     && ! method_exists($value, '__toString')
                     && ! ($value instanceof UnitEnum))
@@ -205,7 +208,7 @@ trait Auditable
 
     public function getAuditExclude(): array
     {
-        return $this->auditExclude ?? Config::get('auditing.exclude');
+        return $this->auditExclude ?? Config::array('auditing.exclude');
     }
 
     public function getAuditInclude(): array
@@ -418,9 +421,9 @@ trait Auditable
             return AuditCauser::current();
         }
 
-        $userResolver = Config::get('auditing.user.resolver');
+        $userResolver = Config::string('auditing.user.resolver');
 
-        if (is_subclass_of($userResolver, \Ipsocode\Auditing\Contracts\UserResolver::class)) {
+        if (is_subclass_of($userResolver, UserResolverContract::class)) {
             return $userResolver::resolve();
         }
 
@@ -433,7 +436,7 @@ trait Auditable
     protected function runResolvers(): array
     {
         $resolved = [];
-        $resolvers = Config::get('auditing.resolvers');
+        $resolvers = Config::array('auditing.resolvers');
 
         foreach ($resolvers as $name => $implementation) {
             if (empty($implementation)) {
@@ -536,7 +539,7 @@ trait Auditable
 
     public function getAuditEvents(): array
     {
-        return $this->auditEvents ?? Config::get('auditing.events');
+        return $this->auditEvents ?? Config::array('auditing.events');
     }
 
     /**
@@ -584,11 +587,20 @@ trait Auditable
         return false;
     }
 
+    /**
+     * Boot or tests only. Sets a worker-lifetime flag every coroutine of the class reads, so
+     * calling it during a request silences auditing for all concurrent requests; use
+     * withoutAuditing() for a request-scoped switch.
+     */
     public static function disableAuditing(): void
     {
         static::$auditingDisabled = true;
     }
 
+    /**
+     * Boot or tests only. Clears the flag disableAuditing() sets, for every coroutine of the
+     * class at once.
+     */
     public static function enableAuditing(): void
     {
         static::$auditingDisabled = false;
@@ -644,7 +656,7 @@ trait Auditable
 
     public function getAuditDriver(): string
     {
-        return $this->auditDriver ?? Config::get('auditing.driver');
+        return $this->auditDriver ?? Config::string('auditing.driver');
     }
 
     public function getAuditThreshold(): int

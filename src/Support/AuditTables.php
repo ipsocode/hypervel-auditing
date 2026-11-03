@@ -13,11 +13,11 @@ class AuditTables
 {
     public static function audits(): string
     {
-        return (string) Config::get('auditing.tables.audits');
+        return Config::string('auditing.tables.audits');
     }
 
     public static function auditDetails(): string
     {
-        return (string) Config::get('auditing.tables.audit_details');
+        return Config::string('auditing.tables.audit_details');
     }
 }

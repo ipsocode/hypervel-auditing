@@ -32,12 +32,12 @@ class TestState
      */
     public static function flushState(): void
     {
-        Audit::$auditingGloballyDisabled = false;
+        Audit::flushState();
 
         $keys = [ContextKeys::DISABLED_GLOBALLY, ContextKeys::RESTORING, ContextKeys::BATCH, ContextKeys::CAUSER];
 
         foreach (static::auditableClasses() as $class) {
-            $class::$auditingDisabled = false;
+            $class::$auditingDisabled = $class::DEFAULT_AUDITING_DISABLED;
             $keys[] = ContextKeys::disabledFor($class);
         }
 

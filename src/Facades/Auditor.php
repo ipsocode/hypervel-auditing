@@ -22,6 +22,9 @@ class Auditor extends Facade
     /**
      * Replace the auditor with a fake that records audits instead of writing
      * them. The facade root and `Contracts\Auditor` both resolve to it, so code
+     * Tests only. Swaps the facade root and the container binding for the worker's lifetime,
+     * so calling it during a request replaces the auditor for every concurrent request.
+     * The root and `Contracts\Auditor` both resolve to the fake, so code
      * that injects the contract gets it too. Faking again wraps the real auditor
      * once more and starts a fresh recording.
      */
