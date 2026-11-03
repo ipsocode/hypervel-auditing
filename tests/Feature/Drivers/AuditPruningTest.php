@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Drivers;
 
 use Hypervel\Support\Facades\Config;
+use Ipsocode\Auditing\Drivers\AuditDetails;
 use Ipsocode\Auditing\Models\AuditDetail;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
@@ -85,7 +86,7 @@ class AuditPruningTest extends TestCase
 
     public function testPruneReportsWhetherItDeletedAnything(): void
     {
-        $driver = new \Ipsocode\Auditing\Drivers\AuditDetails;
+        $driver = new AuditDetails;
 
         $article = $this->articleWithHistory();
 

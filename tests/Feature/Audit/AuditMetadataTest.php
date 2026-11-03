@@ -11,11 +11,6 @@ use Workbench\App\Models\User;
 
 class AuditMetadataTest extends TestCase
 {
-    private function article(): Article
-    {
-        return Article::factory()->create();
-    }
-
     private function user(): User
     {
         return User::factory()->create([

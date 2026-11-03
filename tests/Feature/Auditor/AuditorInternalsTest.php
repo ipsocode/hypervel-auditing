@@ -8,7 +8,6 @@ use Closure;
 use Error;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Testing\PHPUnit\AfterEachTestCleanup;
-use Ipsocode\Auditing\Contracts\Auditor as AuditorContract;
 use Ipsocode\Auditing\Drivers\AuditDetails;
 use Ipsocode\Auditing\Events\DispatchAudit;
 use Ipsocode\Auditing\Exceptions\AuditingException;
@@ -32,11 +31,6 @@ class AuditorInternalsTest extends TestCase
      * The key TestState registers its cleanup under.
      */
     private const CLEANUP_KEY = 'ipsocode/hypervel-auditing';
-
-    private function auditor(): AuditorContract
-    {
-        return $this->app->get(AuditorContract::class);
-    }
 
     public function testAskingTheManagerForAnUnnamedDriverYieldsTheBundledOne(): void
     {

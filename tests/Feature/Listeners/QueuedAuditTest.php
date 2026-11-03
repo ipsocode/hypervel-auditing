@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Listeners;
 
+use Hypervel\Contracts\Foundation\Application;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Events\DispatchAudit;
@@ -24,21 +25,16 @@ use function Hypervel\Coroutine\parallel;
  */
 class QueuedAuditTest extends TestCase
 {
-    protected function defineEnvironment(\Hypervel\Contracts\Foundation\Application $app): void
+    protected function defineEnvironment(Application $app): void
     {
         parent::defineEnvironment($app);
 
         $app->get('config')->set('auditing.queue.enable', true);
     }
 
-    private function article(): Article
-    {
-        return Article::factory()->create(['title' => 'V1']);
-    }
-
     public function testAuditsAreStillRecordedThroughTheQueuedPath(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $article->update(['title' => 'V2']);
 
         $audit = $article->audits()->where('event', 'updated')->sole();
@@ -55,7 +51,7 @@ class QueuedAuditTest extends TestCase
             $dispatched[] = $event->model->getAuditEvent();
         });
 
-        $this->article();
+        $this->article(['title' => 'V1']);
 
         $this->assertSame(['created'], $dispatched);
     }
@@ -64,7 +60,7 @@ class QueuedAuditTest extends TestCase
     {
         Event::listen(DispatchingAudit::class, fn () => false);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $this->assertSame(0, $article->audits()->count());
     }
@@ -74,7 +70,7 @@ class QueuedAuditTest extends TestCase
         $dispatcher = Mockery::spy($this->app->make('events'));
         $this->app->instance('events', $dispatcher);
 
-        $this->article();
+        $this->article(['title' => 'V1']);
 
         $dispatcher->shouldNotHaveReceived('until');
         $dispatcher->shouldHaveReceived('dispatch', [Mockery::type(DispatchAudit::class)]);
@@ -88,7 +84,7 @@ class QueuedAuditTest extends TestCase
             $captured = $event;
         });
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $article->load('categories');
         $article->update(['title' => 'V2']);
 
@@ -98,7 +94,7 @@ class QueuedAuditTest extends TestCase
 
     public function testTheCallersLoadedRelationsSurviveAQueuedUpdate(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $article->load('categories');
         $article->update(['title' => 'V2']);
 
@@ -109,7 +105,7 @@ class QueuedAuditTest extends TestCase
     {
         Config::set('auditing.queue.enable', false);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $article->title = 'V2';
         $article->setAuditEvent('updated')->preloadResolverData();
@@ -130,7 +126,7 @@ class QueuedAuditTest extends TestCase
     {
         Config::set('auditing.queue.enable', false);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $article->title = 'V2';
         $article->setAuditEvent('updated')->preloadResolverData();
 
@@ -155,7 +151,7 @@ class QueuedAuditTest extends TestCase
             $serialized = serialize($event);
         });
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         // A child coroutine starts with a fresh context — no request and no
         // authenticated user — which is what a queue worker sees. Only the
@@ -171,7 +167,7 @@ class QueuedAuditTest extends TestCase
 
     public function testTheListenerReadsItsQueueSettingsFromConfig(): void
     {
-        $event = new DispatchAudit($this->article());
+        $event = new DispatchAudit($this->article(['title' => 'V1']));
 
         Config::set('auditing.queue.connection', 'redis');
         Config::set('auditing.queue.queue', 'audits');
@@ -193,12 +189,12 @@ class QueuedAuditTest extends TestCase
 
         // No delay is null, not 0: any delay sends the job through later(),
         // which on `deferred` and `background` is an in-memory timer.
-        $this->assertNull($listener->withDelay(new DispatchAudit($this->article())));
+        $this->assertNull($listener->withDelay(new DispatchAudit($this->article(['title' => 'V1']))));
     }
 
     public function testADelayFromTheEnvironmentIsReadAsSeconds(): void
     {
-        $event = new DispatchAudit($this->article());
+        $event = new DispatchAudit($this->article(['title' => 'V1']));
         $listener = new ProcessDispatchAudit;
 
         // env() hands the config a string.

@@ -14,11 +14,6 @@ use Workbench\App\Models\Article;
 
 class AuditingEventsTest extends TestCase
 {
-    private function makeArticle(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testAuditingAndAuditedEventsFireAroundAnAudit(): void
     {
         $auditing = 0;
@@ -33,7 +28,7 @@ class AuditingEventsTest extends TestCase
             ++$audited;
         });
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $this->assertSame(1, $auditing);
         $this->assertSame(1, $audited);
@@ -44,7 +39,7 @@ class AuditingEventsTest extends TestCase
     {
         Event::listen(Auditing::class, fn () => false);
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $this->assertSame(0, $article->audits()->count());
     }
@@ -55,7 +50,7 @@ class AuditingEventsTest extends TestCase
         Config::set('auditing.allowed_empty_values', []);
         Config::set('auditing.empty_values', false);
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         // Retrieval produces an empty (no old/new) audit, which the guard drops.
         Article::findOrFail($article->getKey());
@@ -73,7 +68,7 @@ class AuditingEventsTest extends TestCase
         $dispatcher = Mockery::spy($this->app->make('events'));
         $this->app->instance('events', $dispatcher);
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $this->assertSame(1, $article->audits()->count());
         $dispatcher->shouldNotHaveReceived('until');
@@ -84,7 +79,7 @@ class AuditingEventsTest extends TestCase
     {
         Event::fake([Audited::class]);
 
-        $this->makeArticle();
+        $this->article();
 
         Event::assertDispatched(Audited::class);
     }

@@ -8,16 +8,10 @@ use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Facades\Auditor;
 use Ipsocode\Auditing\Support\AuditState;
 use Ipsocode\Auditing\Tests\TestCase;
-use Workbench\App\Models\Article;
 use Workbench\App\Models\Category;
 
 class RelationshipAuditTest extends TestCase
 {
-    private function article(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testAuditAttachRecordsACustomAudit(): void
     {
         $article = $this->article();

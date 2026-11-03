@@ -21,14 +21,9 @@ use Workbench\App\Models\User;
  */
 class ManualAuditTest extends TestCase
 {
-    private function article(): Article
-    {
-        return Article::factory()->create(['title' => 'V1']);
-    }
-
     public function testItRecordsAnEventWithNoColumnBehindIt(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::on($article)->as('exported')->with(['format' => 'pdf'])->log();
 
@@ -41,7 +36,7 @@ class ManualAuditTest extends TestCase
 
     public function testPropertiesBecomeDetailRows(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::on($article)
             ->as('exported')
@@ -56,7 +51,7 @@ class ManualAuditTest extends TestCase
 
     public function testBothSidesOfATransitionCanBeRecorded(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::on($article)
             ->as('approved')
@@ -71,7 +66,7 @@ class ManualAuditTest extends TestCase
 
     public function testPropertiesFromSeveralCallsAreMerged(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::on($article)
             ->as('exported')
@@ -84,7 +79,7 @@ class ManualAuditTest extends TestCase
 
     public function testAnArrayPropertyIsStoredAsJson(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::on($article)->as('exported')->with(['columns' => ['id', 'title']])->log();
 
@@ -93,7 +88,7 @@ class ManualAuditTest extends TestCase
 
     public function testTheEventNameCanBePassedToLog(): void
     {
-        $audit = Auditor::on($this->article())->log('viewed');
+        $audit = Auditor::on($this->article(['title' => 'V1']))->log('viewed');
 
         $this->assertSame('viewed', $audit->event);
     }
@@ -103,7 +98,7 @@ class ManualAuditTest extends TestCase
         $this->expectException(AuditingException::class);
         $this->expectExceptionMessage('A custom audit needs an event name');
 
-        Auditor::on($this->article())->with(['format' => 'pdf'])->log();
+        Auditor::on($this->article(['title' => 'V1']))->with(['format' => 'pdf'])->log();
     }
 
     public function testTheCauserDefaultsToTheResolvedUser(): void
@@ -111,7 +106,7 @@ class ManualAuditTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $audit = Auditor::on($this->article())->as('exported')->log();
+        $audit = Auditor::on($this->article(['title' => 'V1']))->as('exported')->log();
 
         $this->assertSame($user->getKey(), $audit->user_id);
     }
@@ -122,7 +117,7 @@ class ManualAuditTest extends TestCase
         $subject = User::factory()->create();
         $this->actingAs($actor);
 
-        $audit = Auditor::on($this->article())->as('impersonated')->by($subject)->log();
+        $audit = Auditor::on($this->article(['title' => 'V1']))->as('impersonated')->by($subject)->log();
 
         $this->assertSame($subject->getKey(), $audit->user_id);
         $this->assertSame($subject->getMorphClass(), $audit->user_type);
@@ -133,14 +128,14 @@ class ManualAuditTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $audit = Auditor::on($this->article())->as('exported')->by(null)->log();
+        $audit = Auditor::on($this->article(['title' => 'V1']))->as('exported')->by(null)->log();
 
         $this->assertSame($user->getKey(), $audit->user_id);
     }
 
     public function testLoggingLeavesTheModelExactlyAsItFoundIt(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $before = [
             $article->auditEvent,
@@ -163,7 +158,7 @@ class ManualAuditTest extends TestCase
 
     public function testTheModelIsRestoredEvenWhenTheAuditThrows(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $exception = new AuditingException('listener exploded');
 
@@ -184,7 +179,7 @@ class ManualAuditTest extends TestCase
 
     public function testNothingIsWrittenWhileAuditingIsDisabled(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Article::withoutAuditing(
             fn () => Auditor::on($article)->as('exported')->with(['format' => 'pdf'])->log()
@@ -196,7 +191,7 @@ class ManualAuditTest extends TestCase
 
     public function testAVetoingAuditingListenerStopsTheWrite(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         Event::listen(Auditing::class, fn () => false);
 
@@ -206,7 +201,7 @@ class ManualAuditTest extends TestCase
 
     public function testTheUsualAuditedEventIsFired(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $events = [];
 
         Event::listen(Audited::class, function (Audited $event) use (&$events): void {
@@ -220,7 +215,7 @@ class ManualAuditTest extends TestCase
 
     public function testAManualAuditJoinsTheOpenBatch(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         $audit = Auditor::withinBatch(
             fn () => Auditor::on($article)->as('exported')->log(),
@@ -234,7 +229,7 @@ class ManualAuditTest extends TestCase
     {
         // The save's batch is never kept on the model, so a later manual audit
         // gets whatever batch is open when it is logged: here, none.
-        $article = Auditor::withinBatch(fn () => $this->article(), '00000000-0000-0000-0000-000000001184');
+        $article = Auditor::withinBatch(fn () => $this->article(['title' => 'V1']), '00000000-0000-0000-0000-000000001184');
 
         $audit = Auditor::on($article)->as('exported')->log();
 

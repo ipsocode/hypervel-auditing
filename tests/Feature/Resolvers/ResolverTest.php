@@ -17,11 +17,6 @@ use Workbench\App\Models\Article;
 
 class ResolverTest extends TestCase
 {
-    private function article(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testResolverOutputIsStoredOnTheAudit(): void
     {
         $audit = $this->article()->audits()->sole();

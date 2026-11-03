@@ -7,7 +7,6 @@ namespace Ipsocode\Auditing\Tests\Feature\Auditor;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Event;
 use InvalidArgumentException;
-use Ipsocode\Auditing\Contracts\Auditor as AuditorContract;
 use Ipsocode\Auditing\Drivers\AuditDetails;
 use Ipsocode\Auditing\Events\Audited;
 use Ipsocode\Auditing\Exceptions\AuditingException;
@@ -22,16 +21,6 @@ use Workbench\App\Models\Article;
  */
 class AuditorDriverResolutionTest extends TestCase
 {
-    private function auditor(): AuditorContract
-    {
-        return $this->app->get(AuditorContract::class);
-    }
-
-    private function article(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testTheDefaultDriverKeyResolvesToTheBundledDriver(): void
     {
         $this->assertInstanceOf(AuditDetails::class, $this->auditor()->auditDriver(new Article));

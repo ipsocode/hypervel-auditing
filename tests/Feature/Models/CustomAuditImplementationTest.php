@@ -7,7 +7,6 @@ namespace Ipsocode\Auditing\Tests\Feature\Models;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Tests\TestCase;
-use Workbench\App\Models\Article;
 use Workbench\App\Models\AuditLog;
 
 /**
@@ -25,14 +24,9 @@ class CustomAuditImplementationTest extends TestCase
         Config::set('auditing.implementation', AuditLog::class);
     }
 
-    private function article(): Article
-    {
-        return Article::factory()->create(['title' => 'V1']);
-    }
-
     public function testAuditsAreRecordedThroughTheCustomImplementation(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
         $article->update(['title' => 'V2']);
 
         $audit = $article->audits()->where('event', 'updated')->sole();
@@ -44,7 +38,7 @@ class CustomAuditImplementationTest extends TestCase
 
     public function testDetailsAreLinkedByTheAuditIdColumn(): void
     {
-        $audit = $this->article()->audits()->sole();
+        $audit = $this->article(['title' => 'V1'])->audits()->sole();
 
         $this->assertSame('audit_id', $audit->details()->getForeignKeyName());
         $this->assertGreaterThan(0, $audit->details()->count());
@@ -57,7 +51,7 @@ class CustomAuditImplementationTest extends TestCase
 
     public function testTheDetailsInverseRelationReturnsTheCustomImplementation(): void
     {
-        $audit = $this->article()->audits()->sole();
+        $audit = $this->article(['title' => 'V1'])->audits()->sole();
         $detail = $audit->details()->firstOrFail();
 
         $this->assertInstanceOf(AuditLog::class, $detail->audit);
@@ -68,7 +62,7 @@ class CustomAuditImplementationTest extends TestCase
     {
         Config::set('auditing.implementation', Audit::class);
 
-        $detail = $this->article()->audits()->sole()->details()->firstOrFail();
+        $detail = $this->article(['title' => 'V1'])->audits()->sole()->details()->firstOrFail();
 
         $this->assertInstanceOf(Audit::class, $detail->audit);
     }
@@ -77,7 +71,7 @@ class CustomAuditImplementationTest extends TestCase
     {
         Config::set('auditing.threshold', 2);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         foreach (['V2', 'V3', 'V4'] as $title) {
             $article->update(['title' => $title]);

@@ -8,23 +8,17 @@ use Hypervel\Support\Facades\Auth;
 use Ipsocode\Auditing\Resolvers\UserResolver;
 use Ipsocode\Auditing\Tests\TestCase;
 use Swoole\Coroutine\CanceledException;
-use Workbench\App\Models\Article;
 use Workbench\App\Models\User;
 
 class UserResolverTest extends TestCase
 {
-    private function makeArticle(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testAuthenticatedUserIsRecordedOnTheAudit(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user);
 
-        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+        $audit = $this->article()->audits()->where('event', 'created')->sole();
 
         $this->assertSame($user->getKey(), $audit->user_id);
         $this->assertSame($user->getMorphClass(), $audit->user_type);
@@ -32,7 +26,7 @@ class UserResolverTest extends TestCase
 
     public function testGuestLeavesUserColumnsNull(): void
     {
-        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+        $audit = $this->article()->audits()->where('event', 'created')->sole();
 
         $this->assertNull($audit->user_id);
         $this->assertNull($audit->user_type);
@@ -49,7 +43,7 @@ class UserResolverTest extends TestCase
             $this->app->get('config')->get('auth.defaults.guard'),
         ]);
 
-        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+        $audit = $this->article()->audits()->where('event', 'created')->sole();
 
         $this->assertSame($user->getKey(), $audit->user_id);
     }
@@ -58,7 +52,7 @@ class UserResolverTest extends TestCase
     {
         $this->app->get('config')->set('auditing.user.guards', ['not-a-configured-guard']);
 
-        $audit = $this->makeArticle()->audits()->where('event', 'created')->sole();
+        $audit = $this->article()->audits()->where('event', 'created')->sole();
 
         $this->assertNull($audit->user_id);
     }

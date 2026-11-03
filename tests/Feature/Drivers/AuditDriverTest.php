@@ -12,11 +12,6 @@ use Workbench\App\Models\Article;
 
 class AuditDriverTest extends TestCase
 {
-    private function makeArticle(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testDefaultDriverIsAuditDetails(): void
     {
         $this->assertSame('audit_details', config('auditing.driver'));
@@ -24,7 +19,7 @@ class AuditDriverTest extends TestCase
 
     public function testDriverResolvesToTheAuditDetailsDriver(): void
     {
-        $driver = $this->app->get(Auditor::class)->auditDriver($this->makeArticle());
+        $driver = $this->app->get(Auditor::class)->auditDriver($this->article());
 
         $this->assertInstanceOf(AuditDetails::class, $driver);
     }
@@ -46,7 +41,7 @@ class AuditDriverTest extends TestCase
 
     public function testAnAuditIsSplitAcrossBothTables(): void
     {
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $auditId = DB::table('audits')
             ->where('auditable_type', $article->getMorphClass())
@@ -65,7 +60,7 @@ class AuditDriverTest extends TestCase
     {
         DB::connection()->enableQueryLog();
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $inserts = collect(DB::connection()->getQueryLog())
             ->filter(fn (array $entry) => str_contains($entry['query'], 'insert into "audit_details"'))
