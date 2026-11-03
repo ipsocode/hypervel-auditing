@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Drivers;
 
 use Hypervel\Contracts\Foundation\Application;
+use Hypervel\Database\QueryException;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\DB;
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Models\AuditDetail;
 use Ipsocode\Auditing\Support\AuditTables;
 use Ipsocode\Auditing\Tests\TestCase;
-use Throwable;
 use Workbench\App\Models\Article;
 
 /**
@@ -89,7 +89,9 @@ class AuditConnectionTest extends TestCase
                     'auditable_id' => 1,
                 ])->details()->create(['field' => null, 'old_value' => null, 'new_value' => 'x']);
             });
-        } catch (Throwable) {
+            $this->fail('the detail insert should have failed');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('NOT NULL', $exception->getMessage());
         }
 
         $this->assertSame($before, DB::connection('audit_db')->table(AuditTables::audits())->count());

@@ -165,14 +165,17 @@ class ManualAuditTest extends TestCase
     {
         $article = $this->article();
 
-        Event::listen(Auditing::class, function (): void {
-            throw new AuditingException('listener exploded');
+        $exception = new AuditingException('listener exploded');
+
+        Event::listen(Auditing::class, function () use ($exception): void {
+            throw $exception;
         });
 
         try {
             Auditor::on($article)->as('exported')->log();
             $this->fail('the listener should have thrown');
-        } catch (AuditingException) {
+        } catch (AuditingException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         $this->assertFalse($article->isCustomEvent);

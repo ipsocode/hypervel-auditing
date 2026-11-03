@@ -103,11 +103,15 @@ class AuditBatchTest extends TestCase
     #[UnitTest]
     public function testTheBatchIsClosedWhenTheCallbackThrows(): void
     {
+        $exception = new RuntimeException('boom');
+
         try {
-            AuditBatch::within(function () {
-                throw new RuntimeException('boom');
+            AuditBatch::within(function () use ($exception) {
+                throw $exception;
             });
-        } catch (RuntimeException) {
+            $this->fail('the callback should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         $this->assertNull(AuditBatch::current());

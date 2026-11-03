@@ -111,18 +111,22 @@ class RestoreTrackingTest extends TestCase
     {
         $article = $this->trashedArticle();
 
+        $exception = new RuntimeException('listener blew up');
+
         \Hypervel\Support\Facades\Event::listen(
             \Ipsocode\Auditing\Events\Audited::class,
-            function (\Ipsocode\Auditing\Events\Audited $event) {
+            function (\Ipsocode\Auditing\Events\Audited $event) use ($exception) {
                 if ($event->model->getAuditEvent() === 'restored') {
-                    throw new RuntimeException('listener blew up');
+                    throw $exception;
                 }
             }
         );
 
         try {
             $article->restore();
-        } catch (RuntimeException) {
+            $this->fail('the listener should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         \Hypervel\Support\Facades\Event::forget(\Ipsocode\Auditing\Events\Audited::class);

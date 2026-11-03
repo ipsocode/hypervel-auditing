@@ -96,11 +96,15 @@ class DisableAuditingTest extends TestCase
 
     public function testScopeIsRestoredWhenTheCallbackThrows(): void
     {
+        $exception = new RuntimeException('boom');
+
         try {
-            Article::withoutAuditing(function () {
-                throw new RuntimeException('boom');
+            Article::withoutAuditing(function () use ($exception) {
+                throw $exception;
             });
-        } catch (RuntimeException) {
+            $this->fail('the callback should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         $this->assertFalse(Article::isAuditingDisabled());

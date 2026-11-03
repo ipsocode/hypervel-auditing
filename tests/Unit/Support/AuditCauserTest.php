@@ -77,10 +77,14 @@ class AuditCauserTest extends TestCase
     {
         $outer = $this->user();
 
-        $seen = AuditCauser::acting($outer, function () {
+        $exception = new RuntimeException('boom');
+
+        $seen = AuditCauser::acting($outer, function () use ($exception) {
             try {
-                AuditCauser::acting($this->user(), fn () => throw new RuntimeException('boom'));
-            } catch (RuntimeException) {
+                AuditCauser::acting($this->user(), fn () => throw $exception);
+                $this->fail('the inner callback should have thrown');
+            } catch (RuntimeException $caught) {
+                $this->assertSame($exception, $caught);
             }
 
             return AuditCauser::current();

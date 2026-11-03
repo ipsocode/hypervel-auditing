@@ -105,13 +105,17 @@ class AfterCommitDispatchTest extends TestCase
     {
         $article = Article::factory()->create(['title' => 'V1']);
 
+        $exception = new RuntimeException('roll back');
+
         try {
-            DB::transaction(function () use ($article): void {
+            DB::transaction(function () use ($article, $exception): void {
                 $article->update(['title' => 'V2']);
 
-                throw new RuntimeException('roll back');
+                throw $exception;
             });
-        } catch (RuntimeException) {
+            $this->fail('the transaction should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         $this->assertSame(0, $article->audits()->where('event', 'updated')->count());
