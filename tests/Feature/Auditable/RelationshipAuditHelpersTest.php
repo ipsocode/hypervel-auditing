@@ -8,10 +8,10 @@ use Hypervel\Database\Eloquent\Collection as EloquentCollection;
 use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Tests\Fixtures\CreatesRelationshipFixtures;
 use Ipsocode\Auditing\Tests\TestCase;
 use RuntimeException;
 use Swoole\Coroutine\CanceledException;
-use Workbench\App\Models\Article;
 use Workbench\App\Models\Category;
 
 /**
@@ -20,21 +20,7 @@ use Workbench\App\Models\Category;
  */
 class RelationshipAuditHelpersTest extends TestCase
 {
-    private Article $article;
-
-    /** @var array<string, Category> */
-    private array $categories = [];
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->article = Article::factory()->create();
-
-        foreach (['php', 'testing', 'audit'] as $name) {
-            $this->categories[$name] = Category::factory()->create(['name' => $name]);
-        }
-    }
+    use CreatesRelationshipFixtures;
 
     /**
      * @return array<string, mixed>

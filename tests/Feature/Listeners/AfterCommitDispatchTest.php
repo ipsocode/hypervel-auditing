@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Listeners;
 
 use Hypervel\Contracts\Foundation\Application;
-use Hypervel\Coroutine\Coroutine;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\DB;
 use Ipsocode\Auditing\Facades\Auditor;
@@ -84,11 +83,7 @@ class AfterCommitDispatchTest extends TestCase
             function () use ($article, &$duringTheCoroutine): void {
                 $article->update(['title' => 'V2']);
 
-                // Yield before looking, so anything scheduled to run elsewhere
-                // — a timer, another coroutine — has had its chance. Only a job
-                // held for this coroutine's end is still unwritten here.
-                Coroutine::sleep(0.05);
-
+                // Only a job held for this coroutine's end is still unwritten here.
                 $duringTheCoroutine = $article->audits()->where('event', 'updated')->count();
             },
         ]);

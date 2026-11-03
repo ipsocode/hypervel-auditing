@@ -6,10 +6,10 @@ namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 
 use Hypervel\Database\QueryException;
 use Ipsocode\Auditing\Models\Audit;
+use Ipsocode\Auditing\Tests\Fixtures\CreatesRelationshipFixtures;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\AuditableCategoryPivot;
-use Workbench\App\Models\Category;
 use Workbench\App\Models\PivotAuditedArticle;
 
 /**
@@ -19,21 +19,7 @@ use Workbench\App\Models\PivotAuditedArticle;
  */
 class RelationshipPivotAuditTest extends TestCase
 {
-    private Article $article;
-
-    /** @var array<string, Category> */
-    private array $categories = [];
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->article = Article::factory()->create();
-
-        foreach (['php', 'testing', 'audit'] as $name) {
-            $this->categories[$name] = Category::factory()->create(['name' => $name]);
-        }
-    }
+    use CreatesRelationshipFixtures;
 
     private function pivotArticle(): PivotAuditedArticle
     {
