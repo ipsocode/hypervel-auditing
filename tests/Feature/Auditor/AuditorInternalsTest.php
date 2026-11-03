@@ -108,8 +108,7 @@ class AuditorInternalsTest extends TestCase
             );
         }
 
-        // The guard fires inside the driver's transaction, so the metadata row
-        // written just before it must roll back rather than linger detail-less.
+        // The guard fires before the INSERT, so no metadata row lingers detail-less.
         $this->assertSame(0, AuditWithoutDetails::query()->count());
     }
 

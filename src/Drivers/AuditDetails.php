@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Drivers;
 
+use Hypervel\Database\Eloquent\Model;
+use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\AcceptsResolvedAudit;
 use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
@@ -31,7 +33,15 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
 
         unset($data['old_values'], $data['new_values']);
 
-        $auditClass = get_class($model->audits()->getModel());
+        /** @var class-string<Audit&Model> $auditClass */
+        $auditClass = Config::string('auditing.implementation');
+
+        if (! method_exists($auditClass, 'details')) {
+            throw new AuditingException(sprintf(
+                'The audit implementation %s must expose a details() relation to use the audit_details driver',
+                $auditClass
+            ));
+        }
 
         // Both writes run on the Audit model's own connection (`auditing.connection`;
         // AuditDetail::getConnectionName() reads nothing else): a transaction on the
@@ -39,13 +49,6 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
         return (new $auditClass)->getConnection()->transaction(function () use ($auditClass, $data, $oldValues, $newValues) {
             /** @var Audit $audit */
             $audit = call_user_func([$auditClass, 'create'], $data);
-
-            if (! method_exists($audit, 'details')) {
-                throw new AuditingException(sprintf(
-                    'The audit implementation %s must expose a details() relation to use the audit_details driver',
-                    $auditClass
-                ));
-            }
 
             $fields = AuditPayload::fields($oldValues, $newValues);
 
