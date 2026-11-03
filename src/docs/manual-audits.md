@@ -23,7 +23,7 @@ injected `Ipsocode\Auditing\Contracts\Auditor`.
 | `as(string $event)` | Names the event |
 | `with(array $properties)` | Adds properties to the new side; later calls merge, a repeated key takes the last value |
 | `from(array $properties)` | Adds properties to the old side, merging the same way |
-| `by(?Authenticatable $user)` | Records `$user` as the causer; `null` leaves the choice to the user resolver |
+| `by(?Authenticatable $user)` | Records `$user` as the causer; `null` records no causer |
 | `log(?string $event = null)` | Writes the audit and returns it, or `null` when nothing was written |
 
 An event name passed to `log()` takes precedence over `as()`. Without a name
@@ -76,8 +76,9 @@ Auditor::on($account)->as('impersonated')->by($subject)->log();
 ```
 
 To name the causer of every audit written by a piece of work, not one manual
-audit, wrap it in `Auditor::actingAs($user, $callback)`. `by()` with a user
-wins over the scope; see [Resolvers](resolvers.md#the-causer).
+audit, wrap it in `Auditor::actingAs($user, $callback)`. `by()` wins over the
+scope, and `by(null)` records no causer, even on an authenticated request, as
+`actingAs(null, ...)` does; see [Resolvers](resolvers.md#the-causer).
 
 ## When nothing is written
 

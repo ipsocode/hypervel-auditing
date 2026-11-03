@@ -45,9 +45,10 @@ A custom resolver must declare the `?Authenticatable` return type.
 
 The bundled `Resolvers\UserResolver` tries the guards in `auditing.user.guards`
 in order (`web`, then `sanctum`, by default) and returns the user of the first
-one that has an authenticated user. A guard that throws an exception, such as
-one the application does not define, is skipped. A `Swoole\Coroutine\CanceledException`
-is not skipped: it is rethrown, so a canceled coroutine stops auditing.
+one that has an authenticated user, resolving each guard once. A guard that is
+not defined in `auth.guards`, such as `sanctum` in an application without
+Sanctum, is skipped. A defined guard that throws is not: the exception
+propagates, so a misconfigured guard fails loudly instead of recording no user.
 
 The user's `getAuthIdentifier()` and `getMorphClass()` are stored in `user_id`
 and `user_type`, so a custom user resolver should return an Eloquent model.
@@ -56,7 +57,7 @@ causer back.
 
 The causer can be named instead of resolved. Precedence, first match wins:
 
-1. `Auditor::on($model)->by($user)` with a user (see [Manual audits](manual-audits.md)).
+1. `Auditor::on($model)->by($user)`, where a `null` user records no causer (see [Manual audits](manual-audits.md)).
 2. The innermost open `Auditor::actingAs($user, $callback)` scope. Every audit
    written on the current coroutine inside the callback names `$user`, whatever
    the audit's source: model events, relationship helpers and manual audits.
