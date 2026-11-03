@@ -45,7 +45,7 @@ Hypervel 0.4 is released.
 |---|---|
 | `composer conventions` | The conventions check (below), in plain PHP: no install needed |
 | `composer lint` | php-cs-fixer in dry-run mode; `composer lint:fix` applies the fixes |
-| `composer analyse` | PHPStan over `src/`, at the level `phpstan.neon` sets |
+| `composer analyse` | PHPStan over `src/` and `tests/PHPStan/Fixtures`, at the level `phpstan.neon` sets |
 | `composer test` | The suite through the Testbench CLI |
 | `composer test:parallel` | The suite through ParaTest |
 | `composer test:coverage` | The suite under PCOV, failing below 100% line coverage |
@@ -56,9 +56,10 @@ aborted after 60 seconds and reported as risky, which fails the run
 
 php-cs-fixer and PHPStan are configured like `hypervel/components`:
 `.php-cs-fixer.dist.php` loads its rules, verbatim, from
-`.github/php-cs-fixer-rules.php`, and `phpstan.neon` carries its level, analysis
-settings and framework extensions. Keep them in step with `hypervel/components`,
-so a finding here is a finding there. An inline PHPStan ignore names its error
+`.github/php-cs-fixer-rules.php`, and `phpstan.neon` carries its analysis
+settings and framework extensions, at a stricter level than components runs on
+its own source (level 8). Keep them in step with `hypervel/components`, so a
+finding there is a finding here. An inline PHPStan ignore names its error
 and says why: `@phpstan-ignore <identifier> (<reason>)`.
 
 The conventions check, `.github/scripts/conventions.php`, fails CI on what

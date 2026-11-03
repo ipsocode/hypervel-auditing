@@ -71,7 +71,8 @@ off for every test after it in that process.
   `disableAuditing()`.
 - The coroutine context entries the package writes: the global
   `withoutAuditing()` scope and the scope of every loaded auditable class, the
-  observer's in-flight restore markers, and the open batch. They are cleared
+  observer's in-flight restore markers, the open batch, and the causer set by
+  `actingAs()`. They are cleared
   from the current coroutine and from the worker-level storage that code
   running outside a coroutine, such as a test's `setUp()`, writes to.
 
