@@ -15,7 +15,7 @@ trait WritesAudit
      */
     protected function writeAudit(Auditable $model): void
     {
-        if (! Config::get('auditing.enabled')) {
+        if (! Config::boolean('auditing.enabled')) {
             return;
         }
 
