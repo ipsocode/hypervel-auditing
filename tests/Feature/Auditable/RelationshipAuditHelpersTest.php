@@ -240,10 +240,12 @@ class RelationshipAuditHelpersTest extends TestCase
     /**
      * A throwing `AuditCustom` listener must not leave `isCustomEvent = true`
      * and the stale old/new values on the model, or its next real save would
-     * write a corrupt custom audit. The reset happens in a `finally`.
+     * write a corrupt custom audit. The state is restored in a `finally`.
      */
     public function testAThrowingAuditCustomListenerStillResetsTheCustomAuditState(): void
     {
+        $before = $this->article->auditEvent;
+
         Event::listen(AuditCustom::class, function () {
             throw new RuntimeException('listener blew up');
         });
@@ -256,9 +258,9 @@ class RelationshipAuditHelpersTest extends TestCase
         }
 
         $this->assertFalse($this->article->isCustomEvent);
-        $this->assertSame([], $this->article->auditCustomOld);
-        $this->assertSame([], $this->article->auditCustomNew);
-        $this->assertNull($this->article->auditEvent);
+        $this->assertNull($this->article->auditCustomOld);
+        $this->assertNull($this->article->auditCustomNew);
+        $this->assertSame($before, $this->article->auditEvent);
 
         Event::forget(AuditCustom::class);
 
