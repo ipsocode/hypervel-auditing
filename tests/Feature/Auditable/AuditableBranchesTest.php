@@ -7,6 +7,7 @@ namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\Log;
 use Hypervel\Support\Facades\Request;
+use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
 use Mockery;
@@ -154,6 +155,18 @@ class AuditableBranchesTest extends TestCase
         } finally {
             Config::swap($original);
         }
+    }
+
+    public function testAnAuditWithNoEventNameFailsInsteadOfResolvingNoGetter(): void
+    {
+        $article = new Article;
+        $article->isCustomEvent = true;
+        $article->auditEvent = null;
+
+        $this->expectException(AuditingException::class);
+        $this->expectExceptionMessage('Unable to handle "" event');
+
+        $article->toAudit();
     }
 
     public function testAuditSettingsAcceptNumericStringConfigValues(): void

@@ -210,15 +210,21 @@ trait Audit
         }
 
         if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value)) {
-            // Never null: `Y-m-d` parses every string the pattern admits, and an
-            // out-of-range month or day rolls over rather than failing.
-            $date = Carbon::createFromFormat('Y-m-d', $value, Date::now('UTC')->getTimezone());
+            // Never null: the format parses every string the pattern admits, and an
+            // out-of-range month or day rolls over rather than failing. The `!`
+            // resets the time to midnight.
+            /** @var Carbon $date */
+            $date = Carbon::createFromFormat('!Y-m-d', $value, Date::now('UTC')->getTimezone());
 
-            return Date::instance($date->startOfDay());
+            return Date::instance($date);
         }
 
         if (preg_match('/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/', $value)) {
-            return Date::instance(Carbon::createFromFormat('Y-m-d H:i:s', $value, Date::now('UTC')->getTimezone()));
+            // Never null, for the same reason: the pattern admits only what the format parses.
+            /** @var Carbon $date */
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $value, Date::now('UTC')->getTimezone());
+
+            return Date::instance($date);
         }
 
         try {

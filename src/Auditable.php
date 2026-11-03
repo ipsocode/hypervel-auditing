@@ -21,6 +21,7 @@ use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
+use Ipsocode\Auditing\Support\AuditColumns;
 use Ipsocode\Auditing\Support\ContextKeys;
 use Swoole\Coroutine\CanceledException;
 use Throwable;
@@ -156,7 +157,7 @@ trait Auditable
         return $audits->forField($field)
             ->with('details')
             ->oldest()
-            ->orderBy($audits->getModel()->getKeyName());
+            ->orderBy(AuditColumns::key($audits->getModel()));
     }
 
     protected function resolveAuditExclusions(): void
@@ -353,7 +354,7 @@ trait Auditable
 
         $attributeGetter = $this->resolveAttributeGetter($this->auditEvent);
 
-        if (! method_exists($this, $attributeGetter)) {
+        if ($attributeGetter === null || ! method_exists($this, $attributeGetter)) {
             throw new AuditingException(sprintf(
                 'Unable to handle "%s" event, %s() method missing',
                 $this->auditEvent,

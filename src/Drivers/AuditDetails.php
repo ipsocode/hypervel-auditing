@@ -9,6 +9,7 @@ use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\AuditDriver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditColumns;
 use Ipsocode\Auditing\Support\AuditTables;
 use Ipsocode\Auditing\Support\NormalizesAuditValues;
 
@@ -76,7 +77,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
             $relation = $model->audits();
             $auditClass = get_class($relation->getModel());
             $auditModel = new $auditClass;
-            $keyName = $auditModel->getKeyName();
+            $keyName = AuditColumns::key($auditModel);
 
             // Cloned before the delete query below joins onto it — the relation's
             // query builder is mutated in place by leftJoinSub(), so the subquery
