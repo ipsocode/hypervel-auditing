@@ -9,6 +9,7 @@ use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\AuditDriver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditTables;
 use Ipsocode\Auditing\Support\NormalizesAuditValues;
 
 class AuditDetails implements AuditDriver, AcceptsResolvedAudit
@@ -88,7 +89,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                 ->orderByDesc($keyName)
                 ->limit($threshold);
 
-            return $relation
+            $ids = $relation
                 ->leftJoinSub(
                     $subQuery,
                     'audit_threshold',
@@ -101,7 +102,23 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                     }
                 )
                 ->whereNull('audit_threshold.' . $keyName)
-                ->delete() > 0;
+                ->pluck($auditModel->getTable() . '.' . $keyName)
+                ->all();
+
+            if ($ids === []) {
+                return false;
+            }
+
+            // Details first, and explicitly: the bundled migration cascades, but
+            // tables adopted by `auditing:install` may lack ON DELETE CASCADE.
+            return $auditModel->getConnection()->transaction(function () use ($auditModel, $ids) {
+                $auditModel->getConnection()
+                    ->table(AuditTables::auditDetails())
+                    ->whereIn('audit_id', $ids)
+                    ->delete();
+
+                return $auditModel->newQuery()->whereKey($ids)->delete() > 0;
+            });
         }
 
         return false;
