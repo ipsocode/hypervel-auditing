@@ -128,14 +128,15 @@ class ManualAuditTest extends TestCase
         $this->assertSame($subject->getMorphClass(), $audit->user_type);
     }
 
-    public function testAnExplicitNullCauserFallsBackToTheResolver(): void
+    public function testAnExplicitNullCauserRecordsNoUser(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
 
         $audit = Auditor::on($this->article())->as('exported')->by(null)->log();
 
-        $this->assertSame($user->getKey(), $audit->user_id);
+        $this->assertNull($audit->user_id);
+        $this->assertNull($audit->user_type);
     }
 
     public function testLoggingLeavesTheModelExactlyAsItFoundIt(): void

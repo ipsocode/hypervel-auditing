@@ -261,7 +261,7 @@ return [
     |
     */
 
-    'run_migrations' => env('AUDITING_RUN_MIGRATIONS', true),
+    'run_migrations' => (bool) env('AUDITING_RUN_MIGRATIONS', true),
 
     /*
     |--------------------------------------------------------------------------

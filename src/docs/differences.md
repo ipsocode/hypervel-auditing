@@ -33,7 +33,8 @@ assumption before you write a line of code:
 | Retention | Threshold only | Threshold plus `auditing:prune` | [Retention](retention.md) |
 | Batches | None | `Auditor::withinBatch()`, `batch_uuid` column | [Batches](batches.md) |
 | Causer scoping | None | `Auditor::actingAs()` (the `Contracts\Auditor` gained methods: a breaking change for custom implementations) | [Resolvers](resolvers.md#the-causer) |
-| Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()` | [Manual audits](manual-audits.md) |
+| User guards | Catches every exception from a guard and moves on | Skips a guard not defined in `auth.guards`; any other exception propagates | [Resolvers](resolvers.md#the-causer) |
+| Manual audits | Hand-assembled `AuditCustom` dispatch | `Auditor::on(...)->as(...)->log()`; `by(null)` records no causer | [Manual audits](manual-audits.md) |
 | `withoutAuditing()` | Static flag | Coroutine-scoped | [Disabling auditing](disabling-auditing.md) |
 | `retrieved` | Observed on every model, checked per row | Observed only on a class that audits it, decided when the class boots | [Recording](recording.md#retrieved) |
 | Table names | Fixed | `auditing.tables.*` | [Configuration](configuration.md) |

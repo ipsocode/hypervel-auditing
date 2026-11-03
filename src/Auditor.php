@@ -17,12 +17,13 @@ use Ipsocode\Auditing\Events\Auditing;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
+use Ipsocode\Auditing\Support\AuditPayload;
 
 class Auditor extends Manager implements Contracts\Auditor
 {
     public function getDefaultDriver(): string
     {
-        return Config::get('auditing.driver');
+        return Config::string('auditing.driver');
     }
 
     /**
@@ -119,10 +120,7 @@ class Auditor extends Manager implements Contracts\Auditor
         // Resolved once; an AcceptsResolvedAudit driver is handed this same payload.
         $data = $model->toAudit();
 
-        $allowEmpty = Config::get('auditing.empty_values');
-        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values'));
-
-        if (! $allowEmpty && ! $explicitAllowEmpty && empty($data['new_values']) && empty($data['old_values'])) {
+        if (AuditPayload::isEmpty($model, $data)) {
             return null;
         }
 

@@ -32,7 +32,7 @@ class DispatchAudit
     /**
      * @return array<string,mixed>
      */
-    public function __serialize()
+    public function __serialize(): array
     {
         return $this->payload;
     }
@@ -106,9 +106,8 @@ class DispatchAudit
 
     /**
      * @param ReflectionClass<object> $reflection
-     * @param mixed $value
      */
-    protected function setModelPropertyValue(ReflectionClass $reflection, string $name, $value): void
+    protected function setModelPropertyValue(ReflectionClass $reflection, string $name, mixed $value): void
     {
         $reflection->getProperty($name)->setValue($this->model, $value);
     }

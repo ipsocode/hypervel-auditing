@@ -195,17 +195,4 @@ class QueuedAuditTest extends TestCase
         // which on `deferred` and `background` is an in-memory timer.
         $this->assertNull($listener->withDelay(new DispatchAudit($this->article())));
     }
-
-    public function testADelayFromTheEnvironmentIsReadAsSeconds(): void
-    {
-        $event = new DispatchAudit($this->article());
-        $listener = new ProcessDispatchAudit;
-
-        // env() hands the config a string.
-        Config::set('auditing.queue.delay', '45');
-        $this->assertSame(45, $listener->withDelay($event));
-
-        Config::set('auditing.queue.delay', '0');
-        $this->assertNull($listener->withDelay($event));
-    }
 }

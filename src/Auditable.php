@@ -16,12 +16,14 @@ use Ipsocode\Auditing\Concerns\AuditsRelationships;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
 use Ipsocode\Auditing\Contracts\AttributeRedactor;
 use Ipsocode\Auditing\Contracts\Resolver;
+use Ipsocode\Auditing\Contracts\UserResolver as UserResolverContract;
 use Ipsocode\Auditing\Exceptions\AuditableTransitionException;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
+use Ipsocode\Auditing\Support\UserMorph;
 use Swoole\Coroutine\CanceledException;
 use Throwable;
 use UnitEnum;
@@ -35,12 +37,14 @@ trait Auditable
 
     public ?string $auditEvent = null;
 
+    public const bool DEFAULT_AUDITING_DISABLED = false;
+
     /**
      * Worker-global, set by disableAuditing() and enableAuditing(): it affects
      * every concurrent coroutine, so change it at boot or in tests only. Use
      * withoutAuditing() to disable auditing for one coroutine.
      */
-    public static bool $auditingDisabled = false;
+    public static bool $auditingDisabled = self::DEFAULT_AUDITING_DISABLED;
 
     /** @var null|array<string, mixed> */
     public ?array $auditCustomOld = null;
@@ -104,7 +108,7 @@ trait Auditable
     {
         try {
             // `auditing.console` is not read here: the observer checks it on every event.
-            return (bool) App::getFacadeRoot() && (bool) Config::get('auditing.enabled');
+            return (bool) App::getFacadeRoot() && Config::boolean('auditing.enabled');
         } catch (CanceledException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -132,7 +136,7 @@ trait Auditable
     public function audits(): MorphMany
     {
         /** @var class-string<AuditModel> $implementation */
-        $implementation = Config::get('auditing.implementation');
+        $implementation = Config::string('auditing.implementation');
 
         // @phpstan-ignore return.type (the contract declares the declaring model as Model, while morphMany() infers $this; the relation is the same)
         return $this->morphMany(
@@ -192,7 +196,7 @@ trait Auditable
             // Arrays pass only with `allowed_array_values`; objects only when
             // they stringify or are enums.
             if (
-                (is_array($value) && ! Config::get('auditing.allowed_array_values'))
+                (is_array($value) && ! Config::boolean('auditing.allowed_array_values'))
                 || (is_object($value)
                     && ! method_exists($value, '__toString')
                     && ! ($value instanceof UnitEnum))
@@ -204,7 +208,7 @@ trait Auditable
 
     public function getAuditExclude(): array
     {
-        return $this->auditExclude ?? Config::get('auditing.exclude');
+        return $this->auditExclude ?? Config::array('auditing.exclude');
     }
 
     public function getAuditInclude(): array
@@ -379,8 +383,6 @@ trait Auditable
             }
         }
 
-        $morphPrefix = Config::get('auditing.user.morph_prefix');
-
         $tags = implode(',', $this->generateTags());
 
         $user = $this->resolveUser();
@@ -391,9 +393,9 @@ trait Auditable
             'event' => $this->auditEvent,
             'auditable_id' => $this->getKey(),
             'auditable_type' => $this->getMorphClass(),
-            $morphPrefix . '_id' => $user ? $user->getAuthIdentifier() : null,
+            UserMorph::idColumn() => $user ? $user->getAuthIdentifier() : null,
             // @phpstan-ignore method.notFound (the resolved user is an Eloquent model, which Authenticatable does not declare)
-            $morphPrefix . '_type' => $user ? $user->getMorphClass() : null,
+            UserMorph::typeColumn() => $user ? $user->getMorphClass() : null,
             'tags' => empty($tags) ? null : $tags,
             'batch_uuid' => $this->getAuditBatchUuid(),
         ], $this->runResolvers()));
@@ -419,9 +421,9 @@ trait Auditable
             return AuditCauser::current();
         }
 
-        $userResolver = Config::get('auditing.user.resolver');
+        $userResolver = Config::string('auditing.user.resolver');
 
-        if (is_subclass_of($userResolver, \Ipsocode\Auditing\Contracts\UserResolver::class)) {
+        if (is_subclass_of($userResolver, UserResolverContract::class)) {
             return $userResolver::resolve();
         }
 
@@ -434,7 +436,7 @@ trait Auditable
     protected function runResolvers(): array
     {
         $resolved = [];
-        $resolvers = Config::get('auditing.resolvers');
+        $resolvers = Config::array('auditing.resolvers');
 
         foreach ($resolvers as $name => $implementation) {
             if (empty($implementation)) {
@@ -537,7 +539,7 @@ trait Auditable
 
     public function getAuditEvents(): array
     {
-        return $this->auditEvents ?? Config::get('auditing.events');
+        return $this->auditEvents ?? Config::array('auditing.events');
     }
 
     /**
@@ -574,9 +576,10 @@ trait Auditable
         }
 
         // Walk the hierarchy so a scope opened on a parent covers its subclasses,
-        // the way the inherited static property does.
-        for ($class = static::class; $class !== false; $class = get_parent_class($class)) {
-            if (CoroutineContext::get(ContextKeys::disabledFor($class), false) === true) {
+        // the way the inherited static property does. Each class names its own key,
+        // so an override is honored; the walk ends above the classes that use this trait.
+        for ($class = static::class; $class !== false && method_exists($class, 'auditingDisabledContextKey'); $class = get_parent_class($class)) {
+            if (CoroutineContext::get($class::auditingDisabledContextKey(), false) === true) {
                 return true;
             }
         }
@@ -584,11 +587,20 @@ trait Auditable
         return false;
     }
 
+    /**
+     * Boot or tests only. Sets a worker-lifetime flag every coroutine of the class reads, so
+     * calling it during a request silences auditing for all concurrent requests; use
+     * withoutAuditing() for a request-scoped switch.
+     */
     public static function disableAuditing(): void
     {
         static::$auditingDisabled = true;
     }
 
+    /**
+     * Boot or tests only. Clears the flag disableAuditing() sets, for every coroutine of the
+     * class at once.
+     */
     public static function enableAuditing(): void
     {
         static::$auditingDisabled = false;
@@ -626,30 +638,30 @@ trait Auditable
     public static function isAuditingEnabled(): bool
     {
         if (App::runningInConsole()) {
-            return (bool) Config::get('auditing.enabled') && (bool) Config::get('auditing.console');
+            return Config::boolean('auditing.enabled') && Config::boolean('auditing.console');
         }
 
-        return (bool) Config::get('auditing.enabled');
+        return Config::boolean('auditing.enabled');
     }
 
     public function getAuditStrict(): bool
     {
-        return $this->auditStrict ?? (bool) Config::get('auditing.strict');
+        return $this->auditStrict ?? Config::boolean('auditing.strict');
     }
 
     public function getAuditTimestamps(): bool
     {
-        return $this->auditTimestamps ?? (bool) Config::get('auditing.timestamps');
+        return $this->auditTimestamps ?? Config::boolean('auditing.timestamps');
     }
 
     public function getAuditDriver(): string
     {
-        return $this->auditDriver ?? Config::get('auditing.driver');
+        return $this->auditDriver ?? Config::string('auditing.driver');
     }
 
     public function getAuditThreshold(): int
     {
-        return $this->auditThreshold ?? (int) Config::get('auditing.threshold');
+        return $this->auditThreshold ?? Config::integer('auditing.threshold');
     }
 
     public function getAttributeModifiers(): array

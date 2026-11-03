@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 use Hypervel\Database\Migrations\Migration;
 use Hypervel\Database\Schema\Blueprint;
-use Hypervel\Database\Schema\Builder;
 use Hypervel\Database\Schema\ColumnDefinition;
 use Hypervel\Support\Facades\Schema;
+use Ipsocode\Auditing\Support\AuditSchema;
 use Ipsocode\Auditing\Support\AuditTables;
 
 return new class extends Migration {
     public function up(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
         $schema = Schema::connection($connection);
         $table = AuditTables::audits();
-        $morphPrefix = config('auditing.user.morph_prefix', 'user');
+        $morphPrefix = config('auditing.user.morph_prefix');
 
         if (! $schema->hasTable($table)) {
             $schema->create($table, function (Blueprint $table) use ($morphPrefix) {
@@ -33,18 +33,18 @@ return new class extends Migration {
 
         // The table exists already (adopted, renamed, or a re-run): reconcile
         // it instead of aborting the migrate.
-        $this->reconcile($schema, $table, $morphPrefix);
+        AuditSchema::addMissingColumns($schema, $table, $this->columns($morphPrefix));
     }
 
     public function down(): void
     {
-        $connection = config('auditing.connection', config('database.default'));
+        $connection = config('auditing.connection');
 
         Schema::connection($connection)->drop(AuditTables::audits());
     }
 
     /**
-     * The expected columns, keyed by name so reconcile() can tell which are
+     * The expected columns, keyed by name so AuditSchema::addMissingColumns() can tell which are
      * missing, in the order create() adds them.
      *
      * @return array<string, callable(Blueprint): mixed>
@@ -78,7 +78,7 @@ return new class extends Migration {
      */
     private function keyColumn(Blueprint $table, string $column, string $key): ColumnDefinition
     {
-        $type = config('auditing.key_types.' . $key, 'bigint');
+        $type = config('auditing.key_types.' . $key);
 
         return match ($type) {
             'bigint' => $table->unsignedBigInteger($column),
@@ -93,30 +93,5 @@ return new class extends Migration {
                 ),
             ),
         };
-    }
-
-    /**
-     * Add the expected columns a pre-existing table lacks; existing columns
-     * are left alone.
-     */
-    private function reconcile(Builder $schema, string $table, string $morphPrefix): void
-    {
-        $existing = array_map('strtolower', $schema->getColumnListing($table));
-
-        $missing = array_filter(
-            $this->columns($morphPrefix),
-            static fn (callable $define, string $name): bool => ! in_array(strtolower($name), $existing, true),
-            ARRAY_FILTER_USE_BOTH,
-        );
-
-        if ($missing === []) {
-            return;
-        }
-
-        $schema->table($table, function (Blueprint $table) use ($missing) {
-            foreach ($missing as $define) {
-                $define($table);
-            }
-        });
     }
 };

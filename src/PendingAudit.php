@@ -37,6 +37,11 @@ class PendingAudit
      */
     protected ?Authenticatable $user = null;
 
+    /**
+     * Whether by() was called, so an explicit null is told from no call.
+     */
+    protected bool $userNamed = false;
+
     public function __construct(
         protected Auditor $auditor,
         protected Auditable $model
@@ -78,13 +83,15 @@ class PendingAudit
     }
 
     /**
-     * Attribute the audit to a specific user. Otherwise `auditing.user.resolver`
-     * supplies the request's authenticated user: wrong for work done on someone
-     * else's behalf, and absent in a queue worker or a console command.
+     * Attribute the audit to a specific user, or to no one with null. Without
+     * by(), `auditing.user.resolver` supplies the request's authenticated user:
+     * wrong for work done on someone else's behalf, and absent in a queue
+     * worker or a console command.
      */
     public function by(?Authenticatable $user): static
     {
         $this->user = $user;
+        $this->userNamed = true;
 
         return $this;
     }
@@ -125,7 +132,7 @@ class PendingAudit
         // stale value would file this audit under another batch.
         $model->auditBatchUuid = null;
 
-        if ($this->user !== null) {
+        if ($this->userNamed) {
             $model->preloadedResolverData['user'] = $this->user;
         }
 

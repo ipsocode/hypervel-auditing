@@ -10,6 +10,7 @@ use Ipsocode\Auditing\Tests\TestCase;
 use RuntimeException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\AuditableUser;
+use Workbench\App\Models\OverriddenKeyArticle;
 
 use function Hypervel\Coroutine\parallel;
 
@@ -151,5 +152,24 @@ class DisableAuditingTest extends TestCase
         $this->assertSame(1, $fresh->audits()->count());
         $this->assertSame(0, $copied->audits()->count());
         $this->assertSame(0, $concurrent->audits()->count());
+    }
+
+    public function testWithoutAuditingHonorsAnOverriddenContextKey(): void
+    {
+        $article = OverriddenKeyArticle::withoutAuditing(function () {
+            $this->assertTrue(OverriddenKeyArticle::isAuditingDisabled());
+
+            return OverriddenKeyArticle::create(['title' => 'Title', 'content' => 'Content', 'reviewed' => false]);
+        });
+
+        $this->assertSame(0, $article->audits()->count());
+        $this->assertFalse(OverriddenKeyArticle::isAuditingDisabled());
+    }
+
+    public function testAScopeOnAParentCoversASubclassThatOverridesTheKey(): void
+    {
+        $article = Article::withoutAuditing(fn () => OverriddenKeyArticle::create(['title' => 'Title', 'content' => 'Content', 'reviewed' => false]));
+
+        $this->assertSame(0, $article->audits()->count());
     }
 }

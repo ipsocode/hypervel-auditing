@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Resolvers;
 
-use Exception;
 use Hypervel\Contracts\Auth\Authenticatable;
 use Hypervel\Support\Facades\Auth;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\UserResolver as Resolver;
-use Swoole\Coroutine\CanceledException;
 
 class UserResolver implements Resolver
 {
@@ -18,16 +16,15 @@ class UserResolver implements Resolver
         $guards = Config::get('auditing.user.guards');
 
         foreach ($guards as $guard) {
-            try {
-                $authenticated = Auth::guard($guard)->check();
-            } catch (CanceledException $exception) {
-                throw $exception;
-            } catch (Exception $exception) {
+            // The shipped guards include one an application may not define.
+            if (! Config::has("auth.guards.{$guard}")) {
                 continue;
             }
 
-            if ($authenticated === true) {
-                return Auth::guard($guard)->user();
+            $instance = Auth::guard($guard);
+
+            if ($instance->check() === true) {
+                return $instance->user();
             }
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Concerns;
 
 use Closure;
+use Hypervel\Database\Eloquent\Collection as EloquentCollection;
 use Hypervel\Database\Eloquent\Model;
 use Hypervel\Database\Eloquent\Relations\BelongsToMany;
 use Hypervel\Database\Eloquent\Relations\Pivot;
@@ -154,7 +155,7 @@ trait AuditsRelationships
 
         if ($ids instanceof Model) {
             $ids = $ids->getKey();
-        } elseif ($ids instanceof \Hypervel\Database\Eloquent\Collection) {
+        } elseif ($ids instanceof EloquentCollection) {
             $ids = $ids->isEmpty() ? [] : $ids->pluck($ids->first()->getKeyName())->toArray();
         } elseif ($ids instanceof Collection) {
             $ids = $ids->toArray();

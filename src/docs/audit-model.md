@@ -92,8 +92,8 @@ implementation. To work with the bundled driver it needs:
 - **A `details()` relation** to the `audit_details` table, keyed by
   `audit_id`, as shown above. Without it the driver throws
   `AuditingException` ("The audit implementation … must expose a details()
-  relation to use the audit_details driver"), and the transaction it was
-  writing in rolls back, so no `audits` row is left behind.
+  relation to use the audit_details driver") before it writes anything, so no
+  `audits` row is left behind.
 - **`old_values` and `new_values` accessors** that return arrays keyed by
   field. `resolveData()` reads them to build `getModified()`; without them
   `getModified()` returns `[]`. `Models\Audit` builds them from the detail
