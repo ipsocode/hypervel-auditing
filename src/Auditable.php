@@ -11,7 +11,7 @@ use Hypervel\Database\Eloquent\Relations\MorphMany;
 use Hypervel\Support\Arr;
 use Hypervel\Support\Facades\App;
 use Hypervel\Support\Facades\Config;
-use Hypervel\Support\Facades\Log;
+use Hypervel\Support\Facades\Facade;
 use Ipsocode\Auditing\Concerns\AuditsRelationships;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
 use Ipsocode\Auditing\Contracts\AttributeRedactor;
@@ -23,8 +23,6 @@ use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\AuditColumns;
 use Ipsocode\Auditing\Support\ContextKeys;
-use Swoole\Coroutine\CanceledException;
-use Throwable;
 use UnitEnum;
 
 trait Auditable
@@ -95,36 +93,22 @@ trait Auditable
     }
 
     /**
-     * Runs inside the model constructor, possibly against a non-null facade root
-     * over a flushed container (a parallel test worker after a booted test),
-     * where every lookup throws. Declining to register is correct there;
-     * throwing out of `new SomeModel` is not. The registration itself stays
-     * outside the try: failing to observe is a real fault in a working app.
+     * Runs inside the model constructor, possibly after the application was
+     * torn down (a parallel test worker after a booted test), where the facade
+     * application is missing or a flushed container. Declining to register is
+     * correct there; any other failure propagates, since a class that silently
+     * stops being audited is worse than a failed boot.
      */
     protected static function shouldRegisterAuditObserver(): bool
     {
-        try {
-            // `auditing.console` is not read here: the observer checks it on every event.
-            return (bool) App::getFacadeRoot() && (bool) Config::get('auditing.enabled');
-        } catch (CanceledException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            // Logged: a class that never gets its observer is hard to diagnose.
-            // The log call is guarded too, since it can fail against the same
-            // torn-down container.
-            try {
-                Log::warning(sprintf(
-                    'Auditing observer not registered for %s: %s',
-                    static::class,
-                    $e->getMessage()
-                ));
-            } catch (CanceledException $canceled) {
-                throw $canceled;
-            } catch (Throwable) {
-            }
+        $application = Facade::getFacadeApplication();
 
+        if ($application === null || ! $application->bound('app') || ! $application->bound('config')) {
             return false;
         }
+
+        // `auditing.console` is not read here: the observer checks it on every event.
+        return (bool) Config::get('auditing.enabled');
     }
 
     /**

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Auditable;
 
+use Hypervel\Contracts\Container\Container as ContainerContract;
 use Hypervel\Support\Facades\Config;
-use Hypervel\Support\Facades\Log;
+use Hypervel\Support\Facades\Facade;
 use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
 use Mockery;
 use RuntimeException;
-use Swoole\Coroutine\CanceledException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\VisibleArticle;
 
@@ -118,40 +118,42 @@ class AuditableBranchesTest extends TestCase
         }
     }
 
-    public function testACancellationWhileCheckingAuditingIsRethrown(): void
+    public function testAContainerWithoutConfigDeclinesToRegisterTheObserver(): void
     {
-        $original = $this->app->get('config');
-        $config = Mockery::mock($original)->makePartial();
-        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new CanceledException);
-        Config::swap($config);
+        $application = Facade::getFacadeApplication();
+
+        $container = Mockery::mock(ContainerContract::class);
+        $container->shouldReceive('bound')->with('app')->andReturn(true);
+        $container->shouldReceive('bound')->with('config')->andReturn(false);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
             ->bindTo(null, Article::class);
 
-        $this->expectException(CanceledException::class);
-
         try {
-            $registers();
+            Facade::setFacadeApplication($container);
+
+            $this->assertFalse($registers());
         } finally {
-            Config::swap($original);
+            Facade::setFacadeApplication($application);
         }
     }
 
-    public function testACancellationWhileLoggingTheDeclinedRegistrationIsRethrown(): void
+    public function testAConfigFailureWhileBootingPropagatesInsteadOfDisablingAuditing(): void
     {
         $original = $this->app->get('config');
+        $failure = new RuntimeException('config unavailable');
         $config = Mockery::mock($original)->makePartial();
-        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow(new RuntimeException('torn down'));
+        $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow($failure);
         Config::swap($config);
-        Log::shouldReceive('warning')->once()->andThrow(new CanceledException);
 
         $registers = (fn (): bool => static::shouldRegisterAuditObserver())
             ->bindTo(null, Article::class);
 
-        $this->expectException(CanceledException::class);
-
         try {
             $registers();
+            $this->fail('The config failure should have propagated.');
+        } catch (RuntimeException $e) {
+            $this->assertSame($failure, $e);
         } finally {
             Config::swap($original);
         }
