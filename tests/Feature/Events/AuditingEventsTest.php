@@ -68,6 +68,19 @@ class AuditingEventsTest extends TestCase
         $this->assertSame(1, $article->audits()->where('event', 'retrieved')->count());
     }
 
+    public function testAnEventListedInAllowedEmptyValuesIsRecordedWithoutValues(): void
+    {
+        Config::set('auditing.events', ['created', 'updated', 'deleted', 'restored', 'retrieved']);
+        Config::set('auditing.empty_values', false);
+        Config::set('auditing.allowed_empty_values', ['retrieved']);
+
+        $article = $this->makeArticle();
+
+        Article::findOrFail($article->getKey());
+
+        $this->assertSame(1, $article->audits()->where('event', 'retrieved')->count());
+    }
+
     public function testNoListenerMeansNeitherEventIsConstructedNorDispatched(): void
     {
         $dispatcher = m::spy($this->app->make('events'));

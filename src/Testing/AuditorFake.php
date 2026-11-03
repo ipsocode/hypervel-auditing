@@ -14,6 +14,7 @@ use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\AuditDriver;
 use Ipsocode\Auditing\Contracts\Auditor;
 use Ipsocode\Auditing\PendingAudit;
+use Ipsocode\Auditing\Support\AuditPayload;
 use Ipsocode\Auditing\Support\NormalizesAuditValues;
 use PHPUnit\Framework\Assert;
 
@@ -83,10 +84,7 @@ class AuditorFake implements Auditor, Fake
 
         $data = $model->toAudit();
 
-        $allowEmpty = Config::get('auditing.empty_values');
-        $explicitAllowEmpty = in_array($model->getAuditEvent(), Config::get('auditing.allowed_empty_values'));
-
-        if (! $allowEmpty && ! $explicitAllowEmpty && empty($data['new_values']) && empty($data['old_values'])) {
+        if (AuditPayload::isEmpty($model, $data)) {
             return null;
         }
 
@@ -107,7 +105,7 @@ class AuditorFake implements Auditor, Fake
             'field' => $field,
             'old_value' => $this->normalizeValue($oldValues[$field] ?? null),
             'new_value' => $this->normalizeValue($newValues[$field] ?? null),
-        ]), array_values(array_unique(array_merge(array_keys($oldValues), array_keys($newValues)))));
+        ]), AuditPayload::fields($oldValues, $newValues));
 
         $audit->setRelation('details', $related->newCollection($details));
         $audit->setRelation('auditable', $model);

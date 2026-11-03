@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Listeners;
 
-use Hypervel\Support\Facades\Config;
+use Ipsocode\Auditing\Concerns\WritesAudit;
 use Ipsocode\Auditing\Events\AuditCustom;
-use Ipsocode\Auditing\Facades\Auditor;
 
 class RecordCustomAudit
 {
+    use WritesAudit;
+
     public function handle(AuditCustom $event): void
     {
-        if (! Config::get('auditing.enabled')) {
-            return;
-        }
-
-        Auditor::execute($event->model);
+        $this->writeAudit($event->model);
     }
 }

@@ -9,6 +9,7 @@ use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\AuditDriver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditPayload;
 use Ipsocode\Auditing\Support\NormalizesAuditValues;
 
 class AuditDetails implements AuditDriver, AcceptsResolvedAudit
@@ -46,7 +47,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                 ));
             }
 
-            $fields = array_unique(array_merge(array_keys($oldValues), array_keys($newValues)));
+            $fields = AuditPayload::fields($oldValues, $newValues);
 
             if ($fields !== []) {
                 $details = $audit->details();

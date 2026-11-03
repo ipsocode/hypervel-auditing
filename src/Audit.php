@@ -16,6 +16,7 @@ use Hypervel\Support\Facades\Date;
 use Hypervel\Support\Str;
 use InvalidArgumentException;
 use Ipsocode\Auditing\Contracts\AttributeEncoder;
+use Ipsocode\Auditing\Support\UserMorph;
 use JsonException;
 
 trait Audit
@@ -42,9 +43,7 @@ trait Audit
      */
     public function user(): MorphTo
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix');
-
-        return $this->morphTo(__FUNCTION__, $morphPrefix . '_type', $morphPrefix . '_id');
+        return $this->morphTo(__FUNCTION__, UserMorph::typeColumn(), UserMorph::idColumn());
     }
 
     /**
@@ -80,16 +79,14 @@ trait Audit
     #[Scope]
     protected function byUser(Builder $query, (Authenticatable&Model)|null $user): void
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix');
-
         if ($user === null) {
-            $query->whereNull($morphPrefix . '_type')->whereNull($morphPrefix . '_id');
+            $query->whereNull(UserMorph::typeColumn())->whereNull(UserMorph::idColumn());
 
             return;
         }
 
-        $query->where($morphPrefix . '_type', $user->getMorphClass())
-            ->where($morphPrefix . '_id', $user->getAuthIdentifier());
+        $query->where(UserMorph::typeColumn(), $user->getMorphClass())
+            ->where(UserMorph::idColumn(), $user->getAuthIdentifier());
     }
 
     /**
@@ -115,8 +112,6 @@ trait Audit
 
     public function resolveData(): array
     {
-        $morphPrefix = Config::get('auditing.user.morph_prefix');
-
         $this->data = [
             'audit_id' => $this->getKey(),
             'audit_event' => $this->event,
@@ -124,8 +119,8 @@ trait Audit
             'audit_batch_uuid' => $this->batch_uuid,
             'audit_created_at' => $this->serializeAuditDate($this->{$this->getCreatedAtColumn()}),
             'audit_updated_at' => $this->serializeAuditDate($this->{$this->getUpdatedAtColumn()}),
-            'user_id' => $this->getAttribute($morphPrefix . '_id'),
-            'user_type' => $this->getAttribute($morphPrefix . '_type'),
+            'user_id' => $this->getAttribute(UserMorph::idColumn()),
+            'user_type' => $this->getAttribute(UserMorph::typeColumn()),
         ];
 
         $resolverData = [];
@@ -153,6 +148,28 @@ trait Audit
         $this->modified = array_diff_key(array_keys($this->data), $this->metadata);
 
         return $this->data;
+    }
+
+    /**
+     * Flatten the audit into its data array on first use.
+     */
+    protected function ensureDataResolved(): void
+    {
+        if (empty($this->data)) {
+            $this->resolveData();
+        }
+    }
+
+    /**
+     * A date value serialized the way the audited model serializes its own, else the value as is.
+     */
+    protected function serializeDataValue(mixed $value): mixed
+    {
+        if (! $value instanceof DateTimeInterface) {
+            return $value;
+        }
+
+        return $this->auditable !== null ? $this->auditable->serializeDate($value) : $this->serializeDate($value);
     }
 
     /**
@@ -237,11 +254,11 @@ trait Audit
         $value = $this->data[$key];
 
         if ($this->user && Str::startsWith($key, 'user_')) {
-            return $this->getFormattedValue($this->user, substr($key, 5), $value);
+            return $this->getFormattedValue($this->user, Str::after($key, '_'), $value);
         }
 
         if ($this->auditable && Str::startsWith($key, ['new_', 'old_'])) {
-            $attribute = substr($key, 4);
+            $attribute = Str::after($key, '_');
 
             return $this->getFormattedValue(
                 $this->auditable,
@@ -277,19 +294,12 @@ trait Audit
 
     public function getMetadata(bool $json = false, int $options = 0, int $depth = 512): array|string
     {
-        if (empty($this->data)) {
-            $this->resolveData();
-        }
+        $this->ensureDataResolved();
 
         $metadata = [];
 
         foreach ($this->metadata as $key) {
-            $value = $this->getDataValue($key);
-            $metadata[$key] = $value;
-
-            if ($value instanceof DateTimeInterface) {
-                $metadata[$key] = ! is_null($this->auditable) ? $this->auditable->serializeDate($value) : $this->serializeDate($value);
-            }
+            $metadata[$key] = $this->serializeDataValue($this->getDataValue($key));
         }
 
         if (! $json) {
@@ -301,22 +311,12 @@ trait Audit
 
     public function getModified(bool $json = false, int $options = 0, int $depth = 512): array|string
     {
-        if (empty($this->data)) {
-            $this->resolveData();
-        }
+        $this->ensureDataResolved();
 
         $modified = [];
 
         foreach ($this->modified as $key) {
-            $attribute = substr($key, 4);
-            $state = substr($key, 0, 3);
-
-            $value = $this->getDataValue($key);
-            $modified[$attribute][$state] = $value;
-
-            if ($value instanceof DateTimeInterface) {
-                $modified[$attribute][$state] = ! is_null($this->auditable) ? $this->auditable->serializeDate($value) : $this->serializeDate($value);
-            }
+            $modified[Str::after($key, '_')][Str::before($key, '_')] = $this->serializeDataValue($this->getDataValue($key));
         }
 
         if (! $json) {

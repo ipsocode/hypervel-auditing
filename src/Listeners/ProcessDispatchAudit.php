@@ -6,11 +6,13 @@ namespace Ipsocode\Auditing\Listeners;
 
 use Hypervel\Contracts\Queue\ShouldQueue;
 use Hypervel\Support\Facades\Config;
+use Ipsocode\Auditing\Concerns\WritesAudit;
 use Ipsocode\Auditing\Events\DispatchAudit;
-use Ipsocode\Auditing\Facades\Auditor;
 
 class ProcessDispatchAudit implements ShouldQueue
 {
+    use WritesAudit;
+
     public function viaConnection(): string
     {
         return Config::get('auditing.queue.connection');
@@ -36,10 +38,6 @@ class ProcessDispatchAudit implements ShouldQueue
 
     public function handle(DispatchAudit $event): void
     {
-        if (! Config::get('auditing.enabled')) {
-            return;
-        }
-
-        Auditor::execute($event->model);
+        $this->writeAudit($event->model);
     }
 }

@@ -22,6 +22,7 @@ use Ipsocode\Auditing\Models\Audit as AuditModel;
 use Ipsocode\Auditing\Support\AuditBatch;
 use Ipsocode\Auditing\Support\AuditCauser;
 use Ipsocode\Auditing\Support\ContextKeys;
+use Ipsocode\Auditing\Support\UserMorph;
 use Swoole\Coroutine\CanceledException;
 use Throwable;
 use UnitEnum;
@@ -379,8 +380,6 @@ trait Auditable
             }
         }
 
-        $morphPrefix = Config::get('auditing.user.morph_prefix');
-
         $tags = implode(',', $this->generateTags());
 
         $user = $this->resolveUser();
@@ -391,9 +390,9 @@ trait Auditable
             'event' => $this->auditEvent,
             'auditable_id' => $this->getKey(),
             'auditable_type' => $this->getMorphClass(),
-            $morphPrefix . '_id' => $user ? $user->getAuthIdentifier() : null,
+            UserMorph::idColumn() => $user ? $user->getAuthIdentifier() : null,
             // @phpstan-ignore method.notFound (the resolved user is an Eloquent model, which Authenticatable does not declare)
-            $morphPrefix . '_type' => $user ? $user->getMorphClass() : null,
+            UserMorph::typeColumn() => $user ? $user->getMorphClass() : null,
             'tags' => empty($tags) ? null : $tags,
             'batch_uuid' => $this->getAuditBatchUuid(),
         ], $this->runResolvers()));
