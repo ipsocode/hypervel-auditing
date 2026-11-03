@@ -5,11 +5,9 @@
 # the package sees the same shape a consuming application would.
 
 providers:
-  # The package under test, then the Workbench app that registers its own
-  # migrations. Order matters: the package's `auditing.run_migrations` guard is
-  # exercised through its provider, so it has to register first.
+  # The package under test. Its own migrations come from this provider, behind
+  # the `auditing.run_migrations` guard the suite exercises.
   - Ipsocode\Auditing\AuditingServiceProvider
-  - Workbench\App\Providers\WorkbenchServiceProvider
 
 # Applied to the Testbench CLI (`composer test`, testbench artisan, tinker).
 # Testbench does NOT apply these to PHPUnit test methods, so phpunit.xml mirrors
@@ -37,6 +35,9 @@ env:
   # test against a table the suite never migrates; phpunit.xml says more.
   TELESCOPE_ENABLED: false
 
+# The Workbench migrations for the Testbench CLI. The suite registers them in
+# tests/TestCase.php instead, early enough for RefreshDatabase's `migrate:fresh`,
+# which runs before these are loaded.
 migrations:
   - workbench/database/migrations
 
