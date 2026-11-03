@@ -42,16 +42,19 @@ class DispatchAudit
      */
     public function __unserialize(array $values): void
     {
-        $model = new $values['class'];
-
-        if (! $model instanceof Auditable) {
+        // The class name is checked before anything is built: a payload naming
+        // another class must not run that class's constructor, and a class a
+        // deploy removed must fail with the package's exception.
+        if (! is_string($values['class']) || ! is_a($values['class'], Auditable::class, true)) {
             // Name the class here: an unset $this->model would fail later with a
             // vaguer "must not be accessed before initialization".
             throw new AuditingException(sprintf(
                 'Cannot restore a queued DispatchAudit event for %s: it is not Auditable.',
-                $values['class']
+                is_string($values['class']) ? $values['class'] : get_debug_type($values['class'])
             ));
         }
+
+        $model = new $values['class'];
 
         $this->model = $model;
         $this->payload = $values;
