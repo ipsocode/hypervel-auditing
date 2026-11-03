@@ -7,6 +7,7 @@ namespace Ipsocode\Auditing\Tests\Unit\Drivers;
 use Hypervel\Foundation\Testing\Attributes\UnitTest;
 use Ipsocode\Auditing\Drivers\AuditDetails;
 use Ipsocode\Auditing\Tests\Unit\TestCase;
+use JsonException;
 use Workbench\App\Enums\Priority;
 use Workbench\App\Enums\Status;
 use Workbench\App\Support\Money;
@@ -14,7 +15,7 @@ use Workbench\App\Support\Money;
 /**
  * `audit_details.old_value` / `new_value` are single text columns, so every
  * attribute value has to reduce to a string — or to null, never to false, which
- * the driver's own `?string` return type forbids.
+ * the driver's own `?string` return type forbids. A value JSON cannot encode throws.
  */
 class NormalizeValueTest extends TestCase
 {
@@ -86,14 +87,18 @@ class NormalizeValueTest extends TestCase
     }
 
     #[UnitTest]
-    public function testUnencodableValuesBecomeNullRatherThanFalse(): void
+    public function testAnArrayHoldingInvalidUtf8Throws(): void
     {
-        $handle = fopen('php://memory', 'r');
+        $this->expectException(JsonException::class);
 
-        try {
-            $this->assertNull($this->normalize([$handle]));
-        } finally {
-            fclose($handle);
-        }
+        $this->normalize(["\xB1\x31"]);
+    }
+
+    #[UnitTest]
+    public function testAnArrayHoldingInfinityThrows(): void
+    {
+        $this->expectException(JsonException::class);
+
+        $this->normalize([INF]);
     }
 }
