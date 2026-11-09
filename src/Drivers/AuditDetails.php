@@ -90,7 +90,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                 ->orderByDesc($keyName)
                 ->limit($threshold);
 
-            $ids = $relation
+            $excess = $relation
                 ->leftJoinSub(
                     $subQuery,
                     'audit_threshold',
@@ -102,23 +102,21 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                         );
                     }
                 )
-                ->whereNull('audit_threshold.' . $keyName)
-                ->pluck($auditModel->getTable() . '.' . $keyName)
-                ->all();
-
-            if ($ids === []) {
-                return false;
-            }
+                ->whereNull('audit_threshold.' . $keyName);
 
             // Details first, and explicitly: the bundled migration cascades, but
             // tables adopted by `auditing:install` may lack ON DELETE CASCADE.
-            return $auditModel->getConnection()->transaction(function () use ($auditModel, $ids) {
+            // A subquery keeps the statement free of one bound key per pruned row.
+            return $auditModel->getConnection()->transaction(function () use ($auditModel, $excess, $keyName) {
                 $auditModel->getConnection()
                     ->table(AuditTables::auditDetails())
-                    ->whereIn('audit_id', $ids)
+                    ->whereIn(
+                        'audit_id',
+                        (clone $excess->getQuery())->select($auditModel->getTable() . '.' . $keyName)
+                    )
                     ->delete();
 
-                return $auditModel->newQuery()->whereKey($ids)->delete() > 0;
+                return $excess->delete() > 0;
             });
         }
 

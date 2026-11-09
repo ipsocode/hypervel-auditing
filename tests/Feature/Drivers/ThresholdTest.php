@@ -56,13 +56,20 @@ class ThresholdTest extends TestCase
 
         Config::set('auditing.threshold', 2);
 
-        $this->articleWithManyAudits();
+        $article = $this->articleWithManyAudits();
 
+        $survivors = $article->audits()->pluck('id')->all();
+
+        $this->assertCount(2, $survivors);
         $this->assertSame(
             0,
             DB::table(AuditTables::auditDetails())
                 ->whereNotIn('audit_id', DB::table(AuditTables::audits())->select('id'))
                 ->count()
+        );
+        $this->assertEqualsCanonicalizing(
+            $survivors,
+            DB::table(AuditTables::auditDetails())->distinct()->pluck('audit_id')->all()
         );
     }
 }
