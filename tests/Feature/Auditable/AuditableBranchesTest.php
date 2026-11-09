@@ -11,7 +11,7 @@ use Hypervel\Support\Facades\Request;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Resolvers\UrlResolver;
 use Ipsocode\Auditing\Tests\TestCase;
-use Mockery;
+use Mockery as m;
 use RuntimeException;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\VisibleArticle;
@@ -122,7 +122,7 @@ class AuditableBranchesTest extends TestCase
     {
         $application = Facade::getFacadeApplication();
 
-        $container = Mockery::mock(ContainerContract::class);
+        $container = m::mock(ContainerContract::class);
         $container->shouldReceive('bound')->with('app')->andReturn(true);
         $container->shouldReceive('bound')->with('config')->andReturn(false);
 
@@ -142,7 +142,7 @@ class AuditableBranchesTest extends TestCase
     {
         $original = $this->app->get('config');
         $failure = new RuntimeException('config unavailable');
-        $config = Mockery::mock($original)->makePartial();
+        $config = m::mock($original)->makePartial();
         $config->shouldReceive('get')->with('auditing.enabled')->once()->andThrow($failure);
         Config::swap($config);
 
