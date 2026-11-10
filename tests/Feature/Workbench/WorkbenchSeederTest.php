@@ -17,6 +17,14 @@ use Workbench\Database\Seeders\DatabaseSeeder;
  */
 class WorkbenchSeederTest extends TestCase
 {
+    /**
+     * The seeder runs with the migrations, outside the per-test transaction. A
+     * database that outlives the test, such as a file-based SQLite one or a
+     * server, would keep the seeded rows and fail the next seed on a unique
+     * key, so each test migrates its own.
+     */
+    protected bool $migrateRefresh = true;
+
     protected function defineDatabaseSeeders(): void
     {
         $this->seed(DatabaseSeeder::class);

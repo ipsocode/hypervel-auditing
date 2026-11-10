@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing\Tests\Feature\Drivers;
 
 use Hypervel\Contracts\Foundation\Application;
 use Hypervel\Database\QueryException;
+use Hypervel\Foundation\Testing\RefreshDatabaseState;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\DB;
 use Ipsocode\Auditing\Models\Audit;
@@ -22,6 +23,23 @@ use Workbench\App\Models\Article;
  */
 class AuditConnectionTest extends TestCase
 {
+    /**
+     * The audit tables live on an in-memory connection that is empty again for
+     * every test, while the default connection may outlive it, so each test
+     * migrates its own.
+     */
+    protected bool $migrateRefresh = true;
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // That migration built the audit tables on the other connection and left
+        // none on the default one. A database that outlives the test would be
+        // taken for migrated by the next test in the worker, which needs them.
+        RefreshDatabaseState::$migrated = false;
+    }
+
     protected function defineEnvironment(Application $app): void
     {
         parent::defineEnvironment($app);
