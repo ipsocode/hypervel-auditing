@@ -5,7 +5,7 @@
 #
 # Usage:
 #   ./bin/run-database-tests.sh mysql
-#   ./bin/run-database-tests.sh pgsql -p 3 --filter=AuditTest
+#   ./bin/run-database-tests.sh pgsql --processes=3 --filter=AuditTest
 #
 # Supported connection names are mysql, mariadb, pgsql, and sqlite. The runner
 # sets DB_CONNECTION from this argument and runs tests/Feature. The connection's
