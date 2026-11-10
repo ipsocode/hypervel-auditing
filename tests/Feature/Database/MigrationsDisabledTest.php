@@ -6,6 +6,7 @@ namespace Ipsocode\Auditing\Tests\Feature\Database;
 
 use Hypervel\Contracts\Foundation\Application;
 use Hypervel\Database\Migrations\Migrator;
+use Hypervel\Foundation\Testing\RefreshDatabaseState;
 use Ipsocode\Auditing\Tests\TestCase;
 
 /**
@@ -15,6 +16,14 @@ use Ipsocode\Auditing\Tests\TestCase;
  */
 class MigrationsDisabledTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        // Its migration leaves the audit tables out of a database that outlives the test.
+        RefreshDatabaseState::$migrated = false;
+    }
+
     protected function defineEnvironment(Application $app): void
     {
         parent::defineEnvironment($app);

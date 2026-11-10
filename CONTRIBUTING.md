@@ -117,6 +117,49 @@ brings to every package. One part of `.github/` is this
 package's own: `conventions.php`, the check's settings. `.gitignore` leaves
 Claude Code's local state in `.claude/` out.
 
+## Testing on each database
+
+The coverage gate runs the suite on in-memory SQLite. Every feature test writes
+audits, and some of the package's SQL depends on the engine, so a second
+workflow, `.github/workflows/databases.yml`, runs `tests/Feature` against real
+database servers on every pull request into `main` and every push to `main`,
+through `bin/run-database-tests.sh`, in addition to `tests.yml`. Its jobs are
+not required checks. It runs each engine below on PHP 8.4 and 8.5:
+
+| Engine | Versions | Image |
+|---|---|---|
+| MySQL | 5.7, 8.4, 9.7 | `mysql:<version>` |
+| MariaDB | 10, 11, 12.3 | `mariadb:<version>` |
+| PostgreSQL | 17, 18 | `pgvector/pgvector:0.8.7-pg<version>` |
+| SQLite | a file, `/tmp/testing.sqlite` | none |
+
+The table mirrors the jobs in the `databases.yml` of `hypervel/components`, and
+should change with it.
+
+To run one engine locally, start the server on a Docker network, then run the
+script in the CI image on the same network. The job's environment wins over
+`phpunit.xml`'s `<env>` block, so `DB_*` selects the database:
+
+```sh
+docker network create databases
+docker run -d --name mysql --network databases \
+    -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=testing mysql:8.4
+docker run --rm -v "$PWD":/app -w /app --network databases \
+    -e OTEL_SDK_DISABLED=true -e DB_HOST=mysql -e DB_PORT=3306 \
+    -e DB_DATABASE=testing -e DB_USERNAME=root -e DB_PASSWORD=secret \
+    ghcr.io/ipsocode/hypervel/ci-alpine:8.4-latest \
+    bin/run-database-tests.sh mysql
+```
+
+For MariaDB, start `mariadb:11` with `MARIADB_ROOT_PASSWORD` and
+`MARIADB_DATABASE` in place of the MySQL variables, and pass `mariadb`. For
+PostgreSQL, start `pgvector/pgvector:0.8.7-pg17` with `POSTGRES_PASSWORD` and
+`POSTGRES_DB=testing`, then pass `DB_PORT=5432`, `DB_USERNAME=postgres` and
+`pgsql`. For SQLite, no server is needed: run `touch /tmp/testing.sqlite` and
+pass `DB_DATABASE=/tmp/testing.sqlite` and `sqlite`. Each ParaTest worker uses
+its own copy of the database. Options after the connection name go to ParaTest,
+as in `bin/run-database-tests.sh pgsql --filter=AuditTest`.
+
 ## Coroutine safety
 
 A Hypervel worker is long-lived and serves many requests at once as coroutines,

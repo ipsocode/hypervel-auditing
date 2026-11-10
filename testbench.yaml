@@ -15,10 +15,16 @@ providers:
 env:
   APP_NAME: "Hypervel Auditing Workbench"
   APP_ENV: testing
-  # The suite never touches a real database file; every connection is in-memory
-  # so tests stay isolated and parallel-safe.
-  DB_CONNECTION: sqlite
-  DB_DATABASE: ":memory:"
+  # The framework's OpenTelemetry exporters find no collector in a test run. Set
+  # here and not in phpunit.xml, because PHPUnit turns `true` into `1`, which the
+  # SDK rejects as an invalid boolean. The Testbench commands export it to the
+  # ParaTest workers.
+  OTEL_SDK_DISABLED: true
+  # DB_CONNECTION and DB_DATABASE are left out on purpose: the Testbench CLI lets
+  # this block override the environment, so naming them would stop
+  # bin/run-database-tests.sh from reaching another database. phpunit.xml
+  # supplies the in-memory SQLite default, which PHPUnit applies only to
+  # variables the environment has not set.
   # SQLite enforces foreign keys only when asked, and Testbench's `testing`
   # connection leaves them off by default. Without this the audit_details
   # cascade is inert under test while working on MySQL and PostgreSQL — exactly
