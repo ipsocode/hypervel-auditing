@@ -108,33 +108,17 @@ class PendingAudit
 
         $model = $this->model;
 
-        // The custom-audit state lives on the caller's model, which may be
-        // mid-save: snapshot and restore it so logging never disturbs an audit
-        // in flight.
-        $restore = [];
+        return AuditState::scoped($model, function () use ($model, $event): ?Audit {
+            $model->auditEvent = $event;
+            $model->auditCustomOld = $this->old;
+            $model->auditCustomNew = $this->new;
+            $model->isCustomEvent = true;
 
-        foreach (AuditState::PROPERTIES as $property) {
-            $restore[$property] = $model->{$property};
-        }
-
-        $model->auditEvent = $event;
-        $model->auditCustomOld = $this->old;
-        $model->auditCustomNew = $this->new;
-        $model->isCustomEvent = true;
-        // Join the batch open on this coroutine: the property is public, and a
-        // stale value would file this audit under another batch.
-        $model->auditBatchUuid = null;
-
-        if ($this->user !== null) {
-            $model->preloadedResolverData['user'] = $this->user;
-        }
-
-        try {
-            return $this->auditor->execute($model);
-        } finally {
-            foreach ($restore as $property => $value) {
-                $model->{$property} = $value;
+            if ($this->user !== null) {
+                $model->preloadedResolverData['user'] = $this->user;
             }
-        }
+
+            return $this->auditor->execute($model);
+        });
     }
 }

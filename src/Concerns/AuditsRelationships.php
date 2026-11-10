@@ -14,6 +14,7 @@ use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Contracts\Auditable as ContractsAuditable;
 use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditState;
 use Swoole\Coroutine\CanceledException;
 use Throwable;
 
@@ -223,28 +224,21 @@ trait AuditsRelationships
      */
     private function dispatchRelationAuditEvent(string $relationName, string $event, Collection $old, Collection $new): void
     {
-        $this->auditCustomOld[$relationName] = $old->diff($new)->toArray();
-        $this->auditCustomNew[$relationName] = $new->diff($old)->toArray();
+        $removed = $old->diff($new)->toArray();
+        $added = $new->diff($old)->toArray();
 
-        if (
-            empty($this->auditCustomOld[$relationName])
-            && empty($this->auditCustomNew[$relationName])
-        ) {
-            $this->auditCustomOld = $this->auditCustomNew = [];
-        }
+        // Restored afterwards, also when a listener throws: a relation audit
+        // leaves the model's own audit state as it found it.
+        AuditState::scoped($this, function () use ($relationName, $event, $removed, $added): void {
+            $changed = $removed !== [] || $added !== [];
 
-        $this->auditEvent = $event;
-        $this->isCustomEvent = true;
+            $this->auditCustomOld = $changed ? [$relationName => $removed] : [];
+            $this->auditCustomNew = $changed ? [$relationName => $added] : [];
+            $this->auditEvent = $event;
+            $this->isCustomEvent = true;
 
-        // In a finally: a throwing listener must not leave custom-audit state
-        // for the model's next save (PendingAudit::log() restores the same way).
-        try {
             Event::dispatch(new AuditCustom($this));
-        } finally {
-            $this->auditCustomOld = $this->auditCustomNew = [];
-            $this->isCustomEvent = false;
-            $this->auditEvent = null;
-        }
+        });
     }
 
     /**

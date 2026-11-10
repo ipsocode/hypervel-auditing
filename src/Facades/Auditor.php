@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Facades;
 
+use Hypervel\Contracts\Container\Container as ContainerContract;
 use Hypervel\Support\Facades\Facade;
 use Ipsocode\Auditing\Contracts\Auditor as AuditorContract;
 use Ipsocode\Auditing\Testing\AuditorFake;
@@ -32,7 +33,11 @@ class Auditor extends Facade
         $fake = new AuditorFake($auditor);
 
         static::swap($fake);
-        static::$app->instance(AuditorContract::class, $fake);
+
+        // Set: the facade root above could not have resolved without it.
+        /** @var ContainerContract $app */
+        $app = static::getFacadeApplication();
+        $app->instance(AuditorContract::class, $fake);
 
         return $fake;
     }

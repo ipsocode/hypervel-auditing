@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Audit;
 
+use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
 use Workbench\App\Models\TaggedArticle;
@@ -13,7 +14,7 @@ class AuditTagsTest extends TestCase
     /**
      * @param class-string<Article> $model
      */
-    private function auditFor(string $model): \Ipsocode\Auditing\Contracts\Audit
+    private function auditFor(string $model): Audit
     {
         return $model::create([
             'title' => 'Title',

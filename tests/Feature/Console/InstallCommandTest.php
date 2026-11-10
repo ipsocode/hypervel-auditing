@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Ipsocode\Auditing\Tests\Feature\Console;
 
+use Hypervel\Filesystem\Filesystem;
 use Hypervel\Support\Facades\Config;
+use Hypervel\Testing\ParallelTesting;
 use Ipsocode\Auditing\Console\InstallCommand;
 use Ipsocode\Auditing\Tests\TestCase;
 
@@ -18,7 +20,7 @@ class InstallCommandTest extends TestCase
 
         // Isolate the config file the command writes so it never touches the
         // shared workbench config directory.
-        $this->configDir = sys_get_temp_dir() . '/audit-cfg-' . uniqid();
+        $this->configDir = ParallelTesting::tempDir('audit-cfg-' . uniqid());
         mkdir($this->configDir, 0755, true);
         $this->app->useConfigPath($this->configDir);
     }
@@ -27,7 +29,7 @@ class InstallCommandTest extends TestCase
     {
         // Tests here nest config directories and even make `auditing.php` a
         // directory, so remove the whole tree: a leftover outlives the suite.
-        $this->deleteTree($this->configDir);
+        $this->assertTrue((new Filesystem)->deleteDirectory($this->configDir));
 
         parent::tearDown();
     }
@@ -185,22 +187,5 @@ class InstallCommandTest extends TestCase
         // a reboot — which is exactly what the warning tells the operator.
         $this->assertSame('blocked_audits', Config::get('auditing.tables.audits'));
         $this->assertSame('blocked_details', Config::get('auditing.tables.audit_details'));
-    }
-
-    private function deleteTree(string $directory): void
-    {
-        $entries = @scandir($directory);
-
-        if ($entries === false) {
-            return;
-        }
-
-        foreach (array_diff($entries, ['.', '..']) as $entry) {
-            $path = $directory . '/' . $entry;
-
-            is_dir($path) ? $this->deleteTree($path) : @unlink($path);
-        }
-
-        @rmdir($directory);
     }
 }

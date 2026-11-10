@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\AuditableObserver;
 
 use Hypervel\Context\CoroutineContext;
+use Hypervel\Support\Facades\Event;
+use Ipsocode\Auditing\Events\Audited;
 use Ipsocode\Auditing\Support\ContextKeys;
 use Ipsocode\Auditing\Tests\TestCase;
 use RuntimeException;
@@ -111,21 +113,25 @@ class RestoreTrackingTest extends TestCase
     {
         $article = $this->trashedArticle();
 
-        \Hypervel\Support\Facades\Event::listen(
-            \Ipsocode\Auditing\Events\Audited::class,
-            function (\Ipsocode\Auditing\Events\Audited $event) {
+        $exception = new RuntimeException('listener blew up');
+
+        Event::listen(
+            Audited::class,
+            function (Audited $event) use ($exception) {
                 if ($event->model->getAuditEvent() === 'restored') {
-                    throw new RuntimeException('listener blew up');
+                    throw $exception;
                 }
             }
         );
 
         try {
             $article->restore();
-        } catch (RuntimeException) {
+            $this->fail('the listener should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
-        \Hypervel\Support\Facades\Event::forget(\Ipsocode\Auditing\Events\Audited::class);
+        Event::forget(Audited::class);
 
         $article->update(['title' => 'V2']);
 

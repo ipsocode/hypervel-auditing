@@ -8,6 +8,11 @@ use Hypervel\Contracts\Foundation\Application;
 use Hypervel\Foundation\Testing\RefreshDatabase;
 use Hypervel\Testbench\Concerns\WithWorkbench;
 use Hypervel\Testbench\TestCase as BaseTestCase;
+use Ipsocode\Auditing\Contracts\Auditor;
+use Ipsocode\Auditing\Tests\Fixtures\CountingUrlResolver;
+use Ipsocode\Auditing\Tests\Fixtures\LevelRecordingDriver;
+use Workbench\App\Drivers\NullDriver;
+use Workbench\App\Models\Article;
 
 use function Hypervel\Testbench\default_migration_path;
 use function Hypervel\Testbench\workbench_path;
@@ -16,6 +21,17 @@ abstract class TestCase extends BaseTestCase
 {
     use RefreshDatabase;
     use WithWorkbench;
+
+    protected function tearDown(): void
+    {
+        // Counters on the fixtures and workbench drivers are worker-lifetime
+        // statics, so reset them after every test rather than in each test.
+        CountingUrlResolver::flushState();
+        LevelRecordingDriver::flushState();
+        NullDriver::flushState();
+
+        parent::tearDown();
+    }
 
     protected function defineEnvironment(Application $app): void
     {
@@ -38,5 +54,20 @@ abstract class TestCase extends BaseTestCase
             default_migration_path(),
             workbench_path('database', 'migrations'),
         ]);
+    }
+
+    /**
+     * Create an article through its factory.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    protected function article(array $attributes = []): Article
+    {
+        return Article::factory()->create($attributes);
+    }
+
+    protected function auditor(): Auditor
+    {
+        return $this->app->get(Auditor::class);
     }
 }

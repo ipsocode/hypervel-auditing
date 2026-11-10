@@ -52,8 +52,8 @@ $article->auditHistory('status')->get();
 It is on the `Auditable` trait only, not on the `Auditable` contract, so a class
 that implements the contract without the trait is not forced to add it. It
 returns the builder, so you can narrow it further (`->byUser($user)`), with
-`details` eager-loaded. Audits written in the same second are in insertion
-order.
+`details` eager-loaded. Audits written in the same millisecond are in
+insertion order.
 
 ### Audits a user caused
 

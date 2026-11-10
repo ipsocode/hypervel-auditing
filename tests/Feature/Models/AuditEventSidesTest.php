@@ -16,17 +16,9 @@ use Workbench\App\Models\Article;
  */
 class AuditEventSidesTest extends TestCase
 {
-    private function article(): Article
-    {
-        return Article::factory()->create([
-            'title' => 'V1',
-            'content' => 'Body',
-        ]);
-    }
-
     public function testCreatedAuditHasNoOldSide(): void
     {
-        $audit = $this->article()->audits()->where('event', 'created')->sole();
+        $audit = $this->article(['title' => 'V1', 'content' => 'Body'])->audits()->where('event', 'created')->sole();
 
         $this->assertSame([], $audit->old_values);
         $this->assertSame('V1', $audit->new_values['title']);
@@ -38,7 +30,7 @@ class AuditEventSidesTest extends TestCase
 
     public function testDeletedAuditHasNoNewSide(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         $article->delete();
 
         $audit = $article->audits()->where('event', 'deleted')->sole();
@@ -49,7 +41,7 @@ class AuditEventSidesTest extends TestCase
 
     public function testRestoredAuditHasNoOldSide(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         $article->delete();
         $article->restore();
 
@@ -63,7 +55,7 @@ class AuditEventSidesTest extends TestCase
     {
         // A real null must survive: the event-based reconstruction must not be
         // mistaken for "drop every null".
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         $article->update(['published_at' => '2026-01-02 03:04:05']);
 
         $audit = $article->audits()->where('event', 'updated')->sole();
@@ -75,7 +67,7 @@ class AuditEventSidesTest extends TestCase
 
     public function testTransitioningToACreatedAuditWithOldValuesLeavesTheModelIntact(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         $audit = $article->audits()->where('event', 'created')->sole();
 
         $key = $article->getKey();
@@ -91,7 +83,7 @@ class AuditEventSidesTest extends TestCase
 
     public function testTransitioningToADeletedAuditWithNewValuesLeavesTheModelIntact(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         $article->delete();
 
         $audit = $article->audits()->where('event', 'deleted')->sole();
@@ -107,7 +99,7 @@ class AuditEventSidesTest extends TestCase
     {
         Config::set('auditing.events', ['created', 'updated', 'deleted', 'restored', 'retrieved']);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1', 'content' => 'Body']);
         Article::query()->findOrFail($article->getKey());
 
         $audit = $article->audits()->where('event', 'retrieved')->sole();

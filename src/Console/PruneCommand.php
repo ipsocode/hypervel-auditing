@@ -10,6 +10,7 @@ use Hypervel\Database\Eloquent\Relations\Relation;
 use Hypervel\Support\Carbon;
 use Hypervel\Support\Facades\Config;
 use Ipsocode\Auditing\Contracts\Audit;
+use Ipsocode\Auditing\Support\AuditColumns;
 use Ipsocode\Auditing\Support\AuditTables;
 
 /**
@@ -71,7 +72,7 @@ class PruneCommand extends Command
     {
         $audit = $this->audit();
 
-        $query = $audit->newQuery()->where($audit->getCreatedAtColumn(), '<', $cutoff);
+        $query = $audit->newQuery()->where(AuditColumns::createdAt($audit), '<', $cutoff);
 
         if (($model = $this->option('model')) !== null) {
             // Accepts either spelling: a morph alias passes through unchanged,
@@ -92,7 +93,7 @@ class PruneCommand extends Command
     private function prune(Builder $query, int $chunk): int
     {
         $audit = $this->audit();
-        $key = $audit->getKeyName();
+        $key = AuditColumns::key($audit);
         $chunk = max(1, $chunk);
         $deleted = 0;
 

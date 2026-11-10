@@ -15,18 +15,13 @@ use function Hypervel\Coroutine\parallel;
 
 class DisableAuditingTest extends TestCase
 {
-    private function makeArticle(): Article
-    {
-        return Article::factory()->create();
-    }
-
     public function testDisableAuditingPreventsAudits(): void
     {
         Article::disableAuditing();
 
         $this->assertTrue(Article::isAuditingDisabled());
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $this->assertSame(0, $article->audits()->count());
     }
@@ -38,14 +33,14 @@ class DisableAuditingTest extends TestCase
 
         $this->assertFalse(Article::isAuditingDisabled());
 
-        $article = $this->makeArticle();
+        $article = $this->article();
 
         $this->assertSame(1, $article->audits()->count());
     }
 
     public function testWithoutAuditingSuppressesThenRestores(): void
     {
-        $article = Article::withoutAuditing(fn () => $this->makeArticle());
+        $article = Article::withoutAuditing(fn () => $this->article());
 
         $this->assertSame(0, $article->audits()->count());
         $this->assertFalse(Article::isAuditingDisabled());
@@ -96,15 +91,19 @@ class DisableAuditingTest extends TestCase
 
     public function testScopeIsRestoredWhenTheCallbackThrows(): void
     {
+        $exception = new RuntimeException('boom');
+
         try {
-            Article::withoutAuditing(function () {
-                throw new RuntimeException('boom');
+            Article::withoutAuditing(function () use ($exception) {
+                throw $exception;
             });
-        } catch (RuntimeException) {
+            $this->fail('the callback should have thrown');
+        } catch (RuntimeException $caught) {
+            $this->assertSame($exception, $caught);
         }
 
         $this->assertFalse(Article::isAuditingDisabled());
-        $this->assertSame(1, $this->makeArticle()->audits()->count());
+        $this->assertSame(1, $this->article()->audits()->count());
     }
 
     public function testWithoutAuditingIsScopedToTheCurrentCoroutine(): void
@@ -123,7 +122,7 @@ class DisableAuditingTest extends TestCase
             },
             function () use (&$inner) {
                 Coroutine::sleep(0.01);
-                $inner = $this->makeArticle();
+                $inner = $this->article();
             },
         ]);
 
@@ -137,15 +136,15 @@ class DisableAuditingTest extends TestCase
         Article::withoutAuditing(function () use (&$fresh, &$copied, &$concurrent) {
             // A child starts with a fresh context unless told to copy it.
             parallel([function () use (&$fresh) {
-                $fresh = $this->makeArticle();
+                $fresh = $this->article();
             }]);
 
             parallel([function () use (&$copied) {
-                $copied = $this->makeArticle();
+                $copied = $this->article();
             }], copyContext: true);
 
             // The Concurrency facade's coroutine driver copies it by default.
-            [$concurrent] = Concurrency::run([fn () => $this->makeArticle()]);
+            [$concurrent] = Concurrency::run([fn () => $this->article()]);
         });
 
         $this->assertSame(1, $fresh->audits()->count());

@@ -9,6 +9,8 @@ use Ipsocode\Auditing\Contracts\Audit;
 use Ipsocode\Auditing\Contracts\Auditable;
 use Ipsocode\Auditing\Contracts\AuditDriver;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Support\AuditColumns;
+use Ipsocode\Auditing\Support\AuditTables;
 use Ipsocode\Auditing\Support\NormalizesAuditValues;
 
 class AuditDetails implements AuditDriver, AcceptsResolvedAudit
@@ -75,7 +77,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
             $relation = $model->audits();
             $auditClass = get_class($relation->getModel());
             $auditModel = new $auditClass;
-            $keyName = $auditModel->getKeyName();
+            $keyName = AuditColumns::key($auditModel);
 
             // Cloned before the delete query below joins onto it — the relation's
             // query builder is mutated in place by leftJoinSub(), so the subquery
@@ -88,7 +90,7 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                 ->orderByDesc($keyName)
                 ->limit($threshold);
 
-            return $relation
+            $excess = $relation
                 ->leftJoinSub(
                     $subQuery,
                     'audit_threshold',
@@ -100,8 +102,22 @@ class AuditDetails implements AuditDriver, AcceptsResolvedAudit
                         );
                     }
                 )
-                ->whereNull('audit_threshold.' . $keyName)
-                ->delete() > 0;
+                ->whereNull('audit_threshold.' . $keyName);
+
+            // Details first, and explicitly: the bundled migration cascades, but
+            // tables adopted by `auditing:install` may lack ON DELETE CASCADE.
+            // A subquery keeps the statement free of one bound key per pruned row.
+            return $auditModel->getConnection()->transaction(function () use ($auditModel, $excess, $keyName) {
+                $auditModel->getConnection()
+                    ->table(AuditTables::auditDetails())
+                    ->whereIn(
+                        'audit_id',
+                        (clone $excess->getQuery())->select($auditModel->getTable() . '.' . $keyName)
+                    )
+                    ->delete();
+
+                return $excess->delete() > 0;
+            });
         }
 
         return false;

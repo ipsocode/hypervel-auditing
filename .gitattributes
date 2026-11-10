@@ -4,7 +4,6 @@
 # application gets src/, config/, database/, composer.json, README.md and
 # LICENSE.
 /.github export-ignore
-/.claude export-ignore
 /CLAUDE.md export-ignore
 /AGENTS.md export-ignore
 /bin export-ignore

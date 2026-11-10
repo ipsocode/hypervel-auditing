@@ -65,8 +65,8 @@ caller's model may be in the middle of an audit of its own:
 - `PendingAudit::log()` in `src/PendingAudit.php` saves the model's
   custom-audit properties before a [manual audit](manual-audits.md) and
   restores them afterwards.
-- The relationship helpers in `src/Auditable.php` reset that state in a
-  `finally` once their audit has been dispatched.
+- The relationship helpers in `src/Concerns/AuditsRelationships.php` do the
+  same around their audit, through the same `AuditState::scoped()`.
 - The observer in `src/AuditableObserver.php` removes a model's restore marker
   in a `finally`, so a listener that throws out of the `restored` audit does
   not leave the model marked.

@@ -160,6 +160,7 @@ class BootAuditableTest extends TestCase
         $torn = m::mock(ContainerContract::class);
         $torn->shouldReceive('make', 'get')
             ->andThrow(new RuntimeException('Target class [app] does not exist.'));
+        $torn->shouldReceive('bound')->with('app')->andReturn(false);
 
         try {
             Facade::clearResolvedInstances();

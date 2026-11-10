@@ -36,17 +36,13 @@ schedule. It applies to every audit of the row: model events,
 [manual audits](manual-audits.md) alike.
 
 The bundled `audit_details` driver keeps the newest audits of that one row
-(same `auditable_type` and `auditable_id`) and deletes the rest in a single
-statement. Newest means latest `created_at`, with the primary key breaking
-ties between audits written in the same second, so the survivors are the last
-ones written.
+(same `auditable_type` and `auditable_id`) and deletes the rest, with their
+detail rows, in one transaction. Newest means latest `created_at`, with the
+primary key breaking ties between audits written in the same millisecond, so
+the survivors are the last ones written.
 
-This delete removes `audits` rows only. Their detail rows go through the
-`ON DELETE CASCADE` on the `audit_details` foreign key, which the bundled
-migration creates. A table adopted with `auditing:install` may lack that
-constraint, and there the threshold leaves orphaned detail rows behind: add
-the constraint before relying on the threshold. `auditing:prune` deletes
-detail rows itself.
+The threshold delete removes the pruned audits' `audit_details` rows too, so
+a table adopted with `auditing:install` needs no `ON DELETE CASCADE` for it.
 
 A [custom driver](drivers.md) decides what `prune()` does. The `Auditor` calls
 it after every write either way.

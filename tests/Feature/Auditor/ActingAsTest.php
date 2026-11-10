@@ -97,14 +97,18 @@ class ActingAsTest extends TestCase
         $inner = User::factory()->create();
         $article = Article::factory()->create();
 
-        Auditor::actingAs($outer, function () use ($inner, $article) {
+        $exception = new RuntimeException('boom');
+
+        Auditor::actingAs($outer, function () use ($inner, $article, $exception) {
             try {
-                Auditor::actingAs($inner, function () use ($article) {
+                Auditor::actingAs($inner, function () use ($article, $exception) {
                     Auditor::on($article)->as('inner')->with(['a' => 1])->log();
 
-                    throw new RuntimeException('boom');
+                    throw $exception;
                 });
-            } catch (RuntimeException) {
+                $this->fail('the inner callback should have thrown');
+            } catch (RuntimeException $caught) {
+                $this->assertSame($exception, $caught);
             }
 
             Auditor::on($article)->as('outer')->with(['a' => 1])->log();

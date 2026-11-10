@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Drivers;
 
 use Hypervel\Contracts\Foundation\Application;
+use Hypervel\Database\QueryException;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\DB;
 use Ipsocode\Auditing\Models\Audit;
 use Ipsocode\Auditing\Models\AuditDetail;
 use Ipsocode\Auditing\Support\AuditTables;
+use Ipsocode\Auditing\Tests\Fixtures\LevelRecordingDriver;
 use Ipsocode\Auditing\Tests\TestCase;
-use Throwable;
 use Workbench\App\Models\Article;
 
 /**
@@ -57,7 +58,6 @@ class AuditConnectionTest extends TestCase
     public function testTheDriverRunsItsTransactionOnTheAuditConnection(): void
     {
         Config::set('auditing.driver', LevelRecordingDriver::class);
-        LevelRecordingDriver::$levels = [];
 
         $defaultConnection = Config::get('database.default');
 
@@ -89,29 +89,11 @@ class AuditConnectionTest extends TestCase
                     'auditable_id' => 1,
                 ])->details()->create(['field' => null, 'old_value' => null, 'new_value' => 'x']);
             });
-        } catch (Throwable) {
+            $this->fail('the detail insert should have failed');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('NOT NULL', $exception->getMessage());
         }
 
         $this->assertSame($before, DB::connection('audit_db')->table(AuditTables::audits())->count());
-    }
-}
-
-/**
- * Records both connections' transaction levels while the driver builds its
- * detail rows, inside the transaction it opened.
- */
-class LevelRecordingDriver extends \Ipsocode\Auditing\Drivers\AuditDetails
-{
-    /** @var array<int, array{default: int, audit: int}> */
-    public static array $levels = [];
-
-    protected function normalizeValue(mixed $value): ?string
-    {
-        static::$levels[] = [
-            'default' => DB::connection(Config::get('database.default'))->transactionLevel(),
-            'audit' => DB::connection('audit_db')->transactionLevel(),
-        ];
-
-        return parent::normalizeValue($value);
     }
 }

@@ -41,11 +41,6 @@ class AuditStateTest extends TestCase
         return $values;
     }
 
-    private function article(): Article
-    {
-        return Article::factory()->create(['title' => 'V1']);
-    }
-
     public function testEveryListedNameIsAPropertyDeclaredOnAnAuditableModel(): void
     {
         $model = new ReflectionClass(Article::class);
@@ -72,7 +67,7 @@ class AuditStateTest extends TestCase
     {
         Config::set('auditing.queue.enable', false);
 
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         foreach ($this->distinctValues() as $name => $value) {
             $article->{$name} = $value;
@@ -87,7 +82,7 @@ class AuditStateTest extends TestCase
 
     public function testAManualAuditRestoresEveryListedProperty(): void
     {
-        $article = $this->article();
+        $article = $this->article(['title' => 'V1']);
 
         foreach ($this->distinctValues() as $name => $value) {
             $article->{$name} = $value;

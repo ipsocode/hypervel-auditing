@@ -8,11 +8,11 @@ use Closure;
 use Error;
 use Hypervel\Support\Facades\Config;
 use Hypervel\Testing\PHPUnit\AfterEachTestCleanup;
-use Ipsocode\Auditing\Contracts\Auditor as AuditorContract;
 use Ipsocode\Auditing\Drivers\AuditDetails;
 use Ipsocode\Auditing\Events\DispatchAudit;
 use Ipsocode\Auditing\Exceptions\AuditingException;
 use Ipsocode\Auditing\Testing\TestState;
+use Ipsocode\Auditing\Tests\Feature\Auditor\Fixtures\ProbedConstructor;
 use Ipsocode\Auditing\Tests\TestCase;
 use ReflectionProperty;
 use Workbench\App\Drivers\NullDriver;
@@ -31,11 +31,6 @@ class AuditorInternalsTest extends TestCase
      * The key TestState registers its cleanup under.
      */
     private const CLEANUP_KEY = 'ipsocode/hypervel-auditing';
-
-    private function auditor(): AuditorContract
-    {
-        return $this->app->get(AuditorContract::class);
-    }
 
     public function testAskingTheManagerForAnUnnamedDriverYieldsTheBundledOne(): void
     {
@@ -126,6 +121,30 @@ class AuditorInternalsTest extends TestCase
             'class' => Category::class,
             'model_data' => ['auditEvent' => 'created'],
         ]);
+    }
+
+    public function testUnserializingAnEventNeverConstructsAClassThatIsNotAuditable(): void
+    {
+        $event = new DispatchAudit(Article::factory()->create());
+
+        $this->expectException(AuditingException::class);
+        $this->expectExceptionMessage(
+            'Cannot restore a queued DispatchAudit event for ' . ProbedConstructor::class . ': it is not Auditable.'
+        );
+
+        $event->__unserialize(['class' => ProbedConstructor::class, 'model_data' => []]);
+    }
+
+    public function testUnserializingAnEventWhoseClassNoLongerExistsThrowsTheAuditingException(): void
+    {
+        $event = new DispatchAudit(Article::factory()->create());
+
+        $this->expectException(AuditingException::class);
+        $this->expectExceptionMessage(
+            'Cannot restore a queued DispatchAudit event for App\Removed\Model: it is not Auditable.'
+        );
+
+        $event->__unserialize(['class' => 'App\Removed\Model', 'model_data' => []]);
     }
 
     /**

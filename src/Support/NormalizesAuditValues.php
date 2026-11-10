@@ -19,7 +19,7 @@ trait NormalizesAuditValues
      * Reduce an attribute value to a string for one column: booleans give '1'
      * and '0', other scalars are cast (a float that the cast would change keeps
      * its full precision), enums give their value or name, stringable objects their string form, and
-     * anything else is JSON-encoded.
+     * anything else is JSON-encoded. A value that cannot be encoded throws a JsonException.
      */
     protected function normalizeValue(mixed $value): ?string
     {
@@ -60,10 +60,9 @@ trait NormalizesAuditValues
             return (string) $value;
         }
 
-        // Arrays (kept with `auditing.allowed_array_values`) are stored as JSON; a
-        // value json_encode() cannot represent returns false and is stored as null.
-        $encoded = json_encode($value);
-
-        return $encoded === false ? null : $encoded;
+        // Arrays (kept with `auditing.allowed_array_values`) are stored as JSON. A
+        // value json_encode() cannot represent throws: storing null would read as
+        // a real change to or from null.
+        return json_encode($value, JSON_THROW_ON_ERROR);
     }
 }

@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Ipsocode\Auditing\Tests\Feature\Database;
 
 use Hypervel\Contracts\Foundation\Application;
-use Hypervel\Support\Facades\Config;
 use Hypervel\Support\Facades\DB;
 use Hypervel\Support\Facades\Schema;
 use Ipsocode\Auditing\Support\AuditTables;
+use Ipsocode\Auditing\Tests\Fixtures\RendersMysqlDdl;
 use Ipsocode\Auditing\Tests\TestCase;
 use Workbench\App\Models\Article;
 
 class AuditSchemaTest extends TestCase
 {
+    use RendersMysqlDdl;
+
     private const AUDITS_MIGRATION = '2026_06_06_000001_create_audits_table.php';
 
     private const AUDIT_DETAILS_MIGRATION = '2026_06_06_000002_create_audit_details_table.php';
@@ -22,37 +24,7 @@ class AuditSchemaTest extends TestCase
     {
         parent::defineEnvironment($app);
 
-        // Never connected to — pretend() renders the DDL without executing it.
-        $app->get('config')->set('database.connections.mysql_pretend', [
-            'driver' => 'mysql',
-            'host' => '127.0.0.1',
-            'port' => 3306,
-            'database' => 'nowhere',
-            'username' => 'nobody',
-            'password' => '',
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-        ]);
-    }
-
-    /**
-     * The DDL the given migration would issue on MySQL. SQLite maps `char` to a
-     * bare `varchar` with no length, so it cannot catch a column too narrow for
-     * the value the driver writes.
-     *
-     * @return array<int, string>
-     */
-    private function mysqlDdl(string $migration): array
-    {
-        $definition = require dirname(__DIR__, 3) . '/database/migrations/' . $migration;
-
-        Config::set('auditing.connection', 'mysql_pretend');
-
-        return array_map(
-            static fn (array $entry): string => $entry['query'],
-            DB::connection('mysql_pretend')->pretend(static fn () => $definition->up())
-        );
+        $this->defineMysqlPretendConnection($app);
     }
 
     private function createTableStatement(string $migration): string

@@ -90,7 +90,7 @@ after any [attribute modifier](attribute-modifiers.md) has run:
 | A backed enum | Its value |
 | A pure enum | Its name |
 | An object with `__toString()` | Its string form |
-| Anything else, such as an array | JSON: `'{"a":1}'`, or `NULL` when `json_encode()` fails |
+| Anything else, such as an array | JSON: `'{"a":1}'`. A value `json_encode()` cannot represent, such as invalid UTF-8 or `INF`, throws a `JsonException` and fails the audit, rather than recording a `NULL` that reads as a real change |
 
 A model attribute holding an array reaches the driver only when
 `auditing.allowed_array_values` is on, and one holding an object only when the

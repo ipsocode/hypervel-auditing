@@ -8,10 +8,10 @@ use Hypervel\Database\Eloquent\Collection as EloquentCollection;
 use Hypervel\Support\Facades\Event;
 use Ipsocode\Auditing\Events\AuditCustom;
 use Ipsocode\Auditing\Exceptions\AuditingException;
+use Ipsocode\Auditing\Tests\Fixtures\CreatesRelationshipFixtures;
 use Ipsocode\Auditing\Tests\TestCase;
 use RuntimeException;
 use Swoole\Coroutine\CanceledException;
-use Workbench\App\Models\Article;
 use Workbench\App\Models\Category;
 
 /**
@@ -20,21 +20,7 @@ use Workbench\App\Models\Category;
  */
 class RelationshipAuditHelpersTest extends TestCase
 {
-    private Article $article;
-
-    /** @var array<string, Category> */
-    private array $categories = [];
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->article = Article::factory()->create();
-
-        foreach (['php', 'testing', 'audit'] as $name) {
-            $this->categories[$name] = Category::factory()->create(['name' => $name]);
-        }
-    }
+    use CreatesRelationshipFixtures;
 
     /**
      * @return array<string, mixed>
@@ -240,10 +226,12 @@ class RelationshipAuditHelpersTest extends TestCase
     /**
      * A throwing `AuditCustom` listener must not leave `isCustomEvent = true`
      * and the stale old/new values on the model, or its next real save would
-     * write a corrupt custom audit. The reset happens in a `finally`.
+     * write a corrupt custom audit. The state is restored in a `finally`.
      */
     public function testAThrowingAuditCustomListenerStillResetsTheCustomAuditState(): void
     {
+        $before = $this->article->auditEvent;
+
         Event::listen(AuditCustom::class, function () {
             throw new RuntimeException('listener blew up');
         });
@@ -256,9 +244,9 @@ class RelationshipAuditHelpersTest extends TestCase
         }
 
         $this->assertFalse($this->article->isCustomEvent);
-        $this->assertSame([], $this->article->auditCustomOld);
-        $this->assertSame([], $this->article->auditCustomNew);
-        $this->assertNull($this->article->auditEvent);
+        $this->assertNull($this->article->auditCustomOld);
+        $this->assertNull($this->article->auditCustomNew);
+        $this->assertSame($before, $this->article->auditEvent);
 
         Event::forget(AuditCustom::class);
 
